@@ -12,17 +12,16 @@ const C = {
   green: "#1A7A4A", red: "#C0392B", blue: "#1A5296",
 };
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
 const InputRow = ({ label, value, onChange, suffix, step = 1000, min = 0, max, hint }) => (
   <div style={{ marginBottom: 14 }}>
     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
       <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
       {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
     </div>
-    <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6 }}>
+    <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
       <input type="number" value={value} min={min} max={max} step={step} onChange={e => onChange(Number(e.target.value))}
-        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit" }} />
-      <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}` }}>{suffix}</span>
+        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+      <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>{suffix}</span>
     </div>
   </div>
 );
@@ -86,7 +85,7 @@ const OvrigKostnad = ({ items, onChange }) => {
 };
 
 // ── PROVIDER DATA ─────────────────────────────────────────────────────────────
-const FOND = [
+const FOND_DEFAULT = [
   { name: "Länsförsäkringar (kapitalavg)", engångsPct: 0, löpandePct: 0, kapitalPct: 0.35, fast: 0 },
   { name: "Länsförsäkringar (premieavg)", engångsPct: 0, löpandePct: 2, kapitalPct: 0.15, fast: 200 },
   { name: "Folksam", engångsPct: 0, löpandePct: 0, kapitalPct: 0.35, fast: 120 },
@@ -100,7 +99,7 @@ const FOND = [
   { name: "Skandia Depå", engångsPct: 0, löpandePct: 2, kapitalPct: 0.15, fast: 240 },
 ];
 
-const TRAD = [
+const TRAD_DEFAULT = [
   { name: "SEB Trad (kapitalavg)", engångsPct: 0, löpandePct: 0, kapitalPct: 0.95, fast: 212 },
   { name: "SEB Trad (premieavg)", engångsPct: 3, löpandePct: 3, kapitalPct: 0.60, fast: 212 },
   { name: "Folksam Trad", engångsPct: 3, löpandePct: 0.8, kapitalPct: 0.65, fast: 240 },
@@ -112,10 +111,9 @@ const TRAD = [
 
 function calcProviderFees(provider, inputs) {
   const { löpandeMån, engångs, befintligt, år, avkastning } = inputs;
-  const löpandeÅr = löpandeMån * 12;
   const r = avkastning / 100;
 
-  // One-time fee on lump sum
+  // Engångsavgift på engångsinsättning
   const engångsFee = engångs * (provider.engångsPct / 100);
   let capital = befintligt + engångs - engångsFee;
 
@@ -123,24 +121,89 @@ function calcProviderFees(provider, inputs) {
   let year1Fee = engångsFee;
 
   for (let y = 1; y <= år; y++) {
-    capital *= (1 + r); // growth
-    const lFee = löpandeÅr * (provider.löpandePct / 100);
-    capital += löpandeÅr - lFee;
+    // Månadsvis: lägg till premie minus premieavgift
+    for (let m = 0; m < 12; m++) {
+      const premAvgift = löpandeMån * (provider.löpandePct / 100);
+      capital += löpandeMån - premAvgift;
+      totalFee += premAvgift;
+      if (y === 1) year1Fee += premAvgift;
+    }
+    // Årsvis tillväxt
+    capital *= (1 + r);
+    // Årsvis kapitalavgift på totalt kapital
     const kFee = capital * (provider.kapitalPct / 100);
     capital -= kFee;
     capital -= provider.fast;
-    const yearFee = lFee + kFee + provider.fast;
-    totalFee += yearFee;
-    if (y === 1) year1Fee += yearFee;
+    totalFee += kFee + provider.fast;
+    if (y === 1) year1Fee += kFee + provider.fast;
   }
 
-  return {
-    engångsFee,
-    year1Fee,
-    totalFee,
-    avgFee: totalFee / år,
-  };
+  return { engångsFee, year1Fee, totalFee, avgFee: totalFee / år };
 }
+
+// ── PROVIDER EDIT MODAL ───────────────────────────────────────────────────────
+const ProviderModal = ({ provider, onSave, onClose, onReset }) => {
+  const [vals, setVals] = useState({
+    löpandePct: provider.löpandePct,
+    kapitalPct: provider.kapitalPct,
+    fast: provider.fast,
+  });
+  const set = (k, v) => setVals(prev => ({ ...prev, [k]: v }));
+
+  const ModalInput = ({ label, value, onChange, suffix, hint }) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
+        {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <input type="number" value={value} min={0} step={0.01} onChange={e => onChange(Number(e.target.value))}
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+        <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(15,40,71,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.surface, borderRadius: 10, padding: "28px 28px 24px", width: 400, boxShadow: "0 8px 40px rgba(15,40,71,0.18)", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
+          <div>
+            <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Redigera avgifter</div>
+            <div style={{ color: C.navy, fontSize: 16, fontWeight: 700 }}>{provider.name}</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.textLight, cursor: "pointer", padding: "6px 10px", fontSize: 14 }}>✕</button>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: C.border, marginBottom: 20 }} />
+
+        <ModalInput label="Premieavgift (löpande)" value={vals.löpandePct} onChange={v => set("löpandePct", v)} suffix="% av inbetald premie" hint="Dras månadsvis på varje inbetalning" />
+        <ModalInput label="Kapitalavgift" value={vals.kapitalPct} onChange={v => set("kapitalPct", v)} suffix="% / år av totalt kapital" hint="Dras årsvis på ackumulerat kapital" />
+        <ModalInput label="Fast avgift" value={vals.fast} onChange={v => set("fast", v)} suffix="kr / år" />
+
+        {/* Info box */}
+        <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px", marginBottom: 20 }}>
+          <div style={{ color: C.gold, fontSize: 11, lineHeight: 1.7 }}>
+            <strong>Premieavgift</strong> dras på varje månatlig inbetalning.<br />
+            <strong>Kapitalavgift</strong> dras årsvis på totalt ackumulerat kapital.
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onReset} style={{ flex: 1, padding: "10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            Återställ standard
+          </button>
+          <button onClick={() => onSave(vals)} style={{ flex: 2, padding: "10px", borderRadius: 6, border: "none", background: C.navy, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            Spara ändringar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── AVGIFTSKALKYLATOR ─────────────────────────────────────────────────────────
 const AvgiftsView = ({ defaultMånSparande }) => {
@@ -151,21 +214,33 @@ const AvgiftsView = ({ defaultMånSparande }) => {
   const [avkastning, setAvkastning] = useState(7);
   const [kategori, setKategori] = useState("fond");
   const [sortKey, setSortKey] = useState("totalFee");
+  const [customOverrides, setCustomOverrides] = useState({});
+  const [editingProvider, setEditingProvider] = useState(null);
 
   const inputs = { löpandeMån, engångs, befintligt, år, avkastning };
 
-  const results = useMemo(() => {
-    const providers = kategori === "fond" ? FOND : TRAD;
-    return providers
-      .map(p => ({ ...p, ...calcProviderFees(p, inputs) }))
-      .sort((a, b) => a[sortKey] - b[sortKey]);
-  }, [löpandeMån, engångs, befintligt, år, avkastning, kategori, sortKey]);
+  const baseProviders = kategori === "fond" ? FOND_DEFAULT : TRAD_DEFAULT;
+
+  const providers = useMemo(() =>
+    baseProviders.map(p => ({
+      ...p,
+      ...(customOverrides[p.name] || {}),
+      isCustom: !!customOverrides[p.name],
+    })),
+    [baseProviders, customOverrides]
+  );
+
+  const results = useMemo(() =>
+    providers.map(p => ({ ...p, ...calcProviderFees(p, inputs) }))
+      .sort((a, b) => a[sortKey] - b[sortKey]),
+    [providers, löpandeMån, engångs, befintligt, år, avkastning, sortKey]
+  );
 
   const best = results[0];
   const worst = results[results.length - 1];
   const saving = worst.totalFee - best.totalFee;
 
-  const colW = "60px 1fr 110px 110px 110px 110px 110px";
+  const colW = "52px 1fr 100px 100px 100px 110px 100px";
 
   const SortHeader = ({ label, k }) => (
     <div onClick={() => setSortKey(k)} style={{ cursor: "pointer", color: sortKey === k ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: sortKey === k ? 700 : 400, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
@@ -173,137 +248,162 @@ const AvgiftsView = ({ defaultMånSparande }) => {
     </div>
   );
 
+  const handleSave = (name, vals) => {
+    setCustomOverrides(prev => ({ ...prev, [name]: vals }));
+    setEditingProvider(null);
+  };
+
+  const handleReset = (name) => {
+    setCustomOverrides(prev => { const n = { ...prev }; delete n[name]; return n; });
+    setEditingProvider(null);
+  };
+
+  const editingData = editingProvider
+    ? { ...providers.find(p => p.name === editingProvider) }
+    : null;
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "calc(100vh - 90px)" }}>
-      {/* Inputs */}
-      <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
-        <Section title="Dina förutsättningar">
-          <InputRow label="Löpande premie / mån" value={löpandeMån} onChange={setLöpandeMån} suffix="kr / mån" step={500} />
-          <InputRow label="Engångsinsättning" value={engångs} onChange={setEngångs} suffix="kr" step={10000} />
-          <InputRow label="Befintligt kapital" value={befintligt} onChange={setBefintligt} suffix="kr" step={10000} />
-          <InputRow label="Antal år" value={år} onChange={setÅr} suffix="år" step={1} min={1} max={40} />
-          <InputRow label="Förväntad avkastning" value={avkastning} onChange={setAvkastning} suffix="% / år" step={0.5} min={0} max={20} hint="Används för kapitalberäkning" />
-        </Section>
+    <>
+      {editingData && (
+        <ProviderModal
+          provider={editingData}
+          onSave={vals => handleSave(editingProvider, vals)}
+          onReset={() => handleReset(editingProvider)}
+          onClose={() => setEditingProvider(null)}
+        />
+      )}
 
-        {/* Kategoriväljare */}
-        <Section title="Produkttyp">
-          {[{ id: "fond", label: "Fondförsäkring" }, { id: "trad", label: "Traditionell förvaltning" }].map(k => (
-            <button key={k.id} onClick={() => setKategori(k.id)} style={{
-              width: "100%", marginBottom: 8, padding: "11px 14px", borderRadius: 6,
-              border: `1.5px solid ${kategori === k.id ? C.navy : C.border}`,
-              background: kategori === k.id ? C.navy : C.surface,
-              color: kategori === k.id ? "#fff" : C.textMid,
-              fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "left"
-            }}>{k.label}</button>
-          ))}
-        </Section>
+      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "calc(100vh - 90px)" }}>
+        {/* Inputs */}
+        <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
+          <Section title="Dina förutsättningar">
+            <InputRow label="Löpande premie / mån" value={löpandeMån} onChange={setLöpandeMån} suffix="kr / mån" step={500} />
+            <InputRow label="Engångsinsättning" value={engångs} onChange={setEngångs} suffix="kr" step={10000} />
+            <InputRow label="Befintligt kapital" value={befintligt} onChange={setBefintligt} suffix="kr" step={10000} />
+            <InputRow label="Antal år" value={år} onChange={setÅr} suffix="år" step={1} min={1} max={40} />
+            <InputRow label="Förväntad avkastning" value={avkastning} onChange={setAvkastning} suffix="% / år" step={0.5} min={0} max={20} hint="Före avgifter" />
+          </Section>
 
-        {/* Summary KPIs */}
-        <div style={{ background: C.navy, borderRadius: 8, padding: "16px" }}>
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Potentiell besparing</div>
-          <div style={{ color: C.gold, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{fmtShort(saving)}</div>
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 14 }}>Skillnad billigast vs dyrast över {år} år</div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Billigast</span>
-              <span style={{ color: "#6EE0A4", fontSize: 12, fontWeight: 700 }}>{best.name}</span>
+          <Section title="Produkttyp">
+            {[{ id: "fond", label: "Fondförsäkring" }, { id: "trad", label: "Traditionell förvaltning" }].map(k => (
+              <button key={k.id} onClick={() => setKategori(k.id)} style={{
+                width: "100%", marginBottom: 8, padding: "11px 14px", borderRadius: 6,
+                border: `1.5px solid ${kategori === k.id ? C.navy : C.border}`,
+                background: kategori === k.id ? C.navy : C.surface,
+                color: kategori === k.id ? "#fff" : C.textMid,
+                fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "left"
+              }}>{k.label}</button>
+            ))}
+          </Section>
+
+          <div style={{ background: C.navy, borderRadius: 8, padding: "16px" }}>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Potentiell besparing</div>
+            <div style={{ color: C.gold, fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{fmtShort(saving)}</div>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 14 }}>Skillnad billigast vs dyrast över {år} år</div>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Billigast</span>
+                <span style={{ color: "#6EE0A4", fontSize: 12, fontWeight: 700 }}>{best.name}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Dyrast</span>
+                <span style={{ color: "#F08080", fontSize: 12, fontWeight: 700 }}>{worst.name}</span>
+              </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Dyrast</span>
-              <span style={{ color: "#F08080", fontSize: 12, fontWeight: 700 }}>{worst.name}</span>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div style={{ padding: "20px 20px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                {kategori === "fond" ? "Fondförsäkring" : "Traditionell Förvaltning"} — Jämförelse
+              </span>
             </div>
+            <div style={{ color: C.textLight, fontSize: 11 }}>Klicka på ett bolag för att redigera avgifter</div>
+          </div>
+
+          {/* Bar chart */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 14 }}>Total avgift alla år</div>
+            {results.map((p, i) => {
+              const barW = worst.totalFee > 0 ? (p.totalFee / worst.totalFee) * 100 : 0;
+              const isFirst = i === 0;
+              return (
+                <div key={p.name} style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: isFirst ? C.gold : C.textMid, fontSize: 10, fontWeight: 700, width: 16, textAlign: "right" }}>#{i+1}</span>
+                      <span style={{ color: C.text, fontSize: 12, fontWeight: isFirst ? 700 : 400 }}>{p.name}</span>
+                      {p.isCustom && <span style={{ background: C.goldLight, color: C.gold, fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, border: `1px solid ${C.gold}` }}>ANPASSAD</span>}
+                    </div>
+                    <span style={{ color: isFirst ? C.green : C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(p.totalFee)}</span>
+                  </div>
+                  <div style={{ background: C.surface2, borderRadius: 3, height: 8 }}>
+                    <div style={{ width: `${barW}%`, background: isFirst ? C.green : i === results.length-1 ? C.red : C.navy, opacity: isFirst ? 1 : i === results.length-1 ? 0.7 : 0.25, borderRadius: 3, height: 8, transition: "width 0.5s" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Table */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: colW, background: C.navy, padding: "12px 16px", gap: 8 }}>
+              <SortHeader label="Rank" k="totalFee" />
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Bolag</div>
+              <SortHeader label="Engångsfee" k="engångsFee" />
+              <SortHeader label="Avgift år 1" k="year1Fee" />
+              <SortHeader label="Snitt/år" k="avgFee" />
+              <SortHeader label="Total avgift" k="totalFee" />
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Kapitalavg %</div>
+            </div>
+
+            {results.map((p, i) => {
+              const isFirst = i === 0;
+              const isLast = i === results.length - 1;
+              return (
+                <div key={p.name}
+                  onClick={() => setEditingProvider(p.name)}
+                  style={{
+                    display: "grid", gridTemplateColumns: colW, padding: "11px 16px", gap: 8,
+                    background: isFirst ? "#F0FBF5" : i % 2 === 0 ? C.surface : C.surface2,
+                    borderBottom: `1px solid ${C.border}`,
+                    borderLeft: isFirst ? `3px solid ${C.green}` : isLast ? `3px solid ${C.red}` : `3px solid transparent`,
+                    cursor: "pointer", transition: "background 0.15s"
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#E8F0FA"}
+                  onMouseLeave={e => e.currentTarget.style.background = isFirst ? "#F0FBF5" : i % 2 === 0 ? C.surface : C.surface2}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span style={{ background: isFirst ? C.green : isLast ? C.red : C.navy, color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 11, fontWeight: 700, opacity: isFirst || isLast ? 1 : 0.2 }}>#{i+1}</span>
+                  </div>
+                  <div style={{ color: C.text, fontSize: 12, fontWeight: isFirst ? 700 : 400, display: "flex", alignItems: "center", gap: 6 }}>
+                    {p.name}
+                    {p.isCustom && <span style={{ background: C.goldLight, color: C.gold, fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 3, border: `1px solid ${C.gold}` }}>✎</span>}
+                  </div>
+                  <div style={{ color: p.engångsFee > 0 ? C.red : C.textLight, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.engångsFee)}</div>
+                  <div style={{ color: C.text, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.year1Fee)}</div>
+                  <div style={{ color: C.text, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.avgFee)}</div>
+                  <div style={{ color: isFirst ? C.green : isLast ? C.red : C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmtShort(p.totalFee)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ flex: 1, background: C.surface2, borderRadius: 2, height: 6 }}>
+                      <div style={{ width: `${Math.min(100,(p.kapitalPct/1)*100)}%`, background: C.navy, opacity: 0.35, height: 6, borderRadius: 2 }} />
+                    </div>
+                    <span style={{ color: C.textMid, fontSize: 11, fontFamily: "monospace", whiteSpace: "nowrap" }}>{pct(p.kapitalPct)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 12, color: C.textLight, fontSize: 11, lineHeight: 1.7 }}>
+            * Premieavgift dras månadsvis på varje inbetalning. Kapitalavgift dras årsvis på totalt ackumulerat kapital. Avkastning {avkastning} % per år används för kapitaluppbyggnad.
           </div>
         </div>
       </div>
-
-      {/* Results table */}
-      <div style={{ padding: "20px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-            <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
-              {kategori === "fond" ? "Fondförsäkring" : "Traditionell Förvaltning"} — Jämförelse
-            </span>
-          </div>
-          <div style={{ color: C.textLight, fontSize: 11 }}>Klicka på kolumnrubrik för att sortera</div>
-        </div>
-
-        {/* Bar chart — total fee */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-          <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 14 }}>Total avgift alla år</div>
-          {results.map((p, i) => {
-            const barW = worst.totalFee > 0 ? (p.totalFee / worst.totalFee) * 100 : 0;
-            const isFirst = i === 0;
-            return (
-              <div key={p.name} style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: isFirst ? C.gold : C.textMid, fontSize: 10, fontWeight: 700, width: 16, textAlign: "right" }}>#{i+1}</span>
-                    <span style={{ color: C.text, fontSize: 12, fontWeight: isFirst ? 700 : 400 }}>{p.name}</span>
-                  </div>
-                  <span style={{ color: isFirst ? C.green : C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(p.totalFee)}</span>
-                </div>
-                <div style={{ background: C.surface2, borderRadius: 3, height: 8 }}>
-                  <div style={{ width: `${barW}%`, background: isFirst ? C.green : i === results.length-1 ? C.red : C.navy, opacity: isFirst ? 1 : i === results.length-1 ? 0.7 : 0.25, borderRadius: 3, height: 8, transition: "width 0.5s" }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Table */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-          {/* Header */}
-          <div style={{ display: "grid", gridTemplateColumns: colW, background: C.navy, padding: "12px 16px", gap: 8 }}>
-            <SortHeader label="Rank" k="totalFee" />
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Bolag</div>
-            <SortHeader label="Engångsfee" k="engångsFee" />
-            <SortHeader label="Avgift år 1" k="year1Fee" />
-            <SortHeader label="Snitt/år" k="avgFee" />
-            <SortHeader label="Total avgift" k="totalFee" />
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Kapitalavg %</div>
-          </div>
-
-          {/* Rows */}
-          {results.map((p, i) => {
-            const isFirst = i === 0;
-            const isLast = i === results.length - 1;
-            return (
-              <div key={p.name} style={{
-                display: "grid", gridTemplateColumns: colW, padding: "11px 16px", gap: 8,
-                background: isFirst ? "#F0FBF5" : i % 2 === 0 ? C.surface : C.surface2,
-                borderBottom: `1px solid ${C.border}`,
-                borderLeft: isFirst ? `3px solid ${C.green}` : isLast ? `3px solid ${C.red}` : `3px solid transparent`
-              }}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <span style={{
-                    background: isFirst ? C.green : isLast ? C.red : C.navy,
-                    color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 11, fontWeight: 700, opacity: isFirst || isLast ? 1 : 0.2
-                  }}>#{i+1}</span>
-                </div>
-                <div style={{ color: C.text, fontSize: 12, fontWeight: isFirst ? 700 : 400, display: "flex", alignItems: "center" }}>{p.name}</div>
-                <div style={{ color: p.engångsFee > 0 ? C.red : C.textLight, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.engångsFee)}</div>
-                <div style={{ color: C.text, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.year1Fee)}</div>
-                <div style={{ color: C.text, fontSize: 12, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmt(p.avgFee)}</div>
-                <div style={{ color: isFirst ? C.green : isLast ? C.red : C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", display: "flex", alignItems: "center" }}>{fmtShort(p.totalFee)}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ flex: 1, background: C.surface2, borderRadius: 2, height: 6 }}>
-                    <div style={{ width: `${Math.min(100,(p.kapitalPct/1)*100)}%`, background: C.navy, opacity: 0.35, height: 6, borderRadius: 2 }} />
-                  </div>
-                  <span style={{ color: C.textMid, fontSize: 11, fontFamily: "monospace", whiteSpace: "nowrap" }}>{pct(p.kapitalPct)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footnote */}
-        <div style={{ marginTop: 12, color: C.textLight, fontSize: 11, lineHeight: 1.7 }}>
-          * Beräkningar inkluderar premieavgift på engångsinsättning, löpande premieavgift, kapitalavgift på ackumulerat kapital samt fasta årsavgifter.
-          Avkastning {avkastning} % per år används för kapitaluppbyggnad.
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 
@@ -355,10 +455,10 @@ const SparandeView = ({ månSparande }) => {
                 </button>
               </div>
             )}
-            <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
               <input type="number" value={sparande} min={0} step={500} onChange={e => { setUseKF(false); setSparande(Number(e.target.value)); }}
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit" }} />
-              <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}` }}>kr / mån</span>
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+              <span style={{ color: C.textLight, padding: "10px 10px", fontSize: 11, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>kr / mån</span>
             </div>
           </div>
           <InputRow label="Engångsinsättning" value={engångs} onChange={setEngångs} suffix="kr" step={10000} hint="Startkapital" />
@@ -384,11 +484,11 @@ const SparandeView = ({ månSparande }) => {
           <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
           <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling över {år} år</span>
         </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px 20px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px 20px 24px 80px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 180, paddingBottom: 28, position: "relative" }}>
             {[0.25,0.5,0.75,1].map(f => (
-              <div key={f} style={{ position: "absolute", left: 0, right: 0, bottom: 28 + f * 152, borderTop: `1px dashed ${C.border}`, zIndex: 0 }}>
-                <span style={{ position: "absolute", right: "100%", paddingRight: 6, top: -8, color: C.textLight, fontSize: 9, whiteSpace: "nowrap" }}>{fmtShort(maxVal * f)}</span>
+              <div key={f} style={{ position: "absolute", left: -60, right: 0, bottom: 28 + f * 152, borderTop: `1px dashed ${C.border}`, zIndex: 0 }}>
+                <span style={{ position: "absolute", left: 0, top: -8, color: C.textLight, fontSize: 9, whiteSpace: "nowrap", width: 56, textAlign: "right" }}>{fmtShort(maxVal * f)}</span>
               </div>
             ))}
             {rows.map((row, i) => {
@@ -443,6 +543,7 @@ export default function App() {
   const [timmar, setTimmar] = useState(1800);
   const [debiteringsgrad, setDebiteringsgrad] = useState(85);
   const [bruttolön, setBruttolön] = useState(50000);
+  const [lönPeriod, setLönPeriod] = useState("mån");
   const [pensionPct, setPensionPct] = useState(15);
   const [övriga, setÖvriga] = useState([
     { label: "Hyra / kontorsplats", amount: 3000 },
@@ -476,7 +577,6 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", color: C.text }}>
-      {/* Header */}
       <div style={{ background: C.navy, padding: "0 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ padding: "18px 0", borderRight: `1px solid rgba(255,255,255,0.08)`, paddingRight: 28, marginRight: 28 }}>
           <div style={{ color: C.gold, fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Norrfinans</div>
@@ -492,14 +592,9 @@ export default function App() {
             }}>{t.label}</button>
           ))}
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ color: C.gold, fontSize: 18, fontWeight: 700 }}>{fmt(r.omsättning)}</div>
-          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10 }}>Omsättning / år</div>
-        </div>
       </div>
       <div style={{ height: 3, background: `linear-gradient(90deg,${C.gold},#E8B84B,${C.gold})` }} />
 
-      {/* LIKVIDITETSKALKYLATOR */}
       {tab === "kalkylator" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 300px", maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
@@ -508,12 +603,33 @@ export default function App() {
               <InputRow label="Timmar / år" value={timmar} onChange={setTimmar} suffix="tim" step={10} />
               <InputRow label="Debiteringsgrad" value={debiteringsgrad} onChange={setDebiteringsgrad} suffix="%" step={1} max={100} />
               <InfoChip label="Fakturerbara timmar" value={`${Math.round(r.faktTim).toLocaleString("sv-SE")} tim`} />
+              <div style={{ marginTop: 8 }}><InfoChip label="Omsättning / år" value={fmt(r.omsättning)} /></div>
             </Section>
             <Section title="Lön & Arbetsgivaravgift">
-              <InputRow label="Bruttolön / månad" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {[{ id: "mån", label: "Månadsvis" }, { id: "år", label: "Årsvis" }].map(t => (
+                  <button key={t.id} onClick={() => setLönPeriod(t.id)} style={{
+                    flex: 1, padding: "7px", borderRadius: 5,
+                    border: `1.5px solid ${lönPeriod === t.id ? C.navy : C.border}`,
+                    background: lönPeriod === t.id ? C.navy : "transparent",
+                    color: lönPeriod === t.id ? "#fff" : C.textMid,
+                    fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit"
+                  }}>{t.label}</button>
+                ))}
+              </div>
+              <InputRow
+                label={lönPeriod === "mån" ? "Bruttolön / månad" : "Bruttolön / år"}
+                value={lönPeriod === "mån" ? bruttolön : bruttolön * 12}
+                onChange={v => setBruttolön(lönPeriod === "mån" ? v : Math.round(v / 12))}
+                suffix={lönPeriod === "mån" ? "kr / mån" : "kr / år"}
+                step={lönPeriod === "mån" ? 1000 : 12000}
+              />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <InfoChip label="AG-avgift" value="31,42 %" />
                 <InfoChip label="Lönekostnad / år" value={fmt(bruttolön * 12 * 1.3142)} />
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(bruttolön)} />
               </div>
             </Section>
             <Section title="Pensionsavsättning">
