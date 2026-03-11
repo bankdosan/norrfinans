@@ -150,21 +150,12 @@ const COLS = [
   { key: "sjukvard", label: "Sjukvård" },
 ];
 
-// Gemensam inputstil för tabellceller
 const cellInputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  background: "transparent",
-  border: `1px solid ${C.border}`,
-  borderRadius: 4,
-  color: C.text,
-  padding: "4px 6px",
-  fontSize: 11,
-  fontFamily: "inherit",
-  outline: "none",
+  width: "100%", boxSizing: "border-box", background: "transparent",
+  border: `1px solid ${C.border}`, borderRadius: 4, color: C.text,
+  padding: "4px 6px", fontSize: 11, fontFamily: "inherit", outline: "none",
 };
 
-// ── OFFERT VIEW ───────────────────────────────────────────────────────────────
 const OffertView = () => {
   const [employees, setEmployees] = useState(EMP_DEFAULT);
   const [companies, setCompanies] = useState(COMPANIES_DEFAULT);
@@ -174,24 +165,18 @@ const OffertView = () => {
   const activeEmps = employees.filter(e => e.namn || e.arslön > 0);
   const nActive = Math.max(1, activeEmps.length);
 
-  const updateEmp = (i, field, val) =>
-    setEmployees(prev => prev.map((e, j) => j === i ? { ...e, [field]: val } : e));
-
+  const updateEmp = (i, field, val) => setEmployees(prev => prev.map((e, j) => j === i ? { ...e, [field]: val } : e));
   const updatePremium = (companyId, empIdx, field, val) => {
     setCompanies(prev => prev.map(c => c.id !== companyId ? c : {
-      ...c,
-      employees: c.employees.map((e, i) => i !== empIdx ? e : { ...e, [field]: Number(val) })
+      ...c, employees: c.employees.map((e, i) => i !== empIdx ? e : { ...e, [field]: Number(val) })
     }));
   };
-
   const updateCompany = (companyId, field, val) => {
     setCompanies(prev => prev.map(c => c.id !== companyId ? c : { ...c, [field]: Number(val) }));
   };
 
   const calcTotals = (company) => {
-    const empTotals = company.employees.slice(0, nActive).map(e =>
-      e.sjuk + e.pbf + e.tjp + e.lo + e.sjukvard
-    );
+    const empTotals = company.employees.slice(0, nActive).map(e => e.sjuk + e.pbf + e.tjp + e.lo + e.sjukvard);
     const groupTotal = empTotals.reduce((s, v) => s + v, 0);
     const colSums = COLS.reduce((acc, col) => {
       acc[col.key] = company.employees.slice(0, nActive).reduce((s, e) => s + (e[col.key] || 0), 0);
@@ -204,47 +189,24 @@ const OffertView = () => {
     companies.map(c => ({ ...c, ...calcTotals(c) })).sort((a, b) => a.groupTotal - b.groupTotal),
     [companies, nActive]
   );
-
   const best = ranked[0];
   const worst = ranked[ranked.length - 1];
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", minHeight: "calc(100vh - 90px)" }}>
-      {/* ── VÄNSTER PANEL ── */}
       <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}`, overflowY: "auto", minWidth: 0 }}>
         <Section title="Anställda">
           {employees.map((emp, i) => (
-            <div key={i} style={{
-              display: "flex", flexDirection: "column", gap: 5, marginBottom: 8, padding: "8px",
-              background: i < nActive ? C.goldLight : C.surface2,
-              borderRadius: 6, border: `1px solid ${i < nActive ? C.gold : C.border}`
-            }}>
-              {/* Rad 1: Namn + Personnr */}
+            <div key={i} style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 8, padding: "8px", background: i < nActive ? C.goldLight : C.surface2, borderRadius: 6, border: `1px solid ${i < nActive ? C.gold : C.border}` }}>
               <div style={{ display: "flex", gap: 5, minWidth: 0 }}>
-                <input
-                  placeholder={`Namn ${i+1}`}
-                  value={emp.namn}
-                  onChange={e => updateEmp(i, "namn", e.target.value)}
-                  style={{ ...cellInputStyle, flex: 1, minWidth: 0, fontSize: 11, padding: "6px 8px" }}
-                />
-                <input
-                  placeholder="Personnr"
-                  value={emp.persnr}
-                  onChange={e => updateEmp(i, "persnr", e.target.value)}
-                  style={{ ...cellInputStyle, flex: 1, minWidth: 0, fontSize: 11, padding: "6px 8px" }}
-                />
+                <input placeholder={`Namn ${i+1}`} value={emp.namn} onChange={e => updateEmp(i, "namn", e.target.value)}
+                  style={{ ...cellInputStyle, flex: 1, minWidth: 0, fontSize: 11, padding: "6px 8px" }} />
+                <input placeholder="Personnr" value={emp.persnr} onChange={e => updateEmp(i, "persnr", e.target.value)}
+                  style={{ ...cellInputStyle, flex: 1, minWidth: 0, fontSize: 11, padding: "6px 8px" }} />
               </div>
-              {/* Rad 2: Årslön */}
               <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: "hidden" }}>
-                <input
-                  type="number"
-                  placeholder="Årslön"
-                  value={emp.arslön || ""}
-                  min={0}
-                  step={10000}
-                  onChange={e => updateEmp(i, "arslön", Number(e.target.value))}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 11, padding: "6px 8px", fontFamily: "inherit", minWidth: 0, width: "100%", boxSizing: "border-box" }}
-                />
+                <input type="number" placeholder="Årslön" value={emp.arslön || ""} min={0} step={10000} onChange={e => updateEmp(i, "arslön", Number(e.target.value))}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 11, padding: "6px 8px", fontFamily: "inherit", minWidth: 0, width: "100%", boxSizing: "border-box" }} />
                 <span style={{ color: C.textLight, fontSize: 10, padding: "0 8px", borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>kr/år</span>
               </div>
             </div>
@@ -283,7 +245,6 @@ const OffertView = () => {
         </div>
       </div>
 
-      {/* ── HÖGER PANEL ── */}
       <div style={{ padding: "20px 20px", overflowX: "auto" }}>
         <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -324,13 +285,10 @@ const OffertView = () => {
                 );
               })}
             </div>
-
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)", marginBottom: 14 }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `160px repeat(${ranked.length}, 1fr)` }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Komponent</div>
-                {ranked.map(c => (
-                  <div key={c.id} style={{ color: "#fff", fontSize: 10, fontWeight: 700, textAlign: "right" }}>{c.name}</div>
-                ))}
+                {ranked.map(c => <div key={c.id} style={{ color: "#fff", fontSize: 10, fontWeight: 700, textAlign: "right" }}>{c.name}</div>)}
               </div>
               {[...COLS, { key: "total", label: "TOTAL / MÅN" }].map((col, ri) => {
                 const isTotal = col.key === "total";
@@ -340,17 +298,12 @@ const OffertView = () => {
                     {ranked.map((c, ci) => {
                       const val = isTotal ? c.groupTotal : c.colSums[col.key];
                       const isMin = ranked.reduce((min, cc) => (isTotal ? cc.groupTotal : cc.colSums[col.key]) < (isTotal ? min.groupTotal : min.colSums[col.key]) ? cc : min, ranked[0]).id === c.id;
-                      return (
-                        <div key={c.id} style={{ textAlign: "right", color: isTotal ? (ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)") : isMin ? C.green : C.text, fontSize: 12, fontWeight: isTotal || isMin ? 700 : 400, fontFamily: "monospace" }}>
-                          {fmt(val)}
-                        </div>
-                      );
+                      return <div key={c.id} style={{ textAlign: "right", color: isTotal ? (ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)") : isMin ? C.green : C.text, fontSize: 12, fontWeight: isTotal || isMin ? 700 : 400, fontFamily: "monospace" }}>{fmt(val)}</div>;
                     })}
                   </div>
                 );
               })}
             </div>
-
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `180px repeat(${ranked.length}, 1fr)`, gap: 4 }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Anställd</div>
@@ -363,8 +316,7 @@ const OffertView = () => {
                     const e = c.employees[ei] || {};
                     const total = (e.sjuk||0)+(e.pbf||0)+(e.tjp||0)+(e.lo||0)+(e.sjukvard||0);
                     const isMin = ranked.reduce((min, cc) => {
-                      const t = cc.employees[ei] || {};
-                      const tv = (t.sjuk||0)+(t.pbf||0)+(t.tjp||0)+(t.lo||0)+(t.sjukvard||0);
+                      const t = cc.employees[ei] || {}; const tv = (t.sjuk||0)+(t.pbf||0)+(t.tjp||0)+(t.lo||0)+(t.sjukvard||0);
                       const mv = min.employees[ei] || {};
                       return tv < ((mv.sjuk||0)+(mv.pbf||0)+(mv.tjp||0)+(mv.lo||0)+(mv.sjukvard||0)) ? cc : min;
                     }, ranked[0]).id === c.id;
@@ -374,126 +326,71 @@ const OffertView = () => {
               ))}
               <div style={{ display: "grid", gridTemplateColumns: `180px repeat(${ranked.length}, 1fr)`, padding: "10px 16px", gap: 4, background: C.navy }}>
                 <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700 }}>Summa grupp</span>
-                {ranked.map((c, ci) => (
-                  <div key={c.id} style={{ textAlign: "right", color: ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmt(c.groupTotal)}</div>
-                ))}
+                {ranked.map((c, ci) => <div key={c.id} style={{ textAlign: "right", color: ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmt(c.groupTotal)}</div>)}
               </div>
             </div>
           </>
         )}
 
-        {view === "detaljer" && (
-          <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-              {companies.map(c => (
-                <button key={c.id} onClick={() => setSelectedCompany(c.id)} style={{
-                  padding: "8px 16px", borderRadius: 5,
-                  border: `1.5px solid ${selectedCompany === c.id ? c.color : C.border}`,
-                  background: selectedCompany === c.id ? c.color : "transparent",
-                  color: selectedCompany === c.id ? "#fff" : C.textMid,
-                  fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit"
-                }}>{c.name}</button>
-              ))}
-            </div>
-
-            {(() => {
-              const comp = companies.find(c => c.id === selectedCompany);
-              const totals = calcTotals(comp);
-              // Kolumnlayout: Namn | Personnr | Årslön | Sjuk | PBF | TJP | Liv | Sjukvård | Total
-              const cols = "minmax(100px,1.4fr) minmax(80px,1fr) minmax(80px,1fr) 70px 60px 70px 70px 70px 90px";
-              return (
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-                  {/* Header band */}
-                  <div style={{ background: comp.color, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Redigera premier</div>
-                      <div style={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>{comp.name}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10 }}>Premiebefrielse</div>
-                      <div style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{comp.premiebefrielse} %</div>
-                    </div>
+        {view === "detaljer" && (() => {
+          const comp = companies.find(c => c.id === selectedCompany);
+          const totals = calcTotals(comp);
+          const cols = "minmax(100px,1.4fr) minmax(80px,1fr) minmax(80px,1fr) 70px 60px 70px 70px 70px 90px";
+          return (
+            <>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                {companies.map(c => (
+                  <button key={c.id} onClick={() => setSelectedCompany(c.id)} style={{ padding: "8px 16px", borderRadius: 5, border: `1.5px solid ${selectedCompany === c.id ? c.color : C.border}`, background: selectedCompany === c.id ? c.color : "transparent", color: selectedCompany === c.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{c.name}</button>
+                ))}
+              </div>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ background: comp.color, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Redigera premier</div>
+                    <div style={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>{comp.name}</div>
                   </div>
-
-                  {/* Column headers */}
-                  <div style={{ display: "grid", gridTemplateColumns: cols, background: C.navy, padding: "8px 16px", gap: 4 }}>
-                    {["Namn", "Personnr", "Årslön (kr)", "Sjukförs.", "PBF", "TJP", "Liv & Ol.", "Sjukvård", "Total/mån"].map((h, hi) => (
-                      <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", textAlign: hi <= 2 ? "left" : "right" }}>{h}</div>
-                    ))}
-                  </div>
-
-                  {/* Rows */}
-                  {employees.map((emp, ei) => {
-                    const ep = comp.employees[ei] || {};
-                    const total = (ep.sjuk||0)+(ep.pbf||0)+(ep.tjp||0)+(ep.lo||0)+(ep.sjukvard||0);
-                    const isActive = emp.namn || emp.arslön > 0;
-                    const rowBg = isActive ? (ei % 2 === 0 ? C.surface : C.surface2) : "#f8f9fb";
-                    return (
-                      <div key={ei} style={{ display: "grid", gridTemplateColumns: cols, padding: "6px 16px", gap: 4, background: rowBg, borderBottom: `1px solid ${C.border}`, opacity: isActive ? 1 : 0.45, alignItems: "center" }}>
-                        {/* Namn */}
-                        <input
-                          value={emp.namn}
-                          placeholder={`Anställd ${ei+1}`}
-                          onChange={e => updateEmp(ei, "namn", e.target.value)}
-                          style={{ ...cellInputStyle, fontSize: 11, padding: "5px 6px" }}
-                        />
-                        {/* Personnr */}
-                        <input
-                          value={emp.persnr}
-                          placeholder="ÅÅMMDD-XXXX"
-                          onChange={e => updateEmp(ei, "persnr", e.target.value)}
-                          style={{ ...cellInputStyle, fontSize: 10, padding: "5px 6px" }}
-                        />
-                        {/* Årslön */}
-                        <input
-                          type="number"
-                          value={emp.arslön || ""}
-                          placeholder="0"
-                          min={0}
-                          step={10000}
-                          onChange={e => updateEmp(ei, "arslön", Number(e.target.value))}
-                          style={{ ...cellInputStyle, textAlign: "right", fontFamily: "monospace", fontSize: 11, padding: "5px 6px" }}
-                        />
-                        {/* Premier: sjuk, pbf, tjp, lo, sjukvard */}
-                        {["sjuk","pbf","tjp","lo","sjukvard"].map(field => (
-                          <input
-                            key={field}
-                            type="number"
-                            value={ep[field] ?? 0}
-                            min={0}
-                            step={10}
-                            onChange={e => updatePremium(comp.id, ei, field, e.target.value)}
-                            style={{ ...cellInputStyle, textAlign: "right", fontFamily: "monospace", fontSize: 11, padding: "5px 6px" }}
-                          />
-                        ))}
-                        {/* Total */}
-                        <div style={{ color: isActive ? C.navy : C.textLight, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>
-                          {isActive ? fmt(total) : "—"}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Footer summa */}
-                  <div style={{ display: "grid", gridTemplateColumns: cols, padding: "10px 16px", gap: 4, background: C.navy, alignItems: "center" }}>
-                    <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700 }}>Summa grupp</div>
-                    <div /><div />
-                    {COLS.map(col => (
-                      <div key={col.key} style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontFamily: "monospace", textAlign: "right" }}>{fmt(totals.colSums[col.key])}</div>
-                    ))}
-                    <div style={{ color: "#6EE0A4", fontSize: 13, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmt(totals.groupTotal)}</div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10 }}>Premiebefrielse</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{comp.premiebefrielse} %</div>
                   </div>
                 </div>
-              );
-            })()}
-          </>
-        )}
+                <div style={{ display: "grid", gridTemplateColumns: cols, background: C.navy, padding: "8px 16px", gap: 4 }}>
+                  {["Namn","Personnr","Årslön (kr)","Sjukförs.","PBF","TJP","Liv & Ol.","Sjukvård","Total/mån"].map((h, hi) => (
+                    <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", textAlign: hi <= 2 ? "left" : "right" }}>{h}</div>
+                  ))}
+                </div>
+                {employees.map((emp, ei) => {
+                  const ep = comp.employees[ei] || {};
+                  const total = (ep.sjuk||0)+(ep.pbf||0)+(ep.tjp||0)+(ep.lo||0)+(ep.sjukvard||0);
+                  const isActive = emp.namn || emp.arslön > 0;
+                  return (
+                    <div key={ei} style={{ display: "grid", gridTemplateColumns: cols, padding: "6px 16px", gap: 4, background: isActive ? (ei % 2 === 0 ? C.surface : C.surface2) : "#f8f9fb", borderBottom: `1px solid ${C.border}`, opacity: isActive ? 1 : 0.45, alignItems: "center" }}>
+                      <input value={emp.namn} placeholder={`Anställd ${ei+1}`} onChange={e => updateEmp(ei, "namn", e.target.value)} style={{ ...cellInputStyle, fontSize: 11, padding: "5px 6px" }} />
+                      <input value={emp.persnr} placeholder="ÅÅMMDD-XXXX" onChange={e => updateEmp(ei, "persnr", e.target.value)} style={{ ...cellInputStyle, fontSize: 10, padding: "5px 6px" }} />
+                      <input type="number" value={emp.arslön || ""} placeholder="0" min={0} step={10000} onChange={e => updateEmp(ei, "arslön", Number(e.target.value))} style={{ ...cellInputStyle, textAlign: "right", fontFamily: "monospace", fontSize: 11, padding: "5px 6px" }} />
+                      {["sjuk","pbf","tjp","lo","sjukvard"].map(field => (
+                        <input key={field} type="number" value={ep[field] ?? 0} min={0} step={10} onChange={e => updatePremium(comp.id, ei, field, e.target.value)} style={{ ...cellInputStyle, textAlign: "right", fontFamily: "monospace", fontSize: 11, padding: "5px 6px" }} />
+                      ))}
+                      <div style={{ color: isActive ? C.navy : C.textLight, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{isActive ? fmt(total) : "—"}</div>
+                    </div>
+                  );
+                })}
+                <div style={{ display: "grid", gridTemplateColumns: cols, padding: "10px 16px", gap: 4, background: C.navy, alignItems: "center" }}>
+                  <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700 }}>Summa grupp</div>
+                  <div /><div />
+                  {COLS.map(col => <div key={col.key} style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontFamily: "monospace", textAlign: "right" }}>{fmt(totals.colSums[col.key])}</div>)}
+                  <div style={{ color: "#6EE0A4", fontSize: 13, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmt(totals.groupTotal)}</div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );
 };
 
-// ── LIVFÖRSÄKRING VIEW ────────────────────────────────────────────────────────
+// ── LIVFÖRSÄKRING ─────────────────────────────────────────────────────────────
 const LivforsakringView = () => {
   const [civilstand, setCivilstand] = useState("gift");
   const [gemensamma, setGemensamma] = useState(0);
@@ -505,55 +402,27 @@ const LivforsakringView = () => {
     const lan = marknadsvarde * (andelLan / 100);
     const nettoEget = marknadsvarde - lan;
     const totalBarn = gemensamma + sarkull;
-
     if (civilstand === "gift") {
       const avlidenAndel = nettoEget / 2;
       if (sarkull === 0) {
-        return {
-          forsikringsbehov: 0, avlidenAndel, nettoEget, lan,
-          scenario: "gift_inga_sarkull",
-          message: "Inga särkullsbarn — efterlevande make/maka ärver allt med fri förfoganderätt. Gemensamma barn erhåller arv när båda föräldrarna gått bort. Livförsäkring för husändamål behövs ej, men kan vara aktuell av andra skäl.",
-          varning: false
-        };
+        return { forsikringsbehov: 0, avlidenAndel, nettoEget, lan, scenario: "gift_inga_sarkull", message: "Inga särkullsbarn — efterlevande make/maka ärver allt med fri förfoganderätt. Gemensamma barn erhåller arv när båda föräldrarna gått bort. Livförsäkring för husändamål behövs ej, men kan vara aktuell av andra skäl.", varning: false };
       } else {
         const arvslottPerBarn = totalBarn > 0 ? avlidenAndel / totalBarn : 0;
         const sarkullArvslott = arvslottPerBarn * sarkull;
         const sarkullLaglott = sarkullArvslott / 2;
-        return {
-          forsikringsbehov: sarkullArvslott, forsikringsbehovLaglott: sarkullLaglott,
-          avlidenAndel, nettoEget, lan, arvslottPerBarn, sarkullArvslott, sarkullLaglott,
-          scenario: "gift_med_sarkull",
-          message: `Särkullsbarn har rätt att ta ut sin arvslott omedelbart vid dödsfall. Efterlevande make/maka behöver lösa ut särkullsbarnens andel ur dödsboet för att behålla huset.`,
-          varning: true
-        };
+        return { forsikringsbehov: sarkullArvslott, forsikringsbehovLaglott: sarkullLaglott, avlidenAndel, nettoEget, lan, arvslottPerBarn, sarkullArvslott, sarkullLaglott, scenario: "gift_med_sarkull", message: `Särkullsbarn har rätt att ta ut sin arvslott omedelbart vid dödsfall. Efterlevande make/maka behöver lösa ut särkullsbarnens andel ur dödsboet för att behålla huset.`, varning: true };
       }
     }
-
-    if (civilstand === "sambo") {
-      const avlidenAndel = nettoEget / 2;
-      if (totalBarn === 0) {
-        return {
-          forsikringsbehov: avlidenAndel, avlidenAndel, nettoEget, lan,
-          scenario: "sambo_inga_barn",
-          message: "Inga barn. Utan testamente ärver den avlidnes föräldrar (eller syskon) boets andel. Sambon har ingen arvsrätt men kan kräva bodelning och behålla sin halva. Livförsäkring behövs för att lösa ut arvtagarna.",
-          varning: true
-        };
-      } else {
-        const arvslottPerBarn = avlidenAndel / totalBarn;
-        const totalLaglott = (arvslottPerBarn / 2) * totalBarn;
-        return {
-          forsikringsbehov: avlidenAndel, forsikringsbehovLaglott: totalLaglott,
-          avlidenAndel, nettoEget, lan, arvslottPerBarn, allaBarnAndel: avlidenAndel, totalLaglott,
-          scenario: "sambo_med_barn",
-          message: `Alla barn (gemensamma och särkullsbarn) ärver den avlidnes andel direkt. Sambon saknar arvsrätt och kan behöva lösa ut barnen för att behålla hemmet.`,
-          varning: true
-        };
-      }
+    const avlidenAndel = nettoEget / 2;
+    if (totalBarn === 0) {
+      return { forsikringsbehov: avlidenAndel, avlidenAndel, nettoEget, lan, scenario: "sambo_inga_barn", message: "Inga barn. Utan testamente ärver den avlidnes föräldrar (eller syskon) boets andel. Sambon har ingen arvsrätt men kan kräva bodelning och behålla sin halva. Livförsäkring behövs för att lösa ut arvtagarna.", varning: true };
     }
-    return {};
+    const arvslottPerBarn = avlidenAndel / totalBarn;
+    const totalLaglott = (arvslottPerBarn / 2) * totalBarn;
+    return { forsikringsbehov: avlidenAndel, forsikringsbehovLaglott: totalLaglott, avlidenAndel, nettoEget, lan, arvslottPerBarn, allaBarnAndel: avlidenAndel, totalLaglott, scenario: "sambo_med_barn", message: `Alla barn (gemensamma och särkullsbarn) ärver den avlidnes andel direkt. Sambon saknar arvsrätt och kan behöva lösa ut barnen för att behålla hemmet.`, varning: true };
   }, [civilstand, gemensamma, sarkull, marknadsvarde, andelLan]);
 
-  const CounterBtn = ({ value, onChange }) => (
+  const Counter = ({ value, onChange }) => (
     <div style={{ display: "flex", alignItems: "center", border: `1.5px solid ${C.border}`, borderRadius: 8, overflow: "hidden", background: C.surface }}>
       <button onClick={() => onChange(Math.max(0, value - 1))} style={{ width: 40, height: 40, background: C.surface2, border: "none", cursor: "pointer", fontSize: 18, color: C.navy, fontWeight: 700 }}>−</button>
       <span style={{ flex: 1, textAlign: "center", fontSize: 18, fontWeight: 700, color: C.navy, minWidth: 40 }}>{value}</span>
@@ -561,61 +430,36 @@ const LivforsakringView = () => {
     </div>
   );
 
-  const totalBarn = gemensamma + sarkull;
-
   return (
     <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", minHeight: "calc(100vh - 90px)" }}>
       <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}`, overflowY: "auto" }}>
         <Section title="Civilstånd">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {[{ id: "gift", icon: "💍", label: "Gift" }, { id: "sambo", icon: "🏠", label: "Sambo" }].map(alt => (
-              <button key={alt.id} onClick={() => setCivilstand(alt.id)} style={{
-                padding: "14px 10px", borderRadius: 8,
-                border: `2px solid ${civilstand === alt.id ? C.navy : C.border}`,
-                background: civilstand === alt.id ? C.navy : C.surface,
-                color: civilstand === alt.id ? "#fff" : C.textMid,
-                fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "center"
-              }}>
+              <button key={alt.id} onClick={() => setCivilstand(alt.id)} style={{ padding: "14px 10px", borderRadius: 8, border: `2px solid ${civilstand === alt.id ? C.navy : C.border}`, background: civilstand === alt.id ? C.navy : C.surface, color: civilstand === alt.id ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{alt.icon}</div>{alt.label}
               </button>
             ))}
           </div>
-          {civilstand === "sambo" && (
-            <div style={{ marginTop: 10, background: "#FFF8E8", border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px" }}>
-              <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 3 }}>OBS — Sambors arvsrätt</div>
-              <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.6 }}>Sambor ärver inte varandra automatiskt. Sambolagen ger rätt till bodelning (halva bostaden), men resterande del går till arvtagare.</div>
-            </div>
-          )}
         </Section>
-
         <Section title="Barn">
           <div style={{ marginBottom: 16 }}>
             <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 }}>Gemensamma barn</div>
-            <CounterBtn value={gemensamma} onChange={setGemensamma} />
-            <div style={{ color: C.textLight, fontSize: 10, marginTop: 6 }}>{civilstand === "gift" ? "Ärver via efterlevande make/maka (fri förfoganderätt)" : "Har rätt att kräva sin arvslott omedelbart"}</div>
+            <Counter value={gemensamma} onChange={setGemensamma} />
           </div>
           <div>
             <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 }}>Särkullsbarn <span style={{ color: C.red, fontWeight: 400 }}>(din partners barn)</span></div>
-            <CounterBtn value={sarkull} onChange={setSarkull} />
-            <div style={{ color: C.textLight, fontSize: 10, marginTop: 6 }}>Har alltid rätt att ta ut arvslott direkt</div>
+            <Counter value={sarkull} onChange={setSarkull} />
           </div>
-          {totalBarn > 0 && (
-            <div style={{ marginTop: 12, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: C.textMid, fontSize: 12 }}>Totalt antal arvtagare</span>
-              <span style={{ color: C.navy, fontSize: 14, fontWeight: 700 }}>{totalBarn} barn</span>
-            </div>
-          )}
         </Section>
-
         <Section title="Fastighet">
-          <InputRow label="Marknadsvärde hus" value={marknadsvarde} onChange={setMarknadsvarde} suffix="kr" step={50000} hint="Aktuellt marknadsvärde" />
+          <InputRow label="Marknadsvärde hus" value={marknadsvarde} onChange={setMarknadsvarde} suffix="kr" step={50000} />
           <div style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
               <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Andel lån</label>
               <span style={{ color: C.navy, fontSize: 12, fontWeight: 700 }}>{andelLan} %</span>
             </div>
-            <input type="range" min={0} max={100} step={5} value={andelLan} onChange={e => setAndelLan(Number(e.target.value))}
-              style={{ width: "100%", accentColor: C.navy, cursor: "pointer" }} />
+            <input type="range" min={0} max={100} step={5} value={andelLan} onChange={e => setAndelLan(Number(e.target.value))} style={{ width: "100%", accentColor: C.navy, cursor: "pointer" }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
@@ -629,116 +473,15 @@ const LivforsakringView = () => {
           </div>
         </Section>
       </div>
-
       <div style={{ padding: "24px 28px", overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-          <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Livförsäkringsanalys — Bostad & Arv</span>
-        </div>
-
-        <div style={{ background: calc.forsikringsbehov > 0 ? C.navy : C.green, borderRadius: 12, padding: "28px 32px", marginBottom: 20, boxShadow: "0 4px 20px rgba(15,40,71,0.15)" }}>
+        <div style={{ background: calc.forsikringsbehov > 0 ? C.navy : C.green, borderRadius: 12, padding: "28px 32px", marginBottom: 20 }}>
           <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Rekommenderat försäkringsbelopp</div>
-          <div style={{ color: calc.forsikringsbehov > 0 ? C.gold : "#6EE0A4", fontSize: 42, fontWeight: 700, marginBottom: 4 }}>{fmtShort(calc.forsikringsbehov || 0)}</div>
-          {calc.forsikringsbehovLaglott > 0 && (
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>Minimibelopp (laglott): {fmtShort(calc.forsikringsbehovLaglott)}</div>
-          )}
+          <div style={{ color: calc.forsikringsbehov > 0 ? C.gold : "#6EE0A4", fontSize: 42, fontWeight: 700 }}>{fmtShort(calc.forsikringsbehov || 0)}</div>
+          {calc.forsikringsbehovLaglott > 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>Minimibelopp (laglott): {fmtShort(calc.forsikringsbehovLaglott)}</div>}
           <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, marginTop: 12, lineHeight: 1.7 }}>{calc.message}</div>
         </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
-          {[
-            { label: "Marknadsvärde", value: fmtShort(marknadsvarde), icon: "🏠", color: C.navy },
-            { label: "Eget kapital (netto)", value: fmtShort(calc.nettoEget || 0), icon: "💰", color: C.green },
-            { label: "Dödsboets andel", value: fmtShort(calc.avlidenAndel || 0), icon: "⚖️", color: C.gold },
-          ].map((k, i) => (
-            <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-              <div style={{ fontSize: 20, marginBottom: 8 }}>{k.icon}</div>
-              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{k.label}</div>
-              <div style={{ color: k.color, fontSize: 18, fontWeight: 700 }}>{k.value}</div>
-            </div>
-          ))}
-        </div>
-
-        {(calc.scenario === "gift_med_sarkull" || calc.scenario === "sambo_med_barn") && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <div style={{ width: 3, height: 16, background: C.red, borderRadius: 2 }} />
-              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Arvsberäkning</span>
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {[
-                { label: "Eget kapital i fastigheten", value: fmtShort(calc.nettoEget || 0) },
-                { label: civilstand === "gift" ? "Den avlidnes andel (50 % via giftorätt)" : "Den avlidnes andel (50 % via sambolagen)", value: fmtShort(calc.avlidenAndel || 0), bold: true },
-                ...(calc.arvslottPerBarn ? [{ label: `Arvslott per barn (${totalBarn} barn totalt)`, value: fmtShort(calc.arvslottPerBarn) }] : []),
-                ...(calc.scenario === "gift_med_sarkull" ? [
-                  { label: `Särkullsbarns totala arvslott (${sarkull} st)`, value: fmtShort(calc.sarkullArvslott || 0), bold: true, red: true },
-                  { label: "Laglott för särkullsbarn (minimum)", value: fmtShort(calc.sarkullLaglott || 0) },
-                ] : []),
-                ...(calc.scenario === "sambo_med_barn" ? [
-                  { label: "Alla barns totala arv", value: fmtShort(calc.allaBarnAndel || 0), bold: true, red: true },
-                  { label: "Laglott totalt (minimibelopp)", value: fmtShort(calc.totalLaglott || 0) },
-                ] : []),
-              ].map((row, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: row.red ? "#FEF0EE" : row.bold ? C.goldLight : C.surface2, borderRadius: 6, border: `1px solid ${row.red ? "#F5C6C2" : row.bold ? C.gold : C.border}` }}>
-                  <span style={{ color: C.textMid, fontSize: 12, fontWeight: row.bold ? 600 : 400 }}>{row.label}</span>
-                  <span style={{ color: row.red ? C.red : row.bold ? C.navy : C.textMid, fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {calc.scenario === "sambo_inga_barn" && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 16 }}>
-            {[
-              { label: "Eget kapital i fastigheten", value: fmtShort(calc.nettoEget || 0) },
-              { label: "Din andel (sambolagen)", value: fmtShort((calc.nettoEget || 0) / 2) },
-              { label: "Den avlidnes andel (till föräldrar/syskon)", value: fmtShort(calc.avlidenAndel || 0), red: true },
-            ].map((row, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: row.red ? "#FEF0EE" : C.surface2, borderRadius: 6, border: `1px solid ${row.red ? "#F5C6C2" : C.border}`, marginBottom: 8 }}>
-                <span style={{ color: C.textMid, fontSize: 12 }}>{row.label}</span>
-                <span style={{ color: row.red ? C.red : C.navy, fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {calc.scenario === "gift_inga_sarkull" && (
-          <div style={{ background: "#F0FBF5", border: `1px solid ${C.green}`, borderRadius: 8, padding: "20px", marginBottom: 16 }}>
-            <div style={{ color: C.green, fontSize: 14, fontWeight: 700, marginBottom: 8 }}>✓ Trygg situation</div>
-            <div style={{ color: C.textMid, fontSize: 12, lineHeight: 1.8 }}>
-              <div style={{ marginBottom: 6 }}>• Efterlevande make/maka ärver med <strong>fri förfoganderätt</strong> — ingen utlösning krävs.</div>
-              <div style={{ marginBottom: 6 }}>• Gemensamma barn ({gemensamma} st) ärver efter <strong>båda</strong> föräldrarnas bortgång.</div>
-              <div>• Livförsäkring kan ändå vara motiverad för att täcka inkomstbortfall eller andra skulder.</div>
-            </div>
-          </div>
-        )}
-
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-            <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Svensk arvsordning — Din situation</span>
-          </div>
-          {(civilstand === "gift" ? [
-            { rang: "1", titel: "Efterlevande make/maka", beskrivning: "Ärver med fri förfoganderätt om inga särkullsbarn finns. Särkullsbarn bryter denna rätt.", aktiv: true },
-            { rang: "2", titel: `Gemensamma barn (${gemensamma} st)`, beskrivning: "Ärver sekundärt — efter att båda föräldrarna gått bort.", aktiv: gemensamma > 0 },
-            { rang: "!", titel: `Särkullsbarn (${sarkull} st)`, beskrivning: "Har rätt att ta ut sin arvslott direkt vid dödsfall. Kan ej nekas utan testamente.", aktiv: sarkull > 0, varning: true },
-          ] : [
-            { rang: "✗", titel: "Sambo", beskrivning: "Ärver ej automatiskt. Kan begära bodelning (halva samboegendom) men erhåller inget ur dödsboet.", aktiv: false, varning: true },
-            { rang: "1", titel: `Alla barn (${totalBarn} st)`, beskrivning: "Ärver lika stora delar ur dödsboet. Gemensamma barn kan välja att vänta frivilligt.", aktiv: totalBarn > 0 },
-            { rang: "2", titel: "Föräldrar / syskon", beskrivning: "Ärver om inga barn finns.", aktiv: totalBarn === 0 },
-          ]).map((rad, i) => (
-            <div key={i} style={{ display: "flex", gap: 12, padding: "12px 14px", background: rad.varning ? "#FEF0EE" : rad.aktiv ? C.goldLight : C.surface2, borderRadius: 6, border: `1px solid ${rad.varning ? "#F5C6C2" : rad.aktiv ? C.gold : C.border}`, marginBottom: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: rad.varning ? C.red : rad.aktiv ? C.navy : C.border, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{rad.rang}</div>
-              <div>
-                <div style={{ color: rad.varning ? C.red : C.navy, fontSize: 12, fontWeight: 700, marginBottom: 3 }}>{rad.titel}</div>
-                <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.5 }}>{rad.beskrivning}</div>
-              </div>
-            </div>
-          ))}
-          <div style={{ marginTop: 8, padding: "10px 14px", background: C.surface2, borderRadius: 6, color: C.textLight, fontSize: 10, lineHeight: 1.6 }}>
-            * Vägledande beräkningar baserade på Ärvdabalken (SFS 1958:637) och Sambolagen (SFS 2003:376). Konsultera juridisk rådgivare för personlig rådgivning.
-          </div>
+        <div style={{ background: "#F0FBF5", border: `1px solid ${C.green}`, borderRadius: 8, padding: "16px 20px" }}>
+          <div style={{ color: C.textLight, fontSize: 10, lineHeight: 1.6 }}>* Vägledande beräkningar baserade på Ärvdabalken (SFS 1958:637) och Sambolagen (SFS 2003:376). Konsultera juridisk rådgivare för personlig rådgivning.</div>
         </div>
       </div>
     </div>
@@ -759,7 +502,6 @@ const FOND_DEFAULT = [
   { name: "Skandia Fond", engångsPct: 0, löpandePct: 2, kapitalPct: 0, fast: 240 },
   { name: "Skandia Depå", engångsPct: 0, löpandePct: 2, kapitalPct: 0.15, fast: 240 },
 ];
-
 const TRAD_DEFAULT = [
   { name: "SEB Trad (kapitalavg)", engångsPct: 0, löpandePct: 0, kapitalPct: 0.95, fast: 212 },
   { name: "SEB Trad (premieavg)", engångsPct: 3, löpandePct: 3, kapitalPct: 0.60, fast: 212 },
@@ -775,19 +517,16 @@ function calcProviderFees(provider, inputs) {
   const r = avkastning / 100;
   const engångsFee = engångs * (provider.engångsPct / 100);
   let capital = befintligt + engångs - engångsFee;
-  let totalFee = engångsFee;
-  let year1Fee = engångsFee;
+  let totalFee = engångsFee, year1Fee = engångsFee;
   for (let y = 1; y <= år; y++) {
     for (let m = 0; m < 12; m++) {
       const premAvgift = löpandeMån * (provider.löpandePct / 100);
-      capital += löpandeMån - premAvgift;
-      totalFee += premAvgift;
+      capital += löpandeMån - premAvgift; totalFee += premAvgift;
       if (y === 1) year1Fee += premAvgift;
     }
     capital *= (1 + r);
     const kFee = capital * (provider.kapitalPct / 100);
-    capital -= kFee;
-    capital -= provider.fast;
+    capital -= kFee; capital -= provider.fast;
     totalFee += kFee + provider.fast;
     if (y === 1) year1Fee += kFee + provider.fast;
   }
@@ -848,9 +587,7 @@ const AvgiftsView = ({ defaultMånSparande }) => {
   const baseProviders = kategori === "fond" ? FOND_DEFAULT : TRAD_DEFAULT;
   const providers = useMemo(() => baseProviders.map(p => ({ ...p, ...(customOverrides[p.name] || {}), isCustom: !!customOverrides[p.name] })), [baseProviders, customOverrides]);
   const results = useMemo(() => providers.map(p => ({ ...p, ...calcProviderFees(p, inputs) })).sort((a, b) => a[sortKey] - b[sortKey]), [providers, löpandeMån, engångs, befintligt, år, avkastning, sortKey]);
-  const best = results[0];
-  const worst = results[results.length - 1];
-
+  const best = results[0], worst = results[results.length - 1];
   const colW = "52px 1fr 100px 100px 100px 110px 100px";
   const SH = ({ label, k }) => (
     <div onClick={() => setSortKey(k)} style={{ cursor: "pointer", color: sortKey === k ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: sortKey === k ? 700 : 400, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
@@ -959,32 +696,187 @@ const AvgiftsView = ({ defaultMånSparande }) => {
   );
 };
 
+// ── SPARANDE VIEW (with bank comparison chart) ────────────────────────────────
 const SparandeView = ({ månSparande }) => {
   const [sparande, setSparande] = useState(månSparande || 10000);
   const [avkastning, setAvkastning] = useState(7);
   const [år, setÅr] = useState(20);
   const [engångs, setEngångs] = useState(0);
   const [useKF, setUseKF] = useState(!!månSparande);
+  const [bankRanta, setBankRanta] = useState(2.5);
+  const [inflation, setInflation] = useState(2.5);
+  const [chartView, setChartView] = useState("nominell"); // "nominell" | "real"
+  const [tooltip, setTooltip] = useState(null);
 
   const rows = useMemo(() => {
     const mRate = avkastning / 100 / 12;
-    let kapital = engångs;
+    const bankRate = bankRanta / 100 / 12;
+    const inflRate = inflation / 100;
+    let kf = engångs, bank = engångs;
     const data = [];
     for (let y = 1; y <= år; y++) {
-      for (let m = 0; m < 12; m++) kapital = kapital * (1 + mRate) + sparande;
+      for (let m = 0; m < 12; m++) {
+        kf = kf * (1 + mRate) + sparande;
+        bank = bank * (1 + bankRate) + sparande;
+      }
       const insatt = engångs + sparande * 12 * y;
-      data.push({ y, kapital, insatt, avk: kapital - insatt });
+      const inflFactor = Math.pow(1 + inflRate, y);
+      const kfReal = kf / inflFactor;
+      const bankReal = bank / inflFactor;
+      const insattReal = insatt / inflFactor;
+      data.push({ y, kf, bank, insatt, kfReal, bankReal, insattReal, inflFactor });
     }
     return data;
-  }, [sparande, avkastning, år, engångs]);
+  }, [sparande, avkastning, bankRanta, inflation, år, engångs]);
 
   const final = rows[rows.length - 1] || {};
-  const maxVal = final.kapital || 1;
   const milestones = rows.filter(r => [1,2,3,5,7,10,15,20,25,30].includes(r.y));
+
+  // Chart geometry
+  const CHART_H = 220;
+  const CHART_PAD_L = 72;
+  const CHART_PAD_B = 28;
+
+  const nomMax = Math.max(...rows.map(r => r.kf), 1);
+  const realMax = Math.max(...rows.map(r => Math.max(r.kfReal, r.bankReal)), 1);
+  const maxVal = chartView === "nominell" ? nomMax : realMax;
+
+  const toY = (v) => CHART_PAD_B + (1 - v / maxVal) * (CHART_H - CHART_PAD_B);
+  const toX = (i, total, w) => CHART_PAD_L + (i / (total - 1)) * (w - CHART_PAD_L - 8);
+
+  const kfColor = C.gold;
+  const bankColor = "#3A7BD5";
+  const insattColor = C.navy;
+  const inflColor = C.red;
+
+  const gridLines = [0.25, 0.5, 0.75, 1];
+
+  const LineChart = () => {
+    const [hoverIdx, setHoverIdx] = useState(null);
+    const svgRef = (node) => { /* no-op */ };
+
+    if (rows.length < 2) return null;
+
+    const W = 640;
+    const makePoints = (getter) =>
+      rows.map((r, i) => `${toX(i, rows.length, W)},${toY(getter(r))}`).join(" ");
+
+    const kfPoints   = makePoints(r => chartView === "nominell" ? r.kf   : r.kfReal);
+    const bankPoints = makePoints(r => chartView === "nominell" ? r.bank : r.bankReal);
+    const insPoints  = makePoints(r => chartView === "nominell" ? r.insatt : r.insattReal);
+
+    const kfArea = `${CHART_PAD_L},${CHART_H - CHART_PAD_B} ` + kfPoints + ` ${toX(rows.length-1,rows.length,W)},${CHART_H - CHART_PAD_B}`;
+
+    const hRow = hoverIdx !== null ? rows[hoverIdx] : null;
+    const hX = hoverIdx !== null ? toX(hoverIdx, rows.length, W) : 0;
+
+    return (
+      <div style={{ position: "relative" }}>
+        <svg width="100%" viewBox={`0 0 ${W} ${CHART_H}`} style={{ display: "block", overflow: "visible" }}
+          onMouseLeave={() => setHoverIdx(null)}>
+          <defs>
+            <linearGradient id="kfGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={kfColor} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={kfColor} stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          {gridLines.map(f => {
+            const y = toY(maxVal * f);
+            return (
+              <g key={f}>
+                <line x1={CHART_PAD_L} y1={y} x2={W - 8} y2={y} stroke={C.border} strokeWidth="1" strokeDasharray="4,3" />
+                <text x={CHART_PAD_L - 6} y={y + 4} textAnchor="end" fontSize="9" fill={C.textLight}>{fmtShort(maxVal * f)}</text>
+              </g>
+            );
+          })}
+
+          {/* X axis ticks */}
+          {rows.map((r, i) => {
+            const showTick = r.y % (år <= 10 ? 1 : år <= 20 ? 2 : 5) === 0;
+            if (!showTick) return null;
+            const x = toX(i, rows.length, W);
+            return <text key={r.y} x={x} y={CHART_H - 6} textAnchor="middle" fontSize="9" fill={C.textLight}>År {r.y}</text>;
+          })}
+
+          {/* KF fill area */}
+          <polygon points={kfArea} fill="url(#kfGrad)" />
+
+          {/* Lines */}
+          <polyline points={insPoints} fill="none" stroke={insattColor} strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="5,4" />
+          <polyline points={bankPoints} fill="none" stroke={bankColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <polyline points={kfPoints} fill="none" stroke={kfColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+
+          {/* Hover capture overlay */}
+          {rows.map((r, i) => {
+            const x = toX(i, rows.length, W);
+            return (
+              <rect key={i} x={x - (W / rows.length / 2)} y={0} width={W / rows.length} height={CHART_H}
+                fill="transparent" onMouseEnter={() => setHoverIdx(i)} />
+            );
+          })}
+
+          {/* Hover crosshair + dots */}
+          {hoverIdx !== null && hRow && (() => {
+            const kfV = chartView === "nominell" ? hRow.kf : hRow.kfReal;
+            const bankV = chartView === "nominell" ? hRow.bank : hRow.bankReal;
+            const insV = chartView === "nominell" ? hRow.insatt : hRow.insattReal;
+            return (
+              <g>
+                <line x1={hX} y1={toY(maxVal)} x2={hX} y2={CHART_H - CHART_PAD_B} stroke={C.border} strokeWidth="1" strokeDasharray="3,2" />
+                <circle cx={hX} cy={toY(kfV)} r="4" fill={kfColor} stroke="#fff" strokeWidth="1.5" />
+                <circle cx={hX} cy={toY(bankV)} r="4" fill={bankColor} stroke="#fff" strokeWidth="1.5" />
+                <circle cx={hX} cy={toY(insV)} r="3.5" fill={insattColor} stroke="#fff" strokeWidth="1.5" fillOpacity="0.5" />
+              </g>
+            );
+          })()}
+        </svg>
+
+        {/* Tooltip */}
+        {hoverIdx !== null && rows[hoverIdx] && (() => {
+          const r = rows[hoverIdx];
+          const kfV = chartView === "nominell" ? r.kf : r.kfReal;
+          const bankV = chartView === "nominell" ? r.bank : r.bankReal;
+          const insV = chartView === "nominell" ? r.insatt : r.insattReal;
+          const diff = kfV - bankV;
+          return (
+            <div style={{ position: "absolute", top: 8, right: 8, background: C.navy, border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 8, padding: "12px 16px", minWidth: 200, pointerEvents: "none", boxShadow: "0 4px 20px rgba(15,40,71,0.25)" }}>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>År {r.y} {chartView === "real" ? "— realt värde" : ""}</div>
+              {[
+                { label: "KF / Investering", val: kfV, color: kfColor },
+                { label: "Bankkonto", val: bankV, color: bankColor },
+                { label: "Insatt kapital", val: insV, color: "rgba(255,255,255,0.4)" },
+              ].map(item => (
+                <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 8, height: 3, borderRadius: 2, background: item.color }} />
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{item.label}</span>
+                  </div>
+                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(item.val)}</span>
+                </div>
+              ))}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10 }}>KF vs Bank</span>
+                <span style={{ color: diff >= 0 ? "#6EE0A4" : "#F08080", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>+{fmtShort(diff)}</span>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    );
+  };
+
+  const kfFinal = chartView === "nominell" ? (final.kf || 0) : (final.kfReal || 0);
+  const bankFinal = chartView === "nominell" ? (final.bank || 0) : (final.bankReal || 0);
+  const insattFinal = chartView === "nominell" ? (final.insatt || 0) : (final.insattReal || 0);
+  const fördel = kfFinal - bankFinal;
+  const realKöpkraftBankVsInsatt = (final.bankReal || 0) - (final.insattReal || 0);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "calc(100vh - 90px)" }}>
-      <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
+      {/* ── VÄNSTER ── */}
+      <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}`, overflowY: "auto" }}>
         <Section title="Sparparametrar">
           {månSparande > 0 && (
             <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px", marginBottom: 14, display: "flex", justifyContent: "space-between" }}>
@@ -1001,80 +893,139 @@ const SparandeView = ({ månSparande }) => {
               </div>
             )}
             <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-              <input type="number" value={sparande} min={0} step={500} onChange={e => { setUseKF(false); setSparande(Number(e.target.value)); }} style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+              <input type="number" value={sparande} min={0} step={500} onChange={e => { setUseKF(false); setSparande(Number(e.target.value)); }}
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
               <span style={{ color: C.textLight, padding: "10px 10px", fontSize: 11, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>kr / mån</span>
             </div>
           </div>
           <InputRow label="Engångsinsättning" value={engångs} onChange={setEngångs} suffix="kr" step={10000} hint="Startkapital" />
-          <InputRow label="Förväntad avkastning" value={avkastning} onChange={setAvkastning} suffix="% / år" step={0.5} min={0} max={30} />
+          <InputRow label="Förväntad avkastning (KF)" value={avkastning} onChange={setAvkastning} suffix="% / år" step={0.5} min={0} max={30} />
           <InputRow label="Spartid" value={år} onChange={setÅr} suffix="år" step={1} min={1} max={40} />
         </Section>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {[{ l: "Totalt kapital", v: fmtShort(final.kapital || 0), big: true }, { l: "Totalavkastning", v: fmtShort(final.avk || 0) }, { l: "Totalt insatt", v: fmtShort(final.insatt || 0) }, { l: "Avkastning / år", v: fmtShort(((final.kapital||0)-(final.insatt||0))/år) }].map((k, i) => (
-            <div key={i} style={{ background: i === 0 ? C.navy : C.surface, border: `1px solid ${i === 0 ? C.navy : C.border}`, borderRadius: 8, padding: "14px", gridColumn: i === 0 ? "1 / -1" : "auto" }}>
-              <div style={{ color: i === 0 ? "rgba(255,255,255,0.55)" : C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 5 }}>{k.l}</div>
-              <div style={{ color: i === 0 ? "#fff" : C.text, fontSize: i === 0 ? 26 : 18, fontWeight: 700 }}>{k.v}</div>
+
+        <Section title="Jämförelse: Bankkonto">
+          <InputRow label="Bankränta" value={bankRanta} onChange={setBankRanta} suffix="% / år" step={0.25} min={0} max={15} hint="Räntesats på företagskonto" />
+          <InputRow label="Inflation" value={inflation} onChange={setInflation} suffix="% / år" step={0.25} min={0} max={15} hint="KPI — årsgenomsnitt" />
+          <div style={{ background: bankRanta < inflation ? "#FEF0EE" : "#F0FBF5", border: `1px solid ${bankRanta < inflation ? "#F5C6C2" : C.green}`, borderRadius: 6, padding: "10px 14px" }}>
+            <div style={{ color: bankRanta < inflation ? C.red : C.green, fontSize: 11, fontWeight: 700, marginBottom: 3 }}>
+              {bankRanta < inflation ? "⚠ Negativ realränta" : "✓ Positiv realränta"}
             </div>
-          ))}
+            <div style={{ color: C.textMid, fontSize: 11 }}>
+              Realränta bank: <strong style={{ color: bankRanta < inflation ? C.red : C.green }}>{(bankRanta - inflation).toFixed(2)} %</strong>
+            </div>
+            <div style={{ color: C.textMid, fontSize: 11, marginTop: 2 }}>
+              Realavkastning KF: <strong style={{ color: C.gold }}>{(avkastning - inflation).toFixed(2)} %</strong>
+            </div>
+          </div>
+        </Section>
+
+        <div style={{ background: C.navy, borderRadius: 8, padding: "16px", marginBottom: 12 }}>
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Fördel KF vs bank efter {år} år</div>
+          <div style={{ color: "#6EE0A4", fontSize: 28, fontWeight: 700 }}>{fmtShort(kfFinal - bankFinal)}</div>
+          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 4 }}>nominellt värde</div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 12, paddingTop: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>KF slutvärde</span>
+              <span style={{ color: C.gold, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(final.kf || 0)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Bank slutvärde</span>
+              <span style={{ color: bankColor, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(final.bank || 0)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Köpkraftsförlust bank (real)</span>
+              <span style={{ color: realKöpkraftBankVsInsatt >= 0 ? "#6EE0A4" : "#F08080", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>
+                {realKöpkraftBankVsInsatt >= 0 ? "+" : ""}{fmtShort(realKöpkraftBankVsInsatt)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-      <div style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-          <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling över {år} år</span>
-        </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px 20px 24px 80px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 180, paddingBottom: 28, position: "relative" }}>
-            {[0.25,0.5,0.75,1].map(f => (
-              <div key={f} style={{ position: "absolute", left: -60, right: 0, bottom: 28 + f * 152, borderTop: `1px dashed ${C.border}`, zIndex: 0 }}>
-                <span style={{ position: "absolute", left: 0, top: -8, color: C.textLight, fontSize: 9, whiteSpace: "nowrap", width: 56, textAlign: "right" }}>{fmtShort(maxVal * f)}</span>
-              </div>
-            ))}
-            {rows.map((row, i) => {
-              const totalH = (row.kapital / maxVal) * 152;
-              const insattH = (row.insatt / maxVal) * 152;
-              return (
-                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", position: "relative", zIndex: 1 }}>
-                  <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-                    <div style={{ background: C.gold, height: totalH - insattH, borderRadius: "2px 2px 0 0", opacity: 0.85 }} />
-                    <div style={{ background: C.navy, height: insattH, opacity: 0.3 }} />
-                  </div>
-                  {(row.y % (år <= 10 ? 1 : år <= 20 ? 2 : 5) === 0) && (
-                    <div style={{ position: "absolute", bottom: -20, color: C.textLight, fontSize: 9 }}>År {row.y}</div>
-                  )}
-                </div>
-              );
-            })}
+
+      {/* ── HÖGER ── */}
+      <div style={{ padding: "20px 24px", overflowY: "auto" }}>
+        {/* Chart header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+            <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>KF vs Bankkonto — Kapitalutveckling</span>
           </div>
-          <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 8 }}>
-            {[{ c: C.navy, o: 0.3, l: "Insatt kapital" }, { c: C.gold, o: 0.85, l: "Avkastning" }].map(lg => (
-              <div key={lg.l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: lg.c, opacity: lg.o }} />
-                <span style={{ color: C.textMid, fontSize: 11 }}>{lg.l}</span>
-              </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[{ id: "nominell", label: "Nominellt" }, { id: "real", label: "Realt (inf.just.)" }].map(v => (
+              <button key={v.id} onClick={() => setChartView(v.id)} style={{ padding: "6px 14px", borderRadius: 5, border: `1.5px solid ${chartView === v.id ? C.navy : C.border}`, background: chartView === v.id ? C.navy : "transparent", color: chartView === v.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{v.label}</button>
             ))}
           </div>
         </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr", background: C.navy, padding: "10px 16px" }}>
-            {["År","Totalt kapital","Varav insatt","Varav avkastning"].map(h => (
-              <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{h}</div>
+
+        {/* Line chart */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 16px 12px 16px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)", position: "relative" }}>
+          <LineChart />
+          {/* Legend */}
+          <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 12, flexWrap: "wrap" }}>
+            {[
+              { c: kfColor, label: `KF / Investering (${avkastning} %)`, thick: true },
+              { c: bankColor, label: `Bankkonto (${bankRanta} %)`, thick: false },
+              { c: insattColor, o: 0.35, label: "Insatt kapital", dashed: true },
+            ].map(lg => (
+              <div key={lg.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke={lg.c} strokeWidth={lg.thick ? 2.5 : 2} strokeOpacity={lg.o ?? 1} strokeDasharray={lg.dashed ? "4,3" : "none"} /></svg>
+                <span style={{ color: C.textMid, fontSize: 11 }}>{lg.label}</span>
+              </div>
             ))}
           </div>
-          {milestones.map((row, i) => (
-            <div key={row.y} style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr", padding: "10px 16px", background: i % 2 === 0 ? C.surface : C.surface2, borderBottom: `1px solid ${C.border}` }}>
-              <div style={{ color: C.textMid, fontSize: 12, fontWeight: 700 }}>{row.y}</div>
-              <div style={{ color: C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(row.kapital)}</div>
-              <div style={{ color: C.textMid, fontSize: 12, fontFamily: "monospace" }}>{fmtShort(row.insatt)}</div>
-              <div style={{ color: C.green, fontSize: 12, fontWeight: 600, fontFamily: "monospace" }}>{fmtShort(row.avk)}</div>
+          {chartView === "real" && (
+            <div style={{ marginTop: 10, padding: "8px 12px", background: C.surface2, borderRadius: 6, color: C.textLight, fontSize: 10, textAlign: "center" }}>
+              Realt värde = nominellt kapital justerat för {inflation} % inflation per år — visar köpkraft i dagens penningvärde
+            </div>
+          )}
+        </div>
+
+        {/* KPI cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 14 }}>
+          {[
+            { label: `KF efter ${år} år`, value: fmtShort(final.kf || 0), sub: `Real: ${fmtShort(final.kfReal || 0)}`, color: kfColor },
+            { label: `Bank efter ${år} år`, value: fmtShort(final.bank || 0), sub: `Real: ${fmtShort(final.bankReal || 0)}`, color: bankColor },
+            { label: "Fördel KF (nominell)", value: fmtShort((final.kf || 0) - (final.bank || 0)), sub: "Extra avkastning", color: C.green },
+            { label: "Fördel KF (real)", value: fmtShort((final.kfReal || 0) - (final.bankReal || 0)), sub: "Realt mervärde", color: C.green },
+          ].map((k, i) => (
+            <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", marginBottom: 5 }}>{k.label}</div>
+              <div style={{ color: k.color, fontSize: 16, fontWeight: 700, marginBottom: 3 }}>{k.value}</div>
+              <div style={{ color: C.textLight, fontSize: 10 }}>{k.sub}</div>
             </div>
           ))}
+        </div>
+
+        {/* Milestone table */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "50px 1fr 1fr 1fr 1fr 1fr", background: C.navy, padding: "10px 16px" }}>
+            {["År", "KF nominell", "Bank nominell", "KF real", "Bank real", "Fördel KF"].map((h, i) => (
+              <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", textAlign: i > 0 ? "right" : "left" }}>{h}</div>
+            ))}
+          </div>
+          {milestones.filter(r => r.y <= år).map((row, i) => {
+            const fordel = row.kf - row.bank;
+            return (
+              <div key={row.y} style={{ display: "grid", gridTemplateColumns: "50px 1fr 1fr 1fr 1fr 1fr", padding: "9px 16px", background: i % 2 === 0 ? C.surface : C.surface2, borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ color: C.textMid, fontSize: 12, fontWeight: 700 }}>{row.y}</div>
+                <div style={{ color: C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmtShort(row.kf)}</div>
+                <div style={{ color: bankColor, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmtShort(row.bank)}</div>
+                <div style={{ color: C.textMid, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmtShort(row.kfReal)}</div>
+                <div style={{ color: C.textMid, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmtShort(row.bankReal)}</div>
+                <div style={{ color: fordel >= 0 ? C.green : C.red, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>+{fmtShort(fordel)}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 10, color: C.textLight, fontSize: 10, lineHeight: 1.7 }}>
+          * Nominellt = bokfört kapital. Realt = inflationsjusterat till dagens köpkraft ({inflation} % inflation/år). KF-avkastning före skatt (1,086 % schablonskatt på ingående värde).
         </div>
       </div>
     </div>
   );
 };
 
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("kalkylator");
   const [intäkterMode, setIntäkterMode] = useState("timbaserat");
@@ -1155,10 +1106,6 @@ export default function App() {
                     <InfoChip label="Omsättning / mån" value={fmt(direktOmsättning / 12)} />
                     <InfoChip label="EBIT / år" value={fmt(r.ebit)} />
                   </div>
-                  <div style={{ marginTop: 8, background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "9px 12px" }}>
-                    <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 2 }}>OBS — marginalläge</div>
-                    <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.6 }}>EBIT beräknas direkt från vinstmarginalen.</div>
-                  </div>
                 </>
               )}
             </Section>
@@ -1173,7 +1120,7 @@ export default function App() {
                 <InfoChip label="AG-avgift" value="31,42 %" />
                 <InfoChip label="Lönekostnad / år" value={fmt(bruttolön * 12 * 1.3142)} />
               </div>
-              <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(bruttolön)} /></div>
+              <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(bruttolön)} /></div>
             </Section>
             <Section title="Pensionsavsättning">
               <InputRow label="% av bruttolön" value={pensionPct} onChange={setPensionPct} suffix="%" step={0.5} min={0} max={100} hint="Typiskt 4,5–35 %" />
