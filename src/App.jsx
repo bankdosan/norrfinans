@@ -156,7 +156,6 @@ const OffertView = () => {
   const [companies, setCompanies] = useState(COMPANIES_DEFAULT);
   const [view, setView] = useState("jamforelse");
   const [selectedCompany, setSelectedCompany] = useState("skandia");
-  const [editModal, setEditModal] = useState(null); // {companyId}
 
   const activeEmps = employees.filter(e => e.namn || e.arslön > 0);
   const nActive = Math.max(1, activeEmps.length);
@@ -201,7 +200,6 @@ const OffertView = () => {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", minHeight: "calc(100vh - 90px)" }}>
-      {/* LEFT */}
       <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}`, overflowY: "auto" }}>
         <Section title="Anställda">
           {employees.map((emp, i) => (
@@ -241,7 +239,6 @@ const OffertView = () => {
           ))}
         </Section>
 
-        {/* Summary */}
         <div style={{ background: C.navy, borderRadius: 8, padding: "14px 16px" }}>
           <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Billigaste alternativet</div>
           <div style={{ color: C.gold, fontSize: 20, fontWeight: 700 }}>{best?.name}</div>
@@ -254,9 +251,7 @@ const OffertView = () => {
         </div>
       </div>
 
-      {/* RIGHT */}
       <div style={{ padding: "20px 20px", overflowX: "auto" }}>
-        {/* View toggle */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
@@ -273,10 +268,8 @@ const OffertView = () => {
           </div>
         </div>
 
-        {/* JÄMFÖRELSE VIEW */}
         {view === "jamforelse" && (
           <>
-            {/* Bar chart */}
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
               <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 14 }}>Total grupppremie / mån</div>
               {ranked.map((c, i) => {
@@ -299,7 +292,6 @@ const OffertView = () => {
               })}
             </div>
 
-            {/* Comparison table */}
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)", marginBottom: 14 }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)` }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Komponent</div>
@@ -326,7 +318,6 @@ const OffertView = () => {
               })}
             </div>
 
-            {/* Employee breakdown per company */}
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)` }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Anställd</div>
@@ -358,7 +349,6 @@ const OffertView = () => {
           </>
         )}
 
-        {/* REDIGERA PREMIER VIEW */}
         {view === "detaljer" && (
           <>
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
@@ -378,7 +368,6 @@ const OffertView = () => {
               const totals = calcTotals(comp);
               return (
                 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-                  {/* Company header */}
                   <div style={{ background: comp.color, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Redigera premier</div>
@@ -396,14 +385,12 @@ const OffertView = () => {
                     </div>
                   </div>
 
-                  {/* Table header */}
                   <div style={{ display: "grid", gridTemplateColumns: "130px 100px 80px 80px 80px 100px 100px 90px", background: C.navy, padding: "8px 16px", gap: 4 }}>
                     {["Anställd", "Årslön", "Sjukförs.", "PBF", "TJP", "Liv & Olycka", "Sjukvård", "Total/mån"].map(h => (
                       <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", textAlign: h === "Anställd" || h === "Årslön" ? "left" : "right" }}>{h}</div>
                     ))}
                   </div>
 
-                  {/* Employee rows */}
                   {employees.map((emp, ei) => {
                     const ep = comp.employees[ei] || {};
                     const total = (ep.sjuk||0)+(ep.pbf||0)+(ep.tjp||0)+(ep.lo||0)+(ep.sjukvard||0);
@@ -415,7 +402,8 @@ const OffertView = () => {
                         {["sjuk","pbf","tjp","lo","sjukvard"].map(field => (
                           <div key={field} style={{ display: "flex", alignItems: "center" }}>
                             {isActive ? (
-                              <TinyInput value={ep[field] || 0} onChange={v => updatePremium(comp.id, ei, field, v)} />
+                              <input type="number" value={ep[field] || 0} min={0} step={10} onChange={e => updatePremium(comp.id, ei, field, e.target.value)}
+                                style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, padding: "4px 6px", fontSize: 11, fontFamily: "monospace", outline: "none", textAlign: "right" }} />
                             ) : (
                               <span style={{ color: C.textLight, fontSize: 11, fontFamily: "monospace", textAlign: "right", width: "100%", display: "block" }}>—</span>
                             )}
@@ -428,7 +416,6 @@ const OffertView = () => {
                     );
                   })}
 
-                  {/* Group totals */}
                   <div style={{ display: "grid", gridTemplateColumns: "130px 100px 80px 80px 80px 100px 100px 90px", padding: "10px 16px", gap: 4, background: C.navy }}>
                     <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center" }}>Summa grupp</div>
                     <div />
@@ -787,9 +774,12 @@ const SparandeView = ({ månSparande }) => {
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("kalkylator");
+  const [intäkterMode, setIntäkterMode] = useState("timbaserat"); // "timbaserat" | "marginal"
   const [timpris, setTimpris] = useState(1200);
   const [timmar, setTimmar] = useState(1800);
   const [debiteringsgrad, setDebiteringsgrad] = useState(85);
+  const [direktOmsättning, setDirektOmsättning] = useState(2000000);
+  const [vinstmarginal, setVinstmarginal] = useState(30);
   const [bruttolön, setBruttolön] = useState(50000);
   const [lönPeriod, setLönPeriod] = useState("mån");
   const [pensionPct, setPensionPct] = useState(15);
@@ -802,20 +792,24 @@ export default function App() {
   const [buffertPct, setBuffertPct] = useState(10);
 
   const r = useMemo(() => {
+    // Omsättning: timbaserat eller direkt omsättning + marginal
     const faktTim = timmar * (debiteringsgrad / 100);
-    const omsättning = timpris * faktTim;
+    const omsättning = intäkterMode === "timbaserat"
+      ? timpris * faktTim
+      : direktOmsättning;
+    // Vid marginalläge: EBIT beräknas direkt från vinstmarginal, kostnader är resterande
     const lönTotal = bruttolön * 12 * 1.3142;
     const pension = bruttolön * 12 * (pensionPct / 100);
     const övrigaSum = övriga.reduce((s, k) => s + (k.amount || 0), 0) * 12;
-    const ebit = omsättning - lönTotal - pension - övrigaSum;
-    const skatt = Math.max(0, ebit * 0.206);
-    const netto = ebit - skatt;
+    const ebit = intäkterMode === "marginal"
+      ? omsättning * (vinstmarginal / 100)
+      : omsättning - lönTotal - pension - övrigaSum;
     const buffert = omsättning * (buffertPct / 100);
-    const kvarEfterUtdelning = netto - utdelning;
+    const kvarEfterUtdelning = ebit - utdelning;
     const tillgängligtKF_år = kvarEfterUtdelning - buffert;
     const tillgängligtKF_mån = tillgängligtKF_år / 12;
-    return { omsättning, lönTotal, pension, övrigaSum, ebit, skatt, netto, buffert, kvarEfterUtdelning, tillgängligtKF_år, tillgängligtKF_mån, utdelningNetto: utdelning * 0.8, faktTim };
-  }, [timpris, timmar, debiteringsgrad, bruttolön, pensionPct, övriga, utdelning, buffertPct]);
+    return { omsättning, lönTotal, pension, övrigaSum, ebit, buffert, kvarEfterUtdelning, tillgängligtKF_år, tillgängligtKF_mån, utdelningNetto: utdelning * 0.8, faktTim };
+  }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, vinstmarginal, bruttolön, pensionPct, övriga, utdelning, buffertPct]);
 
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
@@ -842,11 +836,43 @@ export default function App() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 300px", maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
             <Section title="Intäkter">
-              <InputRow label="Timpris" value={timpris} onChange={setTimpris} suffix="kr / tim" step={50} />
-              <InputRow label="Timmar / år" value={timmar} onChange={setTimmar} suffix="tim" step={10} />
-              <InputRow label="Debiteringsgrad" value={debiteringsgrad} onChange={setDebiteringsgrad} suffix="%" step={1} max={100} />
-              <InfoChip label="Fakturerbara timmar" value={`${Math.round(r.faktTim).toLocaleString("sv-SE")} tim`} />
-              <div style={{ marginTop: 8 }}><InfoChip label="Omsättning / år" value={fmt(r.omsättning)} /></div>
+              {/* Mode toggle */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.surface2, borderRadius: 7, padding: 4 }}>
+                {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "marginal", label: "📊 Omsättning & Marginal" }].map(m => (
+                  <button key={m.id} onClick={() => setIntäkterMode(m.id)} style={{
+                    flex: 1, padding: "8px 10px", borderRadius: 5, border: "none",
+                    background: intäkterMode === m.id ? C.navy : "transparent",
+                    color: intäkterMode === m.id ? "#fff" : C.textMid,
+                    fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                    transition: "all 0.15s"
+                  }}>{m.label}</button>
+                ))}
+              </div>
+
+              {intäkterMode === "timbaserat" ? (
+                <>
+                  <InputRow label="Timpris" value={timpris} onChange={setTimpris} suffix="kr / tim" step={50} />
+                  <InputRow label="Timmar / år" value={timmar} onChange={setTimmar} suffix="tim" step={10} />
+                  <InputRow label="Debiteringsgrad" value={debiteringsgrad} onChange={setDebiteringsgrad} suffix="%" step={1} max={100} />
+                  <InfoChip label="Fakturerbara timmar" value={`${Math.round(r.faktTim).toLocaleString("sv-SE")} tim`} />
+                  <div style={{ marginTop: 8 }}><InfoChip label="Omsättning / år" value={fmt(r.omsättning)} /></div>
+                </>
+              ) : (
+                <>
+                  <InputRow label="Omsättning / år" value={direktOmsättning} onChange={setDirektOmsättning} suffix="kr / år" step={50000} />
+                  <InputRow label="Vinstmarginal (EBIT)" value={vinstmarginal} onChange={setVinstmarginal} suffix="%" step={0.5} min={0} max={100} hint="Resultat / omsättning" />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
+                    <InfoChip label="Omsättning / mån" value={fmt(direktOmsättning / 12)} />
+                    <InfoChip label="EBIT / år" value={fmt(r.ebit)} />
+                  </div>
+                  <div style={{ marginTop: 8, background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "9px 12px" }}>
+                    <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 2 }}>OBS — marginalläge</div>
+                    <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.6 }}>
+                      EBIT beräknas direkt från vinstmarginalen. Lön, pension & övriga kostnader visas ej i resultatflödet men bör inkluderas i marginalen.
+                    </div>
+                  </div>
+                </>
+              )}
             </Section>
             <Section title="Lön & Arbetsgivaravgift">
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
@@ -872,6 +898,8 @@ export default function App() {
               <InfoChip label="Buffertbelopp" value={fmt(r.buffert)} />
             </Section>
           </div>
+
+          {/* ── RESULTATÖVERSIKT ── */}
           <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
@@ -879,60 +907,116 @@ export default function App() {
             </div>
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
               <WRow label="Omsättning" value={r.omsättning} bold />
-              <WRow separator /><WRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} /><WRow label="Pensionsavsättning" value={-r.pension} /><WRow label="Övriga kostnader" value={-r.övrigaSum} />
-              <WRow separator /><WRow label="EBIT" value={r.ebit} bold /><WRow label="Bolagsskatt (20,6 %)" value={-r.skatt} />
-              <WRow separator /><WRow label="Nettoresultat" value={r.netto} bold /><WRow label="Planerad utdelning (brutto)" value={-utdelning} />
-              <WRow separator /><WRow label="Kvar i bolaget efter utdelning" value={r.kvarEfterUtdelning} bold /><WRow label={`Likviditetsbuffert (${buffertPct} % av oms.)`} value={-r.buffert} />
+              <WRow separator />
+              {intäkterMode === "timbaserat" ? (
+                <>
+                  <WRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} />
+                  <WRow label="Pensionsavsättning" value={-r.pension} />
+                  <WRow label="Övriga kostnader" value={-r.övrigaSum} />
+                  <WRow separator />
+                </>
+              ) : (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0 7px", borderBottom: `1px solid #F0F3F7`, marginBottom: 6 }}>
+                  <span style={{ color: C.textMid, fontSize: 12 }}>Rörelsekostnader (inkl. i marginal)</span>
+                  <span style={{ background: C.goldLight, color: C.gold, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 3, border: `1px solid ${C.gold}` }}>{vinstmarginal} % marginal</span>
+                </div>
+              )}
+              <WRow label="EBIT" value={r.ebit} bold />
+              <WRow separator />
+              <WRow label="Planerad utdelning (brutto)" value={-utdelning} />
+              <WRow separator />
+              <WRow label="Kvar i bolaget efter utdelning" value={r.kvarEfterUtdelning} bold />
+              <WRow label={`Likviditetsbuffert (${buffertPct} % av oms.)`} value={-r.buffert} />
               <WRow separator />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: C.navy, borderRadius: 6, marginTop: 6 }}>
                 <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600 }}>Tillgängligt för kapitalförsäkring / år</span>
                 <span style={{ color: r.tillgängligtKF_år >= 0 ? "#6EE0A4" : "#F08080", fontSize: 15, fontWeight: 700, fontFamily: "monospace" }}>{r.tillgängligtKF_år >= 0 ? "" : "−"}{fmt(Math.abs(r.tillgängligtKF_år))}</span>
               </div>
             </div>
+
+            {/* Fördelning */}
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                 <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Fördelning av omsättning</span>
               </div>
-              {[{ label: "Lön (inkl. AG-avgift)", value: r.lönTotal, color: "#3A7BD5" }, { label: "Pension", value: r.pension, color: "#7B5EA7" }, { label: "Övriga kostnader", value: r.övrigaSum, color: "#E08A3C" }, { label: "Bolagsskatt", value: r.skatt, color: C.red }, { label: "Utdelning (brutto)", value: utdelning, color: C.green }, { label: "Buffert", value: r.buffert, color: C.blue }, { label: "Kapitalförsäkring", value: Math.max(0, r.tillgängligtKF_år), color: C.gold }].map((item, i) => {
+              {(intäkterMode === "timbaserat" ? [
+                { label: "Lön (inkl. AG-avgift)", value: r.lönTotal, color: "#3A7BD5" },
+                { label: "Pension", value: r.pension, color: "#7B5EA7" },
+                { label: "Övriga kostnader", value: r.övrigaSum, color: "#E08A3C" },
+                { label: "Utdelning (brutto)", value: utdelning, color: C.green },
+                { label: "Buffert", value: r.buffert, color: C.blue },
+                { label: "Kapitalförsäkring", value: Math.max(0, r.tillgängligtKF_år), color: C.gold },
+              ] : [
+                { label: "Rörelsekostnader (i marginal)", value: r.omsättning - r.ebit, color: "#3A7BD5" },
+                { label: "Utdelning (brutto)", value: utdelning, color: C.green },
+                { label: "Buffert", value: r.buffert, color: C.blue },
+                { label: "Kapitalförsäkring", value: Math.max(0, r.tillgängligtKF_år), color: C.gold },
+              ]).map((item, i) => {
                 const w = r.omsättning > 0 ? Math.max(0, Math.min(100, (item.value / r.omsättning) * 100)) : 0;
                 return (
                   <div key={i} style={{ marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} /><span style={{ color: C.textMid, fontSize: 11 }}>{item.label}</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />
+                        <span style={{ color: C.textMid, fontSize: 11 }}>{item.label}</span>
+                      </div>
                       <span style={{ color: C.text, fontSize: 11, fontWeight: 600, fontFamily: "monospace" }}>{pct1(w)}</span>
                     </div>
-                    <div style={{ background: C.surface2, borderRadius: 3, height: 6 }}><div style={{ width: `${w}%`, background: item.color, borderRadius: 3, height: 6, transition: "width 0.4s" }} /></div>
+                    <div style={{ background: C.surface2, borderRadius: 3, height: 6 }}>
+                      <div style={{ width: `${w}%`, background: item.color, borderRadius: 3, height: 6, transition: "width 0.4s" }} />
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
+
+          {/* ── KF PANEL ── */}
           <div style={{ padding: "20px 16px", background: "#EEF2F7" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-              <div><div style={{ color: C.gold, fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Företagsägd</div><div style={{ color: C.navy, fontSize: 13, fontWeight: 700 }}>Kapitalförsäkring</div></div>
+              <div>
+                <div style={{ color: C.gold, fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Företagsägd</div>
+                <div style={{ color: C.navy, fontSize: 13, fontWeight: 700 }}>Kapitalförsäkring</div>
+              </div>
             </div>
-            <KFRow label="Kvar i bolaget efter utdelning" value={r.kvarEfterUtdelning} />
-            <KFRow label={`Buffertbelopp (${buffertPct} % av omsättning)`} value={r.buffert} />
+            <KFRow label="EBIT (resultat före skatt)" value={r.ebit} />
+            <KFRow label={`Likviditetsbuffert (${buffertPct} % av omsättning)`} value={r.buffert} />
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "14px 16px", margin: "12px 0" }}>
               <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Utdelning</div>
-              {[{ l: "Brutto", v: fmt(utdelning), c: C.text }, { l: "Skatt (20 %)", v: `−${fmt(utdelning * 0.20)}`, c: C.red }].map(row => (
-                <div key={row.l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ color: C.textMid, fontSize: 12 }}>{row.l}</span><span style={{ color: row.c, fontSize: 12, fontFamily: "monospace" }}>{row.v}</span></div>
+              {[
+                { l: "Brutto", v: fmt(utdelning), c: C.text },
+                { l: "Skatt (20 %)", v: `−${fmt(utdelning * 0.20)}`, c: C.red },
+              ].map(row => (
+                <div key={row.l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ color: C.textMid, fontSize: 12 }}>{row.l}</span>
+                  <span style={{ color: row.c, fontSize: 12, fontFamily: "monospace" }}>{row.v}</span>
+                </div>
               ))}
-              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}><span style={{ color: C.text, fontSize: 12, fontWeight: 700 }}>Netto</span><span style={{ color: C.green, fontSize: 13, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.utdelningNetto)}</span></div>
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: C.text, fontSize: 12, fontWeight: 700 }}>Netto till ägaren</span>
+                <span style={{ color: C.green, fontSize: 13, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.utdelningNetto)}</span>
+              </div>
             </div>
             <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
               <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Sparande i KF</div>
               <KFRow label="Tillgängligt för sparande / mån" value={r.tillgängligtKF_mån} />
               <KFRow label="Tillgängligt för sparande / år" value={r.tillgängligtKF_år} highlight large />
             </div>
-            {r.netto > 0 && (
+            {r.ebit > 0 && (
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "14px 16px", marginTop: 4 }}>
-                <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Som andel av nettoresultat</div>
-                {[{ l: "Utdelning", v: pct1((utdelning / r.netto) * 100), c: C.green }, { l: "Buffert", v: pct1((r.buffert / r.netto) * 100), c: C.blue }, { l: "Kapitalförsäkring", v: pct1(Math.max(0, r.tillgängligtKF_år / r.netto) * 100), c: C.gold, bold: true }].map(row => (
+                <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Som andel av EBIT</div>
+                {[
+                  { l: "Utdelning", v: pct1((utdelning / r.ebit) * 100), c: C.green },
+                  { l: "Buffert", v: pct1((r.buffert / r.ebit) * 100), c: C.blue },
+                  { l: "Kapitalförsäkring", v: pct1(Math.max(0, r.tillgängligtKF_år / r.ebit) * 100), c: C.gold, bold: true },
+                ].map(row => (
                   <div key={row.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: row.c }} /><span style={{ color: row.bold ? C.text : C.textMid, fontSize: 11, fontWeight: row.bold ? 700 : 400 }}>{row.l}</span></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: row.c }} />
+                      <span style={{ color: row.bold ? C.text : C.textMid, fontSize: 11, fontWeight: row.bold ? 700 : 400 }}>{row.l}</span>
+                    </div>
                     <span style={{ color: row.c, fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{row.v}</span>
                   </div>
                 ))}
