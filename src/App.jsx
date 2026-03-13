@@ -1251,8 +1251,8 @@ const LikviditetsanalysView = ({ r, utdelning, buffertPct }) => {
 };
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
-export default function App() {
-  const [tab, setTab] = useState("kalkylator");
+function MainApp({ onLogout }) {
+    const [tab, setTab] = useState("kalkylator");
   const [förenkladVy, setFörenkladVy] = useState(false);
   const [intäkterMode, setIntäkterMode] = useState("timbaserat"); // "timbaserat" | "marginal"
   const [timpris, setTimpris] = useState(0);
@@ -1318,6 +1318,11 @@ export default function App() {
             <button key={t.id} onClick={() => setTab(t.id)} style={{ background: tab === t.id ? "rgba(255,255,255,0.08)" : "transparent", border: "none", borderBottom: tab === t.id ? `2px solid ${C.gold}` : "2px solid transparent", color: tab === t.id ? "#fff" : "rgba(255,255,255,0.45)", padding: "20px 18px 18px", cursor: "pointer", fontSize: 12, fontWeight: 700, letterSpacing: 0.5, fontFamily: "inherit", transition: "all 0.2s" }}>{t.label}</button>
           ))}
         </div>
+        <button onClick={onLogout} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, color: "rgba(255,255,255,0.55)", padding: "7px 14px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 0.5, whiteSpace: "nowrap", transition: "all 0.2s" }}
+          onMouseEnter={e => { e.target.style.borderColor = "rgba(255,255,255,0.5)"; e.target.style.color = "#fff"; }}
+          onMouseLeave={e => { e.target.style.borderColor = "rgba(255,255,255,0.2)"; e.target.style.color = "rgba(255,255,255,0.55)"; }}>
+          Logga ut
+        </button>
       </div>
       <div style={{ height: 3, background: `linear-gradient(90deg,${C.gold},#E8B84B,${C.gold})` }} />
 
@@ -1690,6 +1695,74 @@ export default function App() {
 
       <div style={{ textAlign: "center", padding: "14px", color: C.textLight, fontSize: 11, borderTop: `1px solid ${C.border}`, background: C.surface }}>
         Beräkningar baserade på svenska skatteregler 2024 &nbsp;•&nbsp; Konsultera en revisor för rådgivning
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [authed, setAuthed] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginErr, setLoginErr] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+
+  const handleLogin = () => {
+    if (loginUser.trim() === "Norrfinans" && loginPass === "NorrfinansLIV") {
+      setAuthed(true);
+    } else {
+      setLoginErr(true);
+    }
+  };
+
+  if (authed) return <MainApp onLogout={() => { setAuthed(false); setLoginUser(""); setLoginPass(""); }} />;
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+      <div style={{ width: 380 }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: C.gold, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontSize: 22, fontWeight: 900 }}>N</span>
+            </div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>Norrfinans</div>
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" }}>Rådgivningsverktyg</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 14, padding: "36px 32px", boxShadow: "0 24px 60px rgba(0,0,0,0.35)" }}>
+          <div style={{ color: C.navy, fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Logga in</div>
+          <div style={{ color: C.textLight, fontSize: 12, marginBottom: 28 }}>Ange dina uppgifter för att fortsätta</div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Användarnamn</label>
+            <input type="text" value={loginUser} onChange={e => { setLoginUser(e.target.value); setLoginErr(false); }}
+              onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="Användarnamn"
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", border: `1.5px solid ${loginErr ? C.red : C.border}`, borderRadius: 7, fontSize: 14, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Lösenord</label>
+            <div style={{ position: "relative" }}>
+              <input type={showPass ? "text" : "password"} value={loginPass} onChange={e => { setLoginPass(e.target.value); setLoginErr(false); }}
+                onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="Lösenord"
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 42px 11px 14px", border: `1.5px solid ${loginErr ? C.red : C.border}`, borderRadius: 7, fontSize: 14, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
+              <button onClick={() => setShowPass(p => !p)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.textLight, fontSize: 16, padding: 0 }}>
+                {showPass ? "🙈" : "👁️"}
+              </button>
+            </div>
+          </div>
+          {loginErr && (
+            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 7, padding: "10px 14px", marginBottom: 16, color: C.red, fontSize: 12, fontWeight: 600 }}>
+              Fel användarnamn eller lösenord
+            </div>
+          )}
+          <button onClick={handleLogin} style={{ width: "100%", padding: "13px", background: C.navy, border: "none", borderRadius: 8, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            Logga in →
+          </button>
+        </div>
+        <div style={{ textAlign: "center", marginTop: 24, color: "rgba(255,255,255,0.25)", fontSize: 11 }}>
+          © {new Date().getFullYear()} Norrfinans — Konfidentiellt
+        </div>
       </div>
     </div>
   );
