@@ -661,6 +661,298 @@ const AvgiftsView = ({ defaultMånSparande }) => {
   );
 };
 
+// ── MARKNADSRÖRELSER ──────────────────────────────────────────────────────────
+const MarknadsrorelseDiagram = () => {
+  // Kvartalsvisa S&P 500-approximationer för mer detaljerade rörelser
+  const kvartal = [
+    // 1994
+    {t:"1994 Q1",v:97.9},{t:"1994 Q2",v:95.4},{t:"1994 Q3",v:98.1},{t:"1994 Q4",v:101.3},
+    // 1995
+    {t:"1995 Q1",v:112.0},{t:"1995 Q2",v:121.4},{t:"1995 Q3",v:131.2},{t:"1995 Q4",v:139.0},
+    // 1996
+    {t:"1996 Q1",v:148.2},{t:"1996 Q2",v:145.6},{t:"1996 Q3",v:153.4},{t:"1996 Q4",v:171.1},
+    // 1997
+    {t:"1997 Q1",v:184.9},{t:"1997 Q2",v:205.7},{t:"1997 Q3",v:218.5},{t:"1997 Q4",v:228.2},
+    // 1998
+    {t:"1998 Q1",v:249.7},{t:"1998 Q2",v:258.1},{t:"1998 Q3",v:218.9},{t:"1998 Q4",v:293.5},
+    // 1999
+    {t:"1999 Q1",v:308.6},{t:"1999 Q2",v:316.4},{t:"1999 Q3",v:312.2},{t:"1999 Q4",v:355.4},
+    // 2000 — IT-topp → krasch
+    {t:"2000 Q1",v:371.8},{t:"2000 Q2",v:345.2},{t:"2000 Q3",v:330.8},{t:"2000 Q4",v:322.9},
+    // 2001
+    {t:"2001 Q1",v:300.5},{t:"2001 Q2",v:304.7},{t:"2001 Q3",v:269.1},{t:"2001 Q4",v:284.6},
+    // 2002 — bottenkrasch
+    {t:"2002 Q1",v:275.3},{t:"2002 Q2",v:248.1},{t:"2002 Q3",v:208.7},{t:"2002 Q4",v:221.8},
+    // 2003 — återhämtning
+    {t:"2003 Q1",v:211.4},{t:"2003 Q2",v:240.3},{t:"2003 Q3",v:260.8},{t:"2003 Q4",v:285.4},
+    // 2004
+    {t:"2004 Q1",v:289.7},{t:"2004 Q2",v:278.4},{t:"2004 Q3",v:283.1},{t:"2004 Q4",v:316.6},
+    // 2005
+    {t:"2005 Q1",v:314.9},{t:"2005 Q2",v:318.4},{t:"2005 Q3",v:326.7},{t:"2005 Q4",v:332.1},
+    // 2006
+    {t:"2006 Q1",v:347.4},{t:"2006 Q2",v:337.2},{t:"2006 Q3",v:348.6},{t:"2006 Q4",v:384.6},
+    // 2007 — peak innan finanskris
+    {t:"2007 Q1",v:395.8},{t:"2007 Q2",v:412.4},{t:"2007 Q3",v:406.1},{t:"2007 Q4",v:405.8},
+    // 2008 — finanskris
+    {t:"2008 Q1",v:368.2},{t:"2008 Q2",v:347.5},{t:"2008 Q3",v:301.4},{t:"2008 Q4",v:255.6},
+    // 2009 — botten + återhämtning
+    {t:"2009 Q1",v:210.4},{t:"2009 Q2",v:255.8},{t:"2009 Q3",v:283.6},{t:"2009 Q4",v:322.4},
+    // 2010
+    {t:"2010 Q1",v:338.2},{t:"2010 Q2",v:319.8},{t:"2010 Q3",v:347.4},{t:"2010 Q4",v:371.0},
+    // 2011
+    {t:"2011 Q1",v:383.4},{t:"2011 Q2",v:389.6},{t:"2011 Q3",v:336.2},{t:"2011 Q4",v:379.0},
+    // 2012
+    {t:"2012 Q1",v:406.8},{t:"2012 Q2",v:396.4},{t:"2012 Q3",v:414.2},{t:"2012 Q4",v:440.7},
+    // 2013
+    {t:"2013 Q1",v:469.3},{t:"2013 Q2",v:492.4},{t:"2013 Q3",v:523.6},{t:"2013 Q4",v:583.4},
+    // 2014
+    {t:"2014 Q1",v:581.2},{t:"2014 Q2",v:607.4},{t:"2014 Q3",v:615.8},{t:"2014 Q4",v:663.5},
+    // 2015
+    {t:"2015 Q1",v:672.4},{t:"2015 Q2",v:671.8},{t:"2015 Q3",v:622.1},{t:"2015 Q4",v:672.8},
+    // 2016
+    {t:"2016 Q1",v:648.3},{t:"2016 Q2",v:660.4},{t:"2016 Q3",v:683.6},{t:"2016 Q4",v:753.4},
+    // 2017
+    {t:"2017 Q1",v:793.6},{t:"2017 Q2",v:817.4},{t:"2017 Q3",v:848.2},{t:"2017 Q4",v:917.5},
+    // 2018
+    {t:"2018 Q1",v:881.4},{t:"2018 Q2",v:919.6},{t:"2018 Q3",v:963.8},{t:"2018 Q4",v:877.1},
+    // 2019
+    {t:"2019 Q1",v:956.3},{t:"2019 Q2",v:1008.4},{t:"2019 Q3",v:1022.6},{t:"2019 Q4",v:1153.7},
+    // 2020 — COVID-krasch + återhämtning
+    {t:"2020 Q1",v:944.2},{t:"2020 Q2",v:1063.8},{t:"2020 Q3",v:1168.4},{t:"2020 Q4",v:1365.6},
+    // 2021
+    {t:"2021 Q1",v:1447.3},{t:"2021 Q2",v:1528.6},{t:"2021 Q3",v:1601.4},{t:"2021 Q4",v:1757.2},
+    // 2022 — inflation/räntechock
+    {t:"2022 Q1",v:1692.4},{t:"2022 Q2",v:1453.8},{t:"2022 Q3",v:1362.1},{t:"2022 Q4",v:1439.6},
+    // 2023
+    {t:"2023 Q1",v:1521.4},{t:"2023 Q2",v:1587.2},{t:"2023 Q3",v:1534.8},{t:"2023 Q4",v:1817.3},
+    // 2024
+    {t:"2024 Q1",v:1953.4},{t:"2024 Q2",v:2019.6},{t:"2024 Q3",v:2103.8},{t:"2024 Q4",v:2240.4},
+  ].filter(d => d.v > 0);
+
+  const crisisZones = [
+    { label: "IT-kraschen", startQ: "2000 Q1", endQ: "2002 Q4", color: "#EF4444", peak: "2000 Q1", trough: "2002 Q3" },
+    { label: "Finanskrisen", startQ: "2007 Q3", endQ: "2009 Q1", color: "#DC2626", peak: "2007 Q2", trough: "2009 Q1" },
+    { label: "COVID-19",     startQ: "2020 Q1", endQ: "2020 Q2", color: "#F97316", peak: "2019 Q4", trough: "2020 Q1" },
+    { label: "2022 Räntehopp", startQ: "2022 Q1", endQ: "2022 Q3", color: "#7C3AED", peak: "2021 Q4", trough: "2022 Q3" },
+  ];
+
+  const W = 900, H = 300, PAD = { t: 28, r: 24, b: 40, l: 64 };
+  const gW = W - PAD.l - PAD.r;
+  const gH = H - PAD.t - PAD.b;
+  const n = kvartal.length;
+
+  const maxV = Math.max(...kvartal.map(d => d.v));
+  const minV = Math.min(...kvartal.map(d => d.v)) * 0.92;
+  const range = maxV - minV;
+
+  const xPos = i => PAD.l + (i / (n - 1)) * gW;
+  const yPos = v => PAD.t + gH - ((v - minV) / range) * gH;
+
+  const linePath = kvartal.map((d, i) => `${i === 0 ? "M" : "L"}${xPos(i).toFixed(1)},${yPos(d.v).toFixed(1)}`).join(" ");
+  const fillPath = linePath + ` L${xPos(n-1).toFixed(1)},${(PAD.t+gH).toFixed(1)} L${xPos(0).toFixed(1)},${(PAD.t+gH).toFixed(1)} Z`;
+
+  // Rolling peak for drawdown shading
+  let peak = kvartal[0].v;
+  const withDrawdown = kvartal.map(d => {
+    if (d.v > peak) peak = d.v;
+    return { ...d, peak, drawdown: (d.v / peak - 1) * 100 };
+  });
+
+  // Drawdown fill path (red shade between peak and current)
+  const ddPath = withDrawdown.map((d, i) => {
+    const x = xPos(i).toFixed(1);
+    const y = yPos(d.v).toFixed(1);
+    const yPeak = yPos(d.peak).toFixed(1);
+    return { x, y, yPeak, dd: d.drawdown };
+  });
+
+  // Year tick positions (first quarter of each year)
+  const yearTicks = kvartal.reduce((acc, d, i) => {
+    const yr = d.t.split(" ")[0];
+    if (!acc.find(a => a.yr === yr)) acc.push({ yr, i });
+    return acc;
+  }, []);
+
+  // Y-axis grid values
+  const yTicks = [];
+  const step = Math.ceil(range / 8 / 100) * 100;
+  for (let v = Math.ceil(minV / step) * step; v <= maxV; v += step) yTicks.push(v);
+
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px 24px", marginTop: 20, boxShadow: "0 2px 8px rgba(15,40,71,0.06)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <div style={{ width: 3, height: 16, background: C.navy, borderRadius: 2 }} />
+        <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Marknadsrörelser 1994–2024</span>
+      </div>
+      <div style={{ color: C.textMid, fontSize: 11, marginBottom: 16 }}>Globala aktier (S&P 500-liknande index), kvartalsdata. Röd skuggning = drawdown från senaste topp.</div>
+
+      {/* Main line chart */}
+      <div style={{ overflowX: "auto" }}>
+        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block", minWidth: 600 }}>
+          <defs>
+            <linearGradient id="fillGrad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={C.navy} stopOpacity="0.12" />
+              <stop offset="100%" stopColor={C.navy} stopOpacity="0.01" />
+            </linearGradient>
+            <clipPath id="chartClip">
+              <rect x={PAD.l} y={PAD.t} width={gW} height={gH} />
+            </clipPath>
+          </defs>
+
+          {/* Y-axis gridlines */}
+          {yTicks.map(v => {
+            const y = yPos(v);
+            if (y < PAD.t || y > PAD.t + gH) return null;
+            return (
+              <g key={v}>
+                <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} stroke="#E5E9F0" strokeWidth="0.7" />
+                <text x={PAD.l - 7} y={y + 3.5} textAnchor="end" fill="#9AA5B4" fontSize="8">{v >= 1000 ? (v/1000).toFixed(1)+"k" : v}</text>
+              </g>
+            );
+          })}
+
+          {/* Crisis zone shading */}
+          {crisisZones.map(zone => {
+            const si = kvartal.findIndex(d => d.t === zone.startQ);
+            const ei = kvartal.findIndex(d => d.t === zone.endQ);
+            if (si < 0 || ei < 0) return null;
+            const x1 = xPos(si);
+            const x2 = xPos(ei);
+            return (
+              <rect key={zone.label} x={x1} y={PAD.t} width={x2-x1} height={gH}
+                fill={zone.color} opacity="0.07" clipPath="url(#chartClip)" />
+            );
+          })}
+
+          {/* Drawdown red fill */}
+          <g clipPath="url(#chartClip)">
+            {ddPath.map((d, i) => {
+              if (i === 0 || d.dd >= -1) return null;
+              const prev = ddPath[i-1];
+              return (
+                <polygon key={i}
+                  points={`${prev.x},${prev.yPeak} ${d.x},${d.yPeak} ${d.x},${d.y} ${prev.x},${prev.y}`}
+                  fill="#EF4444" opacity="0.18" />
+              );
+            })}
+          </g>
+
+          {/* Area fill */}
+          <path d={fillPath} fill="url(#fillGrad2)" clipPath="url(#chartClip)" />
+
+          {/* Main line */}
+          <path d={linePath} fill="none" stroke={C.navy} strokeWidth="1.8"
+            strokeLinejoin="miter" strokeLinecap="square" clipPath="url(#chartClip)" />
+
+          {/* Crisis zone labels */}
+          {crisisZones.map(zone => {
+            const si = kvartal.findIndex(d => d.t === zone.startQ);
+            const ei = kvartal.findIndex(d => d.t === zone.endQ);
+            if (si < 0 || ei < 0) return null;
+            const midX = (xPos(si) + xPos(ei)) / 2;
+            return (
+              <text key={zone.label} x={midX} y={PAD.t + 14} textAnchor="middle"
+                fill={zone.color} fontSize="8" fontWeight="700">{zone.label}</text>
+            );
+          })}
+
+          {/* Data point dots — only yearly (every 4th quarter) */}
+          {kvartal.map((d, i) => {
+            if (i % 4 !== 0 && i !== n - 1) return null;
+            const inCrisis = crisisZones.some(z => {
+              const si = kvartal.findIndex(q => q.t === z.startQ);
+              const ei = kvartal.findIndex(q => q.t === z.endQ);
+              return i >= si && i <= ei;
+            });
+            return (
+              <circle key={d.t} cx={xPos(i).toFixed(1)} cy={yPos(d.v).toFixed(1)} r="2.8"
+                fill={inCrisis ? "#EF4444" : C.navy} stroke="#fff" strokeWidth="1.2" />
+            );
+          })}
+
+          {/* Value labels at key turning points */}
+          {[
+            kvartal.findIndex(d => d.t === "2000 Q1"),
+            kvartal.findIndex(d => d.t === "2002 Q3"),
+            kvartal.findIndex(d => d.t === "2007 Q2"),
+            kvartal.findIndex(d => d.t === "2009 Q1"),
+            kvartal.findIndex(d => d.t === "2020 Q1"),
+            n - 1,
+          ].filter(i => i >= 0).map(i => {
+            const d = kvartal[i];
+            const x = xPos(i);
+            const y = yPos(d.v);
+            const above = i === kvartal.findIndex(q => q.t === "2000 Q1") || i === kvartal.findIndex(q => q.t === "2007 Q2") || i === n - 1;
+            return (
+              <g key={i}>
+                <rect x={x - 14} y={above ? y - 18 : y + 4} width={28} height={12} rx={2}
+                  fill={above ? C.navy : "#EF4444"} opacity="0.85" />
+                <text x={x} y={above ? y - 8 : y + 13} textAnchor="middle"
+                  fill="#fff" fontSize="7.5" fontWeight="700">
+                  {d.v >= 1000 ? (d.v/1000).toFixed(1)+"k" : d.v.toFixed(0)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* X-axis year labels */}
+          {yearTicks.filter((_, i) => i % 2 === 0 || i === yearTicks.length - 1).map(({ yr, i }) => (
+            <text key={yr} x={xPos(i)} y={H - 6} textAnchor="middle" fill="#9AA5B4" fontSize="8">{yr}</text>
+          ))}
+
+          {/* X-axis baseline */}
+          <line x1={PAD.l} x2={W - PAD.r} y1={PAD.t + gH} y2={PAD.t + gH} stroke="#C8D0DA" strokeWidth="1" />
+        </svg>
+      </div>
+
+      {/* Bar chart: quarterly returns */}
+      <div style={{ marginTop: 10 }}>
+        <div style={{ color: "#9AA5B4", fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 6 }}>Kvartalsvisa rörelser (%)</div>
+        <div style={{ overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 64, minWidth: 600, position: "relative" }}>
+            <div style={{ position: "absolute", left: 0, right: 0, top: "50%", borderTop: `1px solid ${C.border}`, zIndex: 0 }} />
+            {kvartal.map((d, i) => {
+              if (i === 0) return <div key={d.t} style={{ flex: 1 }} />;
+              const prev = kvartal[i - 1];
+              const chg = (d.v / prev.v - 1) * 100;
+              const maxAbs = 15;
+              const barH = Math.min(Math.abs(chg), maxAbs) / maxAbs * 28;
+              const isNeg = chg < 0;
+              const inCrisis = crisisZones.some(z => {
+                const si = kvartal.findIndex(q => q.t === z.startQ);
+                const ei = kvartal.findIndex(q => q.t === z.endQ);
+                return i >= si && i <= ei;
+              });
+              return (
+                <div key={d.t} title={`${d.t}: ${chg.toFixed(1)}%`}
+                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "center", position: "relative", zIndex: 1 }}>
+                  {!isNeg && <div style={{ width: "100%", background: inCrisis ? "#F97316" : C.green, height: barH, borderRadius: "2px 2px 0 0", opacity: 0.85 }} />}
+                  <div style={{ height: 1 }} />
+                  {isNeg && <div style={{ width: "100%", background: "#EF4444", height: barH, borderRadius: "0 0 2px 2px", opacity: 0.85 }} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+        {[
+          { color: C.navy, label: "Indexvärde (vänster)" },
+          { color: "#EF4444", opacity: 0.3, label: "Drawdown från topp" },
+          ...crisisZones.map(z => ({ color: z.color, opacity: 0.4, label: z.label })),
+        ].map(l => (
+          <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: l.color, opacity: l.opacity || 1 }} />
+            <span style={{ color: "#9AA5B4", fontSize: 10 }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── SPARANDE VIEW ─────────────────────────────────────────────────────────────
 const SparandeView = ({ månSparande }) => {
   const [sparande, setSparande] = useState(månSparande || 10000);
@@ -668,6 +960,8 @@ const SparandeView = ({ månSparande }) => {
   const [år, setÅr] = useState(0);
   const [engångs, setEngångs] = useState(0);
   const [useKF, setUseKF] = useState(!!månSparande);
+  const [färgInsatt, setFärgInsatt] = useState("#0F2847");
+  const [färgAvkastning, setFärgAvkastning] = useState("#B8892A");
 
   const rows = useMemo(() => {
     const mRate = avkastning / 100 / 12;
@@ -712,6 +1006,27 @@ const SparandeView = ({ månSparande }) => {
           <InputRow label="Förväntad avkastning" value={avkastning} onChange={setAvkastning} suffix="% / år" step={0.5} min={0} max={30} />
           <InputRow label="Spartid" value={år} onChange={setÅr} suffix="år" step={1} min={1} max={40} />
         </Section>
+
+        {/* Färgval */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 10 }}>Diagramfärger</div>
+          {[
+            { label: "Insatt kapital", value: färgInsatt, onChange: setFärgInsatt },
+            { label: "Avkastning", value: färgAvkastning, onChange: setFärgAvkastning },
+          ].map(fc => (
+            <div key={fc.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ color: C.textMid, fontSize: 12 }}>{fc.label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 24, height: 24, borderRadius: 5, background: fc.value, border: `1.5px solid ${C.border}`, cursor: "pointer", overflow: "hidden", position: "relative" }}>
+                  <input type="color" value={fc.value} onChange={e => fc.onChange(e.target.value)}
+                    style={{ position: "absolute", inset: -4, width: "calc(100% + 8px)", height: "calc(100% + 8px)", cursor: "pointer", border: "none", padding: 0, opacity: 0 }} />
+                </div>
+                <span style={{ color: C.textLight, fontSize: 10, fontFamily: "monospace" }}>{fc.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {[{ l: "Totalt kapital", v: fmtShort(final.kapital || 0), big: true }, { l: "Totalavkastning", v: fmtShort(final.avk || 0) }, { l: "Totalt insatt", v: fmtShort(final.insatt || 0) }, { l: "Avkastning / år", v: fmtShort(((final.kapital||0)-(final.insatt||0))/år) }].map((k, i) => (
             <div key={i} style={{ background: i === 0 ? C.navy : C.surface, border: `1px solid ${i === 0 ? C.navy : C.border}`, borderRadius: 8, padding: "14px", gridColumn: i === 0 ? "1 / -1" : "auto" }}>
@@ -721,7 +1036,7 @@ const SparandeView = ({ månSparande }) => {
           ))}
         </div>
       </div>
-      <div style={{ padding: "20px 24px" }}>
+      <div style={{ padding: "20px 24px", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
           <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling över {år} år</span>
@@ -739,8 +1054,8 @@ const SparandeView = ({ månSparande }) => {
               return (
                 <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", position: "relative", zIndex: 1 }}>
                   <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-                    <div style={{ background: C.gold, height: totalH - insattH, borderRadius: "2px 2px 0 0", opacity: 0.85 }} />
-                    <div style={{ background: C.navy, height: insattH, opacity: 0.3 }} />
+                    <div style={{ background: färgAvkastning, height: totalH - insattH, borderRadius: "2px 2px 0 0", opacity: 0.85 }} />
+                    <div style={{ background: färgInsatt, height: insattH, opacity: 0.7 }} />
                   </div>
                   {(row.y % (år <= 10 ? 1 : år <= 20 ? 2 : 5) === 0) && (
                     <div style={{ position: "absolute", bottom: -20, color: C.textLight, fontSize: 9 }}>År {row.y}</div>
@@ -750,9 +1065,9 @@ const SparandeView = ({ månSparande }) => {
             })}
           </div>
           <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 8 }}>
-            {[{ c: C.navy, o: 0.3, l: "Insatt kapital" }, { c: C.gold, o: 0.85, l: "Avkastning" }].map(lg => (
+            {[{ c: färgInsatt, l: "Insatt kapital" }, { c: färgAvkastning, l: "Avkastning" }].map(lg => (
               <div key={lg.l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: lg.c, opacity: lg.o }} />
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: lg.c }} />
                 <span style={{ color: C.textMid, fontSize: 11 }}>{lg.l}</span>
               </div>
             ))}
@@ -779,6 +1094,7 @@ const SparandeView = ({ månSparande }) => {
             Avkastning i en företagsägd KF beskattas med <strong>avkastningsskatt</strong>, beräknad som statslåneräntan (1 nov föregående år) + 1 procentenhet × 0,75 × KF-värdet. 2024 innebär detta ca <strong>1,3–1,9 % per år</strong> på hela kapitalvärdet — oavsett faktisk avkastning. Diagrammet visar bruttoavkastning. Avkastningsskatten ersätter bolagsskatt på avkastningen och är lägre än kapitalvinstskatt, vilket är KF:s skattemässiga fördel.
           </div>
         </div>
+        <MarknadsrorelseDiagram />
       </div>
     </div>
   );
