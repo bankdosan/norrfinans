@@ -22,50 +22,25 @@ const parseInput = s => {
   return clean === "" ? 0 : Number(clean) || 0;
 };
 
-const InputRow = ({ label, value, onChange, suffix, step = 1000, min = 0, max, hint }) => {
-  const [focused, setFocused] = React.useState(false);
-  const [raw, setRaw] = React.useState("");
-
-  const handleFocus = () => {
-    setFocused(true);
-    setRaw(value === 0 ? "" : String(value));
-  };
-  const handleBlur = () => {
-    setFocused(false);
-    onChange(parseInput(raw));
-  };
-  const handleChange = e => {
-    const v = e.target.value;
-    // Allow digits, spaces, commas, dots, minus
-    if (/^[-\d\s,\.]*$/.test(v)) {
-      setRaw(v);
-      const parsed = parseInput(v);
-      if (!isNaN(parsed)) onChange(parsed);
-    }
-  };
-
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-        <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
-        {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={focused ? raw : fmtInput(value)}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onChange={handleChange}
-          placeholder="0"
-          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }}
-        />
-        <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>{suffix}</span>
-      </div>
+const InputRow = ({ label, value, onChange, suffix, step = 1000, min = 0, max, hint }) => (
+  <div style={{ marginBottom: 14 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+      <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
+      {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
     </div>
-  );
-};
+    <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+      <input
+        type="number"
+        value={value === 0 ? "" : value}
+        min={min} max={max} step={step}
+        placeholder="0"
+        onChange={e => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }}
+      />
+      <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>{suffix}</span>
+    </div>
+  </div>
+);
 
 const Section = ({ title, children }) => (
   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
