@@ -1252,6 +1252,32 @@ const LikviditetsanalysView = ({ r, utdelning, buffertPct }) => {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 // ── ÄRENDEN VIEW ──────────────────────────────────────────────────────────────
+const FInput = ({ label, value, onChange, placeholder, half, type = "text" }) => (
+  <div style={{ marginBottom: 14, flex: half ? "0 0 calc(50% - 6px)" : "1 1 100%" }}>
+    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>{label}</label>
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ""}
+      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+  </div>
+);
+
+const FTextarea = ({ label, value, onChange, rows = 3 }) => (
+  <div style={{ marginBottom: 14, flex: "1 1 100%" }}>
+    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>{label}</label>
+    <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
+      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", resize: "vertical" }} />
+  </div>
+);
+
+const FSect = ({ title, children }) => (
+  <div style={{ marginBottom: 24 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+      <div style={{ width: 3, height: 14, background: C.gold, borderRadius: 2 }} />
+      <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
+    </div>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>{children}</div>
+  </div>
+);
+
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
   const [mottagarMail, setMottagarMail] = useState("");
@@ -1260,15 +1286,20 @@ const ArendenView = () => {
   // ── Nyteckning state ──
   const [nt, setNt] = useState({
     // Kunduppgifter
-    foretagsnamn: "", orgnr: "", bransch: "",
-    adress: "", postnr: "", ort: "",
-    kontaktperson: "", kontaktTitel: "", kontaktTel: "", kontaktEmail: "",
+    foretagsnamn: "", orgnr: "",
+    ägarAntal: 1,
+    ägare: Array.from({length: 5}, () => ({ personnr: "", andel: "" })),
     // Försäkringsval
-    gruppliv: false, sjukvard: false, sjukOlycka: false, tjanstepension: false,
-    // Anställda
-    antalAnstallda: "", loneSumma: "", medellon: "",
+    tjanstepension: false, plansjuk: false, gruppliv: false, kassplacering: false,
+    // Tjänstepension sub
+    tjpTecknasTill: "67", tjpUtbetalningstid: "10", tjpSparpremie: "", tjpAntalFonder: 1,
+    tjpFonder: Array.from({length: 10}, () => ({ namn: "", procent: "" })),
+    // Plansjuk sub
+    psHalsokrav: "", psForsAkradLon: "", psForsAkradTjp: "", psFaktura: "",
+    // Gruppliv sub
+    glSjukvard: "", glSjukOlycka: "", glLiv: "",
     // Önskat
-    startdatum: "", karenstid: "", forsakringsbelopp: "",
+    startdatum: "", forsakringsbelopp: "",
     // Förmedlare
     formedlarNamn: "", formedlarTel: "", formedlarEmail: "",
     // Övrigt
@@ -1296,14 +1327,19 @@ const ArendenView = () => {
       nt.tjanstepension && "Tjänstepension",
     ].filter(Boolean).join(", ") || "Ej angivet";
 
+    const ägarInfo = Array.from({ length: nt.ägarAntal }).map((_, i) =>
+      `  Ägare ${i+1}: ${nt.ägare[i].personnr || "–"} (${nt.ägare[i].andel || "–"}%)`
+    ).join("\n");
+
     return `NYTECKNING — NORRFINANS FÖRMEDLING
 ${"=".repeat(50)}
 
 KUNDUPPGIFTER
 Företagsnamn:     ${nt.foretagsnamn}
 Organisationsnr:  ${nt.orgnr}
-Bransch:          ${nt.bransch}
-Adress:           ${nt.adress}, ${nt.postnr} ${nt.ort}
+
+ÄGARE (${nt.ägarAntal} st)
+${ägarInfo}
 
 KONTAKTPERSON
 Namn:             ${nt.kontaktperson}
@@ -1321,7 +1357,6 @@ Medellön:         ${nt.medellon} kr/mån
 
 ÖNSKADE VILLKOR
 Startdatum:       ${nt.startdatum}
-Karenstid:        ${nt.karenstid}
 Försäkringsbelopp:${nt.forsakringsbelopp}
 
 FÖRMEDLARE
@@ -1377,32 +1412,6 @@ Skickat via Norrfinans Rådgivningsverktyg`;
   };
 
 
-  const FInput = ({ label, value, onChange, placeholder, half, type = "text" }) => (
-    <div style={{ marginBottom: 14, flex: half ? "0 0 calc(50% - 6px)" : "1 1 100%" }}>
-      <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ""}
-        style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
-    </div>
-  );
-
-  const FTextarea = ({ label, value, onChange, rows = 3 }) => (
-    <div style={{ marginBottom: 14, flex: "1 1 100%" }}>
-      <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>{label}</label>
-      <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
-        style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", resize: "vertical" }} />
-    </div>
-  );
-
-  const FSect = ({ title, children }) => (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <div style={{ width: 3, height: 14, background: C.gold, borderRadius: 2 }} />
-        <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>{children}</div>
-    </div>
-  );
-
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
       {/* Header */}
@@ -1439,26 +1448,65 @@ Skickat via Norrfinans Rådgivningsverktyg`;
           <FSect title="Kunduppgifter">
             <FInput label="Företagsnamn" value={nt.foretagsnamn} onChange={v => updNt("foretagsnamn", v)} placeholder="AB Exempel" />
             <FInput label="Organisationsnummer" value={nt.orgnr} onChange={v => updNt("orgnr", v)} placeholder="556123-4567" half />
-            <FInput label="Bransch" value={nt.bransch} onChange={v => updNt("bransch", v)} placeholder="t.ex. IT, Bygg, Handel" half />
-            <FInput label="Adress" value={nt.adress} onChange={v => updNt("adress", v)} placeholder="Storgatan 1" />
-            <FInput label="Postnummer" value={nt.postnr} onChange={v => updNt("postnr", v)} placeholder="123 45" half />
-            <FInput label="Ort" value={nt.ort} onChange={v => updNt("ort", v)} placeholder="Stockholm" half />
+            <div style={{ marginBottom: 14, flex: "0 0 calc(50% - 6px)" }}>
+              <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Antal ägare</label>
+              <select value={nt.ägarAntal} onChange={e => updNt("ägarAntal", Number(e.target.value))}
+                style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} {n === 1 ? "ägare" : "ägare"}</option>)}
+              </select>
+            </div>
+            {(() => {
+              const totalAndel = nt.ägare.slice(0, nt.ägarAntal).reduce((s, o) => s + (parseFloat(o.andel) || 0), 0);
+              const isOk = Math.abs(totalAndel - 100) < 0.01;
+              const hasAny = nt.ägare.slice(0, nt.ägarAntal).some(o => o.andel !== "");
+              return (
+                <>
+                  {Array.from({ length: nt.ägarAntal }).map((_, i) => (
+                    <div key={i} style={{ flex: "1 1 100%", display: "flex", gap: 12, alignItems: "flex-end", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "12px 14px" }}>
+                      <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, minWidth: 56, paddingBottom: 10 }}>Ägare {i + 1}</div>
+                      <div style={{ flex: 2 }}>
+                        <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Personnummer</label>
+                        <input type="text" value={nt.ägare[i].personnr}
+                          onChange={e => { const a = nt.ägare.map((o,j) => j===i ? {...o, personnr: e.target.value} : o); updNt("ägare", a); }}
+                          placeholder="YYYYMMDD-XXXX"
+                          style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Ägarandel %</label>
+                        <input type="number" value={nt.ägare[i].andel}
+                          onChange={e => { const a = nt.ägare.map((o,j) => j===i ? {...o, andel: e.target.value} : o); updNt("ägare", a); }}
+                          placeholder="0" min={0} max={100}
+                          style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${hasAny ? (isOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: hasAny ? (isOk ? "#F0FDF4" : "#FEF2F2") : "#fff" }} />
+                      </div>
+                    </div>
+                  ))}
+                  {hasAny && (
+                    <div style={{ flex: "1 1 100%", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, padding: "6px 4px" }}>
+                      <span style={{ color: C.textLight, fontSize: 11 }}>Total ägarandel:</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isOk ? "#16A34A" : "#EF4444", fontFamily: "monospace" }}>{totalAndel.toFixed(0)}%</span>
+                      {isOk
+                        ? <span style={{ background: "#DCFCE7", color: "#15803D", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5 }}>✓ OK</span>
+                        : <span style={{ background: "#FEE2E2", color: "#B91C1C", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5 }}>Måste bli 100%</span>
+                      }
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </FSect>
 
-          <FSect title="Kontaktperson">
-            <FInput label="Namn" value={nt.kontaktperson} onChange={v => updNt("kontaktperson", v)} placeholder="Anna Andersson" half />
-            <FInput label="Titel / Roll" value={nt.kontaktTitel} onChange={v => updNt("kontaktTitel", v)} placeholder="VD / HR-chef" half />
-            <FInput label="Telefon" value={nt.kontaktTel} onChange={v => updNt("kontaktTel", v)} placeholder="070-000 00 00" half />
-            <FInput label="E-post" value={nt.kontaktEmail} onChange={v => updNt("kontaktEmail", v)} placeholder="anna@exempel.se" half type="email" />
-          </FSect>
-
-          <FSect title="Försäkringstyper">
-            <div style={{ flex: "1 1 100%", display: "flex", flexWrap: "wrap", gap: 10 }}>
+{/* ── Försäkringstyper ── */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 14, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Försäkringstyper</span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
               {[
-                { key: "gruppliv", label: "Gruppliv" },
-                { key: "sjukvard", label: "Sjukvårdsförsäkring" },
-                { key: "sjukOlycka", label: "Sjuk & Olycksfall" },
                 { key: "tjanstepension", label: "Tjänstepension" },
+                { key: "plansjuk", label: "Plansjuk" },
+                { key: "gruppliv", label: "Gruppliv" },
+                { key: "kassplacering", label: "Kassplacering" },
               ].map(fs => (
                 <label key={fs.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", border: `1.5px solid ${nt[fs.key] ? C.navy : C.border}`, borderRadius: 7, cursor: "pointer", background: nt[fs.key] ? "#EEF2FF" : "#fff", transition: "all 0.15s" }}>
                   <input type="checkbox" checked={nt[fs.key]} onChange={e => updNt(fs.key, e.target.checked)} style={{ accentColor: C.navy, width: 14, height: 14 }} />
@@ -1466,11 +1514,155 @@ Skickat via Norrfinans Rådgivningsverktyg`;
                 </label>
               ))}
             </div>
-          </FSect>
+
+            {/* ── Tjänstepension sub-form ── */}
+            {nt.tjanstepension && (
+              <div style={{ background: "#EEF2FF", border: "1.5px solid #C7D2FE", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+                <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Tjänstepension — detaljer</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Teckna till (år)</label>
+                    <input type="number" value={nt.tjpTecknasTill} onChange={e => updNt("tjpTecknasTill", e.target.value)} placeholder="67"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                  <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Utbetalningstid (år)</label>
+                    <input type="number" value={nt.tjpUtbetalningstid} onChange={e => updNt("tjpUtbetalningstid", e.target.value)} placeholder="10"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Sparpremie / mån (kr)</label>
+                    <input type="number" value={nt.tjpSparpremie} onChange={e => updNt("tjpSparpremie", e.target.value)} placeholder="0"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                  <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Antal fonder</label>
+                    <select value={nt.tjpAntalFonder} onChange={e => updNt("tjpAntalFonder", Number(e.target.value))}
+                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                      {Array.from({length: 10}, (_,i) => <option key={i+1} value={i+1}>{i+1} fond{i > 0 ? "er" : ""}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {(() => {
+                  const totalPct = nt.tjpFonder.slice(0, nt.tjpAntalFonder).reduce((s, f) => s + (parseFloat(f.procent) || 0), 0);
+                  const fondOk = Math.abs(totalPct - 100) < 0.01;
+                  const harNgt = nt.tjpFonder.slice(0, nt.tjpAntalFonder).some(f => f.procent !== "");
+                  return (
+                    <>
+                      {Array.from({ length: nt.tjpAntalFonder }).map((_, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-end", marginBottom: 8 }}>
+                          <div style={{ flex: 3 }}>
+                            {i === 0 && <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Fondens namn</label>}
+                            <input type="text" value={nt.tjpFonder[i].namn}
+                              onChange={e => { const f = nt.tjpFonder.map((o,j) => j===i ? {...o, namn: e.target.value} : o); updNt("tjpFonder", f); }}
+                              placeholder={`Fond ${i+1}`}
+                              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            {i === 0 && <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Fördelning %</label>}
+                            <input type="number" value={nt.tjpFonder[i].procent}
+                              onChange={e => { const f = nt.tjpFonder.map((o,j) => j===i ? {...o, procent: e.target.value} : o); updNt("tjpFonder", f); }}
+                              placeholder="0" min={0} max={100}
+                              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${harNgt ? (fondOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: harNgt ? (fondOk ? "#F0FDF4" : "#FEF2F2") : "#fff" }} />
+                          </div>
+                        </div>
+                      ))}
+                      {harNgt && (
+                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginTop: 4 }}>
+                          <span style={{ color: C.textLight, fontSize: 11 }}>Total fondfördelning:</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: fondOk ? "#16A34A" : "#EF4444", fontFamily: "monospace" }}>{totalPct.toFixed(0)}%</span>
+                          {fondOk
+                            ? <span style={{ background: "#DCFCE7", color: "#15803D", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5 }}>✓ OK</span>
+                            : <span style={{ background: "#FEE2E2", color: "#B91C1C", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5 }}>Måste bli 100%</span>
+                          }
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── Plansjuk sub-form ── */}
+            {nt.plansjuk && (
+              <div style={{ background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+                <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Plansjuk — detaljer</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Klarar hälsokrav 14/90</label>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {["Ja", "Nej"].map(v => (
+                        <label key={v} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", border: `1.5px solid ${nt.psHalsokrav === v ? (v === "Ja" ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 7, cursor: "pointer", background: nt.psHalsokrav === v ? (v === "Ja" ? "#F0FDF4" : "#FEF2F2") : "#fff" }}>
+                          <input type="radio" name="halsokrav" value={v} checked={nt.psHalsokrav === v} onChange={() => updNt("psHalsokrav", v)} style={{ accentColor: v === "Ja" ? "#16A34A" : "#EF4444" }} />
+                          <span style={{ fontSize: 13, fontWeight: 600, color: nt.psHalsokrav === v ? (v === "Ja" ? "#15803D" : "#B91C1C") : C.textMid }}>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Försäkrad lön (kr/år)</label>
+                    <input type="number" value={nt.psForsAkradLon} onChange={e => updNt("psForsAkradLon", e.target.value)} placeholder="0"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                  <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Försäkrad tjänstepension (kr/mån)</label>
+                    <input type="number" value={nt.psForsAkradTjp} onChange={e => updNt("psForsAkradTjp", e.target.value)} placeholder="0"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Faktura skickas till</label>
+                    <input type="text" value={nt.psFaktura} onChange={e => updNt("psFaktura", e.target.value)} placeholder="E-post eller adress"
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff" }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Gruppliv sub-form ── */}
+            {nt.gruppliv && (
+              <div style={{ background: "#F0FDF4", border: "1.5px solid #86EFAC", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+                <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Gruppliv — detaljer</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Sjukvårdsförsäkring</label>
+                    <select value={nt.glSjukvard} onChange={e => updNt("glSjukvard", e.target.value)}
+                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                      <option value="">— Välj —</option>
+                      <option>Sjukvårdsförsäkring PA Guld (utan självrisk) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring PA Silver (självrisk 1000 kr) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring PA Silver (självrisk 1500 kr) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring PA Silver Barn (en/flerbarn, självrisk 1500 kr) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring PA Silver Barn (enbarn, självrisk 1000 kr) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring PA Silver Barn (flerbarn, självrisk 1000 kr) 12 mån. karens, 20% rabatt (EA)</option>
+                      <option>Sjukvårdsförsäkring (självrisk 750 kr) (LF)</option>
+                      <option>Sjukvårdsförsäkring BAS (självrisk 750 kr) (LF)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Sjuk & Olycksfallsförsäkring</label>
+                    <select value={nt.glSjukOlycka} onChange={e => updNt("glSjukOlycka", e.target.value)}
+                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                      <option value="">— Välj —</option>
+                      <option>Olycksfallsförsäkring (EA)</option>
+                      <option>Olycksfallsförsäkring (LF)</option>
+                      <option>Olycksfallsförsäkring Plus (LF)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Livförsäkring</label>
+                    <select value={nt.glLiv} onChange={e => updNt("glLiv", e.target.value)}
+                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                      <option value="">— Välj —</option>
+                      <option>Livförsäkring mot full arbetsförhet (EA)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <FSect title="Önskade villkor">
             <FInput label="Önskat startdatum" value={nt.startdatum} onChange={v => updNt("startdatum", v)} placeholder="2025-01-01" half type="date" />
-            <FInput label="Karenstid" value={nt.karenstid} onChange={v => updNt("karenstid", v)} placeholder="t.ex. 90 dagar" half />
             <FInput label="Önskat försäkringsbelopp" value={nt.forsakringsbelopp} onChange={v => updNt("forsakringsbelopp", v)} placeholder="t.ex. 20 prisbasbelopp" />
           </FSect>
 
