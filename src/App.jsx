@@ -180,13 +180,22 @@ const OffertView = () => {
     setCompanies(prev => prev.map(c => c.id !== companyId ? c : { ...c, [field]: Number(val) }));
   };
 
+  const calcEmp = (company, empIdx) => {
+    const e = company.employees[empIdx] || {};
+    const arslön = employees[empIdx]?.arslön || 0;
+    const tjp = Math.round(arslön * (company.sparpremie / 100) / 12);
+    const pbf = Math.round((e.sjuk + tjp + e.lo + e.sjukvard) * (company.premiebefrielse / 100));
+    return { sjuk: e.sjuk, lo: e.lo, sjukvard: e.sjukvard, tjp, pbf };
+  };
+
   const calcTotals = (company) => {
-    const empTotals = company.employees.slice(0, nActive).map(e =>
-      e.sjuk + e.pbf + e.tjp + e.lo + e.sjukvard
-    );
+    const empTotals = Array.from({ length: nActive }).map((_, i) => {
+      const e = calcEmp(company, i);
+      return e.sjuk + e.pbf + e.tjp + e.lo + e.sjukvard;
+    });
     const groupTotal = empTotals.reduce((s, v) => s + v, 0);
     const colSums = COLS.reduce((acc, col) => {
-      acc[col.key] = company.employees.slice(0, nActive).reduce((s, e) => s + (e[col.key] || 0), 0);
+      acc[col.key] = Array.from({ length: nActive }).reduce((s, _, i) => s + (calcEmp(company, i)[col.key] || 0), 0);
       return acc;
     }, {});
     return { empTotals, groupTotal, colSums };
@@ -334,13 +343,13 @@ const OffertView = () => {
                 <div key={ei} style={{ display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)`, padding: "9px 16px", background: ei % 2 === 0 ? C.surface : C.surface2, borderBottom: `1px solid ${C.border}` }}>
                   <span style={{ color: C.text, fontSize: 12 }}>{emp.namn || `Anställd ${ei+1}`}</span>
                   {ranked.map((c, ci) => {
-                    const e = c.employees[ei] || {};
-                    const total = (e.sjuk||0)+(e.pbf||0)+(e.tjp||0)+(e.lo||0)+(e.sjukvard||0);
+                    const e = calcEmp(c, ei);
+                    const total = e.sjuk + e.pbf + e.tjp + e.lo + e.sjukvard;
                     const isMin = ranked.reduce((min, cc) => {
-                      const t = cc.employees[ei] || {};
-                      const tv = (t.sjuk||0)+(t.pbf||0)+(t.tjp||0)+(t.lo||0)+(t.sjukvard||0);
-                      const mv = (min.employees[ei]||{});
-                      return tv < ((mv.sjuk||0)+(mv.pbf||0)+(mv.tjp||0)+(mv.lo||0)+(mv.sjukvard||0)) ? cc : min;
+                      const t = calcEmp(cc, ei);
+                      const tv = t.sjuk + t.pbf + t.tjp + t.lo + t.sjukvard;
+                      const mv = calcEmp(min, ei);
+                      return tv < (mv.sjuk + mv.pbf + mv.tjp + mv.lo + mv.sjukvard) ? cc : min;
                     }, ranked[0]).id === c.id;
                     return <div key={c.id} style={{ textAlign: "right", color: isMin ? C.green : C.text, fontSize: 12, fontWeight: isMin ? 700 : 400, fontFamily: "monospace" }}>{fmt(total)}</div>;
                   })}
@@ -400,7 +409,8 @@ const OffertView = () => {
 
                   {employees.map((emp, ei) => {
                     const ep = comp.employees[ei] || {};
-                    const total = (ep.sjuk||0)+(ep.pbf||0)+(ep.tjp||0)+(ep.lo||0)+(ep.sjukvard||0);
+                    const calc = calcEmp(comp, ei);
+                    const total = calc.sjuk + calc.pbf + calc.tjp + calc.lo + calc.sjukvard;
                     const isActive = emp.namn || emp.arslön > 0;
                     return (
                       <div key={ei} style={{ display: "grid", gridTemplateColumns: "130px 100px 80px 80px 80px 100px 100px 90px", padding: "8px 16px", gap: 4, background: isActive ? (ei % 2 === 0 ? C.surface : C.surface2) : "#f8f9fb", borderBottom: `1px solid ${C.border}`, opacity: isActive ? 1 : 0.4 }}>
@@ -409,8 +419,14 @@ const OffertView = () => {
                         {["sjuk","pbf","tjp","lo","sjukvard"].map(field => (
                           <div key={field} style={{ display: "flex", alignItems: "center" }}>
                             {isActive ? (
-                              <input type="number" value={ep[field] ? ep[field] : ""} placeholder="0" min={0} step={10} onChange={e => updatePremium(comp.id, ei, field, e.target.value === "" ? 0 : Number(e.target.value))}
-                                style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, padding: "4px 6px", fontSize: 11, fontFamily: "monospace", outline: "none", textAlign: "right" }} />
+                              field === "tjp" || field === "pbf" ? (
+                                <div style={{ width: "100%", textAlign: "right", fontSize: 11, fontFamily: "monospace", color: C.navy, fontWeight: 600, padding: "4px 6px", background: "#f0f4ff", border: `1px solid #c7d2fe`, borderRadius: 4 }} title={field === "tjp" ? `${comp.sparpremie}% av lön` : `${comp.premiebefrielse}% av premier`}>
+                                  {fmt(calc[field])}
+                                </div>
+                              ) : (
+                                <input type="number" value={ep[field] ? ep[field] : ""} placeholder="0" min={0} step={10} onChange={e => updatePremium(comp.id, ei, field, e.target.value === "" ? 0 : Number(e.target.value))}
+                                  style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, padding: "4px 6px", fontSize: 11, fontFamily: "monospace", outline: "none", textAlign: "right" }} />
+                              )
                             ) : (
                               <span style={{ color: C.textLight, fontSize: 11, fontFamily: "monospace", textAlign: "right", width: "100%", display: "block" }}>—</span>
                             )}
@@ -1446,27 +1462,196 @@ ${an.noteringar || "–"}
 ${"=".repeat(50)}
 Skickat via Norrfinans Rådgivningsverktyg`;
 
-  const handleSend = () => {
+  const handleDownloadPDF = () => {
     const isNt = mode === "nyteckning";
-    const fullText = isNt ? buildNtBody() : buildAnBody();
-    const subject = encodeURIComponent(isNt
+    const title = isNt
       ? `Nyteckning — ${nt.foretagsnamn || "Ny kund"}`
-      : `Ändring — ${an.foretagsnamn || "Kund"}`);
-    const to = encodeURIComponent(mottagarMail);
+      : `Ändring — ${an.foretagsnamn || "Kund"}`;
 
-    // Copy full body to clipboard (mailto truncates long bodies)
-    navigator.clipboard.writeText(fullText).then(() => {
-      // Open Outlook with subject pre-filled — user pastes body
-      window.open(`mailto:${to}?subject=${subject}`, "_blank");
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 6000);
-    }).catch(() => {
-      // Fallback if clipboard denied
-      window.open(`mailto:${to}?subject=${subject}&body=${encodeURIComponent(fullText.slice(0, 1800))}`, "_blank");
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 6000);
-    });
+    // Build structured rows for PDF
+    const rows = isNt ? buildNtRows() : buildAnRows();
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>${title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Inter', Arial, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; padding: 32px 40px; }
+  .header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:16px; border-bottom:3px solid #0F2847; }
+  .logo { width:38px; height:38px; background:#B8892A; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:900; flex-shrink:0; }
+  .brand { color:#0F2847; font-size:16px; font-weight:800; letter-spacing:1px; }
+  .subtitle { color:#888; font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+  .doc-title { font-size:14px; font-weight:700; color:#0F2847; margin-left:auto; }
+  .section { margin-bottom:18px; }
+  .section-header { background:#0F2847; color:#fff; font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 12px; border-radius:4px 4px 0 0; }
+  .section-body { border:1px solid #dde3ed; border-top:none; border-radius:0 0 4px 4px; overflow:hidden; }
+  .row { display:flex; border-bottom:1px solid #f0f3f7; }
+  .row:last-child { border-bottom:none; }
+  .row.alt { background:#f8fafc; }
+  .label { width:200px; flex-shrink:0; padding:7px 12px; color:#556; font-weight:600; font-size:10px; }
+  .value { padding:7px 12px; color:#1a1a2e; font-size:10px; flex:1; }
+  .value.bold { font-weight:700; }
+  .subsection-title { background:#f0f4ff; color:#0F2847; font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:6px 12px; border-bottom:1px solid #dde3ed; }
+  .chip { display:inline-block; background:#0F2847; color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:3px; margin-right:4px; }
+  .footer { margin-top:32px; padding-top:12px; border-top:1px solid #dde3ed; color:#aaa; font-size:9px; display:flex; justify-content:space-between; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">N</div>
+    <div>
+      <div class="brand">Norrfinans</div>
+      <div class="subtitle">Rådgivningsverktyg</div>
+    </div>
+    <div class="doc-title">${title}</div>
+  </div>
+  ${rows}
+  <div class="footer">
+    <span>Norrfinans — Konfidentiellt</span>
+    <span>Genererat ${new Date().toLocaleDateString("sv-SE")} ${new Date().toLocaleTimeString("sv-SE", {hour:"2-digit",minute:"2-digit"})}</span>
+  </div>
+</body>
+</html>`;
+
+    const w = window.open("", "_blank");
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 600);
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 5000);
   };
+
+  const row = (label, value, alt, bold) =>
+    `<div class="row${alt ? " alt" : ""}"><div class="label">${label}</div><div class="value${bold ? " bold" : ""}">${value || "–"}</div></div>`;
+
+  const sectionHtml = (title, rowsHtml) =>
+    `<div class="section"><div class="section-header">${title}</div><div class="section-body">${rowsHtml}</div></div>`;
+
+  const buildNtRows = () => {
+    let html = "";
+
+    // Kunduppgifter
+    html += sectionHtml("Kunduppgifter",
+      row("Företagsnamn", nt.foretagsnamn, false, true) +
+      row("Organisationsnummer", nt.orgnr, true)
+    );
+
+    // Ägare
+    const ägarRows = Array.from({ length: nt.ägarAntal }).map((_, i) =>
+      row(`Ägare ${i+1} — Personnummer`, nt.ägare[i].personnr, i%2===0) +
+      row(`Ägare ${i+1} — Ägarandel`, nt.ägare[i].andel ? nt.ägare[i].andel + " %" : "–", i%2!==0)
+    ).join("");
+    html += sectionHtml(`Ägare (${nt.ägarAntal} st)`, ägarRows);
+
+    // Startdatum
+    html += sectionHtml("Önskat startdatum", row("Startdatum", nt.startdatum));
+
+    // Försäkringstyper
+    const typer = [
+      nt.tjanstepension && "Tjänstepension",
+      nt.plansjuk && "Plansjuk",
+      nt.gruppliv && "Gruppliv",
+      nt.kassplacering && "Kassplacering",
+    ].filter(Boolean);
+    const chips = typer.map(t => `<span class="chip">${t}</span>`).join("") || "–";
+    html += sectionHtml("Försäkringstyper",
+      `<div class="row"><div class="label">Valda försäkringar</div><div class="value">${chips}</div></div>`
+    );
+
+    // Tjänstepension
+    if (nt.tjanstepension) {
+      const fonderRows = Array.from({ length: nt.tjpAntalFonder }).map((_, i) =>
+        row(`Fond ${i+1}`, `${nt.tjpFonder[i].namn || "–"} — ${nt.tjpFonder[i].procent || "0"} %`, i%2===0)
+      ).join("");
+      html += sectionHtml("Tjänstepension",
+        row("Teckna till", (nt.tjpTecknasTill || "67") + " år", false) +
+        row("Utbetalningstid", (nt.tjpUtbetalningstid || "10") + " år", true) +
+        row("Sparpremie / mån", nt.tjpSparpremie ? nt.tjpSparpremie + " kr" : "–", false) +
+        `<div class="subsection-title">Fondfördelning (${nt.tjpAntalFonder} fonder)</div>` +
+        fonderRows
+      );
+    }
+
+    // Plansjuk
+    if (nt.plansjuk) {
+      html += sectionHtml("Plansjuk",
+        row("Klarar hälsokrav 14/90", nt.psHalsokrav, false, true) +
+        row("Försäkrad lön", nt.psForsAkradLon ? nt.psForsAkradLon + " kr/år" : "–", true) +
+        row("Försäkrad tjänstepension", nt.psForsAkradTjp ? nt.psForsAkradTjp + " kr/mån" : "–", false) +
+        row("Faktura skickas till", nt.psFaktura, true)
+      );
+    }
+
+    // Gruppliv
+    if (nt.gruppliv) {
+      html += sectionHtml("Gruppliv",
+        row("Sjukvårdsförsäkring", nt.glSjukvard, false) +
+        row("Sjuk & Olycksfallsförsäkring", nt.glSjukOlycka, true) +
+        row("Livförsäkring", nt.glLiv, false)
+      );
+    }
+
+    // Kassplacering
+    if (nt.kassplacering) {
+      html += sectionHtml("Kassplacering",
+        row("Status", "Inkluderas i ärendet", false, true)
+      );
+    }
+
+    // Förmedlare
+    html += sectionHtml("Förmedlare",
+      row("Namn", nt.formedlarNamn, false) +
+      row("Telefon", nt.formedlarTel, true) +
+      row("E-post", nt.formedlarEmail, false)
+    );
+
+    // Noteringar
+    if (nt.noteringar) {
+      html += sectionHtml("Noteringar",
+        `<div class="row"><div class="value" style="padding:10px 12px;line-height:1.6;">${nt.noteringar}</div></div>`
+      );
+    }
+
+    return html;
+  };
+
+  const buildAnRows = () => {
+    let html = "";
+    html += sectionHtml("Kund",
+      row("Företagsnamn", an.foretagsnamn, false, true) +
+      row("Organisationsnummer", an.orgnr, true) +
+      row("Kontaktperson", an.kontaktperson, false) +
+      row("Telefon", an.kontaktTel, true) +
+      row("E-post", an.kontaktEmail, false)
+    );
+    html += sectionHtml("Ärende",
+      row("Typ av ändring", an.andringTyp, false, true) +
+      row("Befintlig police/avtal", an.befintligPolice, true)
+    );
+    if (an.beskrivning) {
+      html += sectionHtml("Beskrivning",
+        `<div class="row"><div class="value" style="padding:10px 12px;line-height:1.6;">${an.beskrivning}</div></div>`
+      );
+    }
+    html += sectionHtml("Förmedlare",
+      row("Namn", an.formedlarNamn, false) +
+      row("Telefon", an.formedlarTel, true) +
+      row("E-post", an.formedlarEmail, false)
+    );
+    if (an.noteringar) {
+      html += sectionHtml("Noteringar",
+        `<div class="row"><div class="value" style="padding:10px 12px;line-height:1.6;">${an.noteringar}</div></div>`
+      );
+    }
+    return html;
+  };
+
+  const handleSend = handleDownloadPDF;
 
 
   return (
@@ -1480,12 +1665,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
         </div>
       </div>
 
-      {/* Mottagarmejl */}
-      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14 }}>
-        <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>Skickas till</span>
-        <input type="email" value={mottagarMail} onChange={e => setMottagarMail(e.target.value)} placeholder="mottagare@bolag.se"
-          style={{ flex: 1, padding: "8px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
-      </div>
+
 
       {/* Mode buttons */}
       <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
@@ -1736,11 +1916,11 @@ Skickat via Norrfinans Rådgivningsverktyg`;
           {/* Send buttons */}
           <button onClick={handleSend}
             style={{ width: "100%", marginTop: 8, padding: "13px 20px", background: C.navy, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            📧 Kopiera & öppna Outlook
+            📄 Generera PDF
           </button>
           {submitted && (
             <div style={{ marginTop: 12, padding: "10px 16px", background: "#ECFDF5", border: "1px solid #6EE7B7", borderRadius: 7, color: "#065F46", fontSize: 12, fontWeight: 600 }}>
-              ✓ Hela formulärtexten är kopierad — klistra in (Ctrl+V) i mejlet
+              ✓ PDF öppnas — välj Spara som PDF eller Skriv ut för att bifoga i mejl
             </div>
           )}
         </div>
@@ -1785,11 +1965,11 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 
           <button onClick={handleSend}
             style={{ width: "100%", marginTop: 8, padding: "13px 20px", background: C.navy, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            📧 Kopiera & öppna Outlook
+            📄 Generera PDF
           </button>
           {submitted && (
             <div style={{ marginTop: 12, padding: "10px 16px", background: "#ECFDF5", border: "1px solid #6EE7B7", borderRadius: 7, color: "#065F46", fontSize: 12, fontWeight: 600 }}>
-              ✓ Hela formulärtexten är kopierad — klistra in (Ctrl+V) i mejlet
+              ✓ PDF öppnas — välj Spara som PDF eller Skriv ut för att bifoga i mejl
             </div>
           )}
         </div>
