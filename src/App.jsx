@@ -57,12 +57,17 @@ const WRow = ({ label, value, bold, separator }) => {
   );
 };
 
-const KFRow = ({ label, value, highlight, large }) => (
-  <div style={{ padding: "14px 16px", background: highlight ? C.navy : C.surface2, border: `1px solid ${highlight ? C.navy : C.border}`, borderRadius: 7, marginBottom: 10 }}>
-    <div style={{ color: highlight ? "rgba(255,255,255,0.6)" : C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 5 }}>{label}</div>
-    <div style={{ color: highlight ? "#FFF" : C.text, fontSize: large ? 26 : 20, fontWeight: 700 }}>{fmt(value)}</div>
-  </div>
-);
+const KFRow = ({ label, value, highlight, large, color }) => {
+  const bg = highlight ? C.navy : color === "blue" ? "#EEF4FF" : C.surface2;
+  const border = highlight ? C.navy : color === "blue" ? "#BFCFEE" : C.border;
+  const valColor = highlight ? "#FFF" : color === "blue" ? "#2563EB" : value < 0 ? C.red : C.text;
+  return (
+    <div style={{ padding: "14px 16px", background: bg, border: `1px solid ${border}`, borderRadius: 7, marginBottom: 10 }}>
+      <div style={{ color: highlight ? "rgba(255,255,255,0.6)" : C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 5 }}>{label}</div>
+      <div style={{ color: valColor, fontSize: large ? 26 : 20, fontWeight: 700 }}>{fmt(value)}</div>
+    </div>
+  );
+};
 
 const OvrigKostnad = ({ items, onChange }) => {
   const add = () => onChange([...items, { label: "", amount: 0 }]);
@@ -779,6 +784,156 @@ const SparandeView = ({ månSparande }) => {
   );
 };
 
+// ── LIKVIDITETSANALYS ─────────────────────────────────────────────────────────
+const LikviditetsanalysView = ({ r, utdelning, buffertPct }) => {
+  const [tillväxt, setTillväxt] = useState(0);   // omsättningstillväxt % / år
+  const [år, setÅr] = useState(5);
+
+  const rows = useMemo(() => {
+    const res = [];
+    for (let y = 1; y <= år; y++) {
+      const faktor = Math.pow(1 + tillväxt / 100, y - 1);
+      const omsättning = r.omsättning * faktor;
+      // Kostnader: lön & pension skalas med tillväxt (antagande), övriga likaså
+      const kostnader = (r.lönTotal + r.pensionTotal + r.övrigaSum) * faktor;
+      const ebit = omsättning - kostnader;
+      const bolagsskatt = Math.max(0, ebit) * 0.206;
+      const resultat = ebit - bolagsskatt;
+      const utd = Math.min(utdelning, Math.max(0, resultat)); // kan inte dela ut mer än resultat
+      const buffert = y === 1 ? Math.max(0, ebit) * (buffertPct / 100) : 0;
+      const kfSparande = resultat - utd - buffert;
+      res.push({ y, omsättning, kostnader, ebit, bolagsskatt, resultat, utd, buffert, kfSparande });
+    }
+    return res;
+  }, [r, utdelning, buffertPct, tillväxt, år]);
+
+  const colStyle = (val, highlight) => ({
+    padding: "11px 14px", fontSize: 12, fontFamily: "monospace", fontWeight: highlight ? 700 : 400,
+    color: val < 0 ? C.red : highlight ? C.gold : C.text, textAlign: "right", whiteSpace: "nowrap"
+  });
+  const hdr = { padding: "10px 14px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
+    textTransform: "uppercase", color: "rgba(255,255,255,0.6)", textAlign: "right", whiteSpace: "nowrap" };
+  const hdrL = { ...hdr, textAlign: "left" };
+
+  const cols = [
+    { label: "År", key: "y", left: true, plain: true },
+    { label: "Omsättning", key: "omsättning" },
+    { label: "Kostnader", key: "kostnader", neg: true },
+    { label: "EBIT", key: "ebit" },
+    { label: "Bolagsskatt", key: "bolagsskatt", neg: true },
+    { label: "Res. efter skatt", key: "resultat" },
+    { label: "Utdelning", key: "utd", neg: true },
+    { label: "Buffert (år 1)", key: "buffert", neg: true },
+    { label: "KF-sparande", key: "kfSparande", highlight: true },
+  ];
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+        <div style={{ width: 3, height: 20, background: C.gold, borderRadius: 2 }} />
+        <div>
+          <div style={{ color: C.gold, fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Flerårsöversikt</div>
+          <div style={{ color: C.navy, fontSize: 16, fontWeight: 700 }}>Likviditetsanalys</div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24, maxWidth: 480 }}>
+        <div>
+          <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Antal år</label>
+          <div style={{ display: "flex", alignItems: "center", background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+            <input type="number" value={år === 0 ? "" : år} placeholder="5" min={1} max={20} step={1}
+              onChange={e => setÅr(e.target.value === "" ? 0 : Math.max(1, Math.min(20, Number(e.target.value))))}
+              style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "9px 12px", fontFamily: "inherit" }} />
+            <span style={{ color: C.textLight, padding: "9px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}` }}>år</span>
+          </div>
+        </div>
+        <div>
+          <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Omsättningstillväxt</label>
+          <div style={{ display: "flex", alignItems: "center", background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+            <input type="number" value={tillväxt === 0 ? "" : tillväxt} placeholder="0" min={-20} max={50} step={1}
+              onChange={e => setTillväxt(e.target.value === "" ? 0 : Number(e.target.value))}
+              style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "9px 12px", fontFamily: "inherit" }} />
+            <span style={{ color: C.textLight, padding: "9px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}` }}>% / år</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Info buffert */}
+      <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 8, padding: "12px 16px", marginBottom: 20 }}>
+        <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
+          <strong style={{ color: C.navy }}>Likviditetsbuffert</strong> byggs upp år 1 och finansieras ur bolagets resultat efter skatt. Från år 2 är bufferten redan finansierad — hela överskottet (efter utdelning) är disponibelt för KF-inbetalning eller återinvestering.
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: "auto", borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: "0 2px 8px rgba(15,40,71,0.07)" }}>
+        <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 780 }}>
+          <thead>
+            <tr style={{ background: C.navy }}>
+              {cols.map(col => (
+                <th key={col.key} style={col.left ? hdrL : hdr}>{col.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={row.y} style={{ background: i % 2 === 0 ? "#fff" : C.surface, borderBottom: `1px solid ${C.border}` }}>
+                {cols.map(col => {
+                  if (col.plain) return (
+                    <td key={col.key} style={{ padding: "11px 14px", fontSize: 12, fontWeight: 700, color: C.navy }}>
+                      {row.y === 1 ? "År 1" : `År ${row.y}`}
+                    </td>
+                  );
+                  const val = row[col.key];
+                  const display = col.neg ? (val > 0 ? `−${fmt(val)}` : "—") : fmt(val);
+                  return (
+                    <td key={col.key} style={colStyle(col.neg ? -val : val, col.highlight)}>
+                      {col.key === "buffert" && row.y > 1 ? <span style={{ color: C.textLight, fontSize: 11 }}>finansierad</span> : display}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+          {/* Totals row */}
+          <tfoot>
+            <tr style={{ background: C.navy, borderTop: `2px solid ${C.gold}` }}>
+              <td style={{ padding: "12px 14px", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: 1 }}>Totalt</td>
+              {cols.slice(1).map(col => {
+                const total = rows.reduce((s, row) => s + (row[col.key] || 0), 0);
+                return (
+                  <td key={col.key} style={{ padding: "12px 14px", fontSize: 12, fontFamily: "monospace", fontWeight: 700, textAlign: "right",
+                    color: col.highlight ? C.gold : total < 0 ? "#f87171" : "rgba(255,255,255,0.85)" }}>
+                    {fmt(total)}
+                  </td>
+                );
+              })}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {/* KF-sparande summary */}
+      {rows.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginTop: 20 }}>
+          {[
+            { label: "KF-sparande år 1", value: rows[0].kfSparande, sub: "inkl. buffertuppbyggnad" },
+            { label: `KF-sparande år 2${rows.length > 2 ? "+" : ""}`, value: rows.length > 1 ? rows[1].kfSparande : 0, sub: "buffert redan finansierad" },
+            { label: `Totalt KF ${år} år`, value: rows.reduce((s, r) => s + r.kfSparande, 0), sub: "kumulativt", highlight: true },
+          ].map(card => (
+            <div key={card.label} style={{ background: card.highlight ? C.goldLight : "#fff", border: `1px solid ${card.highlight ? C.gold : C.border}`, borderRadius: 8, padding: "16px 18px" }}>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 6 }}>{card.label}</div>
+              <div style={{ color: card.highlight ? C.gold : card.value < 0 ? C.red : C.navy, fontSize: 20, fontWeight: 700, fontFamily: "monospace", marginBottom: 4 }}>{fmt(card.value)}</div>
+              <div style={{ color: C.textLight, fontSize: 11 }}>{card.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("kalkylator");
@@ -815,20 +970,22 @@ export default function App() {
       : omsättning - lönTotal - pensionTotal - övrigaSum;
     const bolagsskatt = Math.max(0, ebit) * 0.206;     // Bolagsskatt 20,6% (ej under noll)
     const resultatEfterSkatt = ebit - bolagsskatt;
-    const kvarEfterUtdelning = resultatEfterSkatt - utdelning;
-    const buffert = Math.max(0, kvarEfterUtdelning) * (buffertPct / 100);
-    const tillgängligtKF_år = kvarEfterUtdelning - buffert;
+    const buffert = Math.max(0, ebit) * (buffertPct / 100); // Buffert % av EBIT
+    const kvarEfterBuffert = resultatEfterSkatt - buffert;
+    const kvarEfterUtdelning = kvarEfterBuffert - utdelning;
+    const tillgängligtKF_år = kvarEfterUtdelning;
     const tillgängligtKF_mån = tillgängligtKF_år / 12;
     return {
       omsättning, lönTotal, pension, pensionSLP, pensionTotal, övrigaSum,
       ebit, bolagsskatt, resultatEfterSkatt,
-      buffert, kvarEfterUtdelning, tillgängligtKF_år, tillgängligtKF_mån,
+      buffert, kvarEfterBuffert, kvarEfterUtdelning, tillgängligtKF_år, tillgängligtKF_mån,
       utdelningNetto: utdelning * 0.8, faktTim
     };
   }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, vinstmarginal, bruttolön, pensionMån, övriga, utdelning, buffertPct]);
 
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
+    { id: "analys", label: "Likviditetsanalys" },
     { id: "sparande", label: "Sparande & Avkastning" },
     { id: "avgifter", label: "Avgiftskalkylator" },
     { id: "offert", label: "Offertjämförelse" },
@@ -927,7 +1084,7 @@ export default function App() {
                 <Section title="Övriga kostnader / mån"><OvrigKostnad items={övriga} onChange={setÖvriga} /></Section>
                 <Section title="Utdelning & Buffert">
                   <InputRow label="Planerad utdelning brutto / år" value={utdelning} onChange={setUtdelning} suffix="kr / år" step={10000} hint="Skatt 20 % (3:12)" />
-                  <InputRow label="Likviditetsbuffert" value={buffertPct} onChange={setBuffertPct} suffix="% av kvar efter utdelning" step={1} min={0} max={100} />
+                  <InputRow label="Likviditetsbuffert" value={buffertPct} onChange={setBuffertPct} suffix="% av EBIT" step={1} min={0} max={100} />
                   <InfoChip label="Buffertbelopp" value={fmt(r.buffert)} />
                 </Section>
               </div>
@@ -988,7 +1145,7 @@ export default function App() {
                 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 3 }}>Likviditetsbuffert</div>
-                    <div style={{ color: C.textMid, fontSize: 11 }}>{buffertPct} % av kvar efter utdelning</div>
+                    <div style={{ color: C.textMid, fontSize: 11 }}>{buffertPct} % av EBIT</div>
                   </div>
                   <div style={{ color: C.text, fontSize: 18, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.buffert)}</div>
                 </div>
@@ -1054,7 +1211,7 @@ export default function App() {
               <Section title="Övriga kostnader / mån"><OvrigKostnad items={övriga} onChange={setÖvriga} /></Section>
               <Section title="Utdelning & Buffert">
                 <InputRow label="Planerad utdelning brutto / år" value={utdelning} onChange={setUtdelning} suffix="kr / år" step={10000} hint="Skatt 20 % (3:12)" />
-                <InputRow label="Likviditetsbuffert" value={buffertPct} onChange={setBuffertPct} suffix="% av kvar efter utdelning" step={1} min={0} max={100} />
+                <InputRow label="Likviditetsbuffert" value={buffertPct} onChange={setBuffertPct} suffix="% av EBIT" step={1} min={0} max={100} />
                 <InfoChip label="Buffertbelopp" value={fmt(r.buffert)} />
               </Section>
             </div>
@@ -1095,7 +1252,7 @@ export default function App() {
                 <WRow label="Planerad utdelning (brutto)" value={-utdelning} />
                 <WRow separator />
                 <WRow label="Kvar i bolaget efter utdelning" value={r.kvarEfterUtdelning} bold />
-                <WRow label={`Likviditetsbuffert (${buffertPct} % av kvar)`} value={-r.buffert} />
+                <WRow label={`Likviditetsbuffert (${buffertPct}% av EBIT)`} value={-r.buffert} />
                 <WRow separator />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: C.navy, borderRadius: 6, marginTop: 6 }}>
                   <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600 }}>Tillgängligt för kapitalförsäkring / år</span>
@@ -1153,19 +1310,16 @@ export default function App() {
                 </div>
               </div>
               <KFRow label="EBIT (rörelseresultat)" value={r.ebit} />
+              <KFRow label={`Likviditetsbuffert (${buffertPct}% av EBIT)`} value={-r.buffert} color="blue" />
               <KFRow label="Bolagsskatt (20,6%)" value={-r.bolagsskatt} />
               <KFRow label="Resultat efter skatt" value={r.resultatEfterSkatt} />
 
-              {/* Fördelning av resultat efter skatt */}
+              {/* Utdelning + KF */}
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "14px 16px", margin: "12px 0" }}>
-                <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Användning av resultat efter skatt</div>
+                <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Fördelning av resultat</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                   <span style={{ color: C.textMid, fontSize: 12 }}>Utdelning till ägaren (brutto)</span>
                   <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace" }}>−{fmt(utdelning)}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ color: C.textMid, fontSize: 12 }}>Likviditetsbuffert ({buffertPct} %)</span>
-                  <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace" }}>−{fmt(r.buffert)}</span>
                 </div>
                 <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: C.text, fontSize: 12, fontWeight: 700 }}>Kvar för KF-inbetalning</span>
@@ -1213,6 +1367,7 @@ export default function App() {
         </div>
       )}
 
+      {tab === "analys" && <LikviditetsanalysView r={r} utdelning={utdelning} buffertPct={buffertPct} />}
       {tab === "sparande" && <SparandeView månSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "avgifter" && <AvgiftsView defaultMånSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "offert" && <OffertView />}
