@@ -1576,13 +1576,13 @@ const TradView = () => {
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling — {b.namn}</span>
             </div>
             {(() => {
-              const VW = 800, VH = 220, PAD_L = 62, PAD_B = 22, plotW = VW - PAD_L - 8, plotH = VH - PAD_B;
+              const VW = 800, VH = 220, PAD_L = 62, PAD_B = 22, PAD_T = 16, plotW = VW - PAD_L - 8, plotH = VH - PAD_B - PAD_T;
               const n = rows.length;
               const barW = Math.max(14, Math.min(40, (plotW / n) * 0.6));
               const gap = plotW / n;
               const minVal = kapital + extra;
               const range = Math.max(1, maxKap - minVal);
-              const toY = v => plotH - ((v - minVal) / range) * plotH;
+              const toY = v => PAD_T + plotH - ((v - minVal) / range) * plotH;
               return (
                 <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block" }}>
                   {/* Y-axis gridlines + labels */}
@@ -1602,13 +1602,14 @@ const TradView = () => {
                     const x = cx - barW / 2;
                     const kapH = ((row.kapEfterAvg - minVal) / range) * plotH;
                     const avkH = Math.max(0, (row.avkEfterAvg / range) * plotH);
+                    const baseY = PAD_T + plotH;
                     return (
                       <g key={i}>
-                        <rect x={x} y={plotH - kapH} width={barW} height={kapH} fill={b.color} opacity={0.13} rx={2} />
-                        <rect x={x} y={plotH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.6} rx={2} />
+                        <rect x={x} y={baseY - kapH} width={barW} height={kapH} fill={b.color} opacity={0.13} rx={2} />
+                        <rect x={x} y={baseY - avkH} width={barW} height={avkH} fill={b.color} opacity={0.6} rx={2} />
                         <text x={cx} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={C.textLight} fontFamily="inherit">{row.y}</text>
                         {uttakÅr === row.y && (
-                          <line x1={cx} y1={0} x2={cx} y2={plotH} stroke={C.red} strokeWidth={1} strokeDasharray="3,3" opacity={0.7} />
+                          <line x1={cx} y1={PAD_T} x2={cx} y2={PAD_T + plotH} stroke={C.red} strokeWidth={1} strokeDasharray="3,3" opacity={0.7} />
                         )}
                       </g>
                     );
