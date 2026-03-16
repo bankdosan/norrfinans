@@ -1169,7 +1169,7 @@ const LikviditetsanalysView = ({ r, utdelning, buffertPct, buffertMode, buffertK
     { label: "År", key: "y", left: true, plain: true },
     { label: "Omsättning", key: "omsättning" },
     { label: "Kostnader", key: "kostnader", neg: true },
-    { label: "EBIT", key: "ebit" },
+    { label: "Resultat före skatt", key: "ebit" },
     { label: "Bolagsskatt", key: "bolagsskatt", neg: true },
     { label: "Res. efter skatt", key: "resultat" },
     { label: "Utdelning", key: "utd", neg: true },
@@ -1575,60 +1575,64 @@ const TradView = () => {
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling — {b.namn}</span>
             </div>
-            <svg width="100%" viewBox={`0 0 ${Math.max(400, rows.length * 42)} ${chartH + 40}`} style={{ overflow: "visible" }}>
-              {/* Grid lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map(frac => {
-                const y = chartH - frac * chartH;
-                const val = (kapital + extra) + frac * (maxKap - (kapital + extra));
-                return (
-                  <g key={frac}>
-                    <line x1={0} y1={y} x2="100%" y2={y} stroke={C.border} strokeWidth={0.75} strokeDasharray="3,4" />
-                    <text x={0} y={y - 2} fontSize={6} fill={C.textLight} letterSpacing={0.2}>{fmtShort(val)}</text>
-                  </g>
-                );
-              })}
-              {/* Bars + line */}
-              {rows.map((row, i) => {
-                const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
-                const x = i * (barW + 6) + 30;
-                const kapH = ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
-                const avkH = Math.max(0, (row.avkEfterAvg / Math.max(1, maxKap - (kapital + extra))) * chartH);
-                const bY = chartH - kapH;
-                return (
-                  <g key={i}>
-                    <rect x={x} y={bY} width={barW} height={kapH} fill={b.color} opacity={0.15} rx={2} />
-                    <rect x={x} y={chartH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.65} rx={2} />
-                    <text x={x + barW / 2} y={chartH + 12} textAnchor="middle" fontSize={6.5} fill={C.textLight} letterSpacing={0.3}>{row.y}</text>
-                    {uttakÅr === row.y && (
-                      <line x1={x + barW / 2} y1={0} x2={x + barW / 2} y2={chartH} stroke={C.red} strokeWidth={1.5} strokeDasharray="4,3" />
-                    )}
-                  </g>
-                );
-              })}
-              {/* Line over bars */}
-              <polyline
-                fill="none"
-                stroke={b.color}
-                strokeWidth={1.5}
-                points={rows.map((row, i) => {
-                  const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
-                  const x = i * (barW + 6) + 30 + barW / 2;
-                  const y = chartH - ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
-                  return `${x},${y}`;
-                }).join(" ")}
-              />
-              {/* Dots */}
-              {rows.map((row, i) => {
-                const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
-                const x = i * (barW + 6) + 30 + barW / 2;
-                const y = chartH - ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
-                return <circle key={i} cx={x} cy={y} r={2.5} fill={b.color} stroke="#fff" strokeWidth={1} />;
-              })}
-            </svg>
-            <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 8, background: b.color, opacity: 0.7, borderRadius: 2 }} /><span style={{ fontSize: 10, color: C.textLight }}>Årets avkastning</span></div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 8, background: b.color, opacity: 0.18, borderRadius: 2 }} /><span style={{ fontSize: 10, color: C.textLight }}>Kapitaluppbyggnad</span></div>
-              {uttakÅr && <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 2, background: C.red }} /><span style={{ fontSize: 10, color: C.textLight }}>Uttag år {uttakÅr}</span></div>}
+            {(() => {
+              const VW = 800, VH = 220, PAD_L = 62, PAD_B = 22, plotW = VW - PAD_L - 8, plotH = VH - PAD_B;
+              const n = rows.length;
+              const barW = Math.max(14, Math.min(40, (plotW / n) * 0.6));
+              const gap = plotW / n;
+              const minVal = kapital + extra;
+              const range = Math.max(1, maxKap - minVal);
+              const toY = v => plotH - ((v - minVal) / range) * plotH;
+              return (
+                <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block" }}>
+                  {/* Y-axis gridlines + labels */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(frac => {
+                    const val = minVal + frac * range;
+                    const y = toY(val);
+                    return (
+                      <g key={frac}>
+                        <line x1={PAD_L} y1={y} x2={VW - 8} y2={y} stroke={C.border} strokeWidth={0.6} strokeDasharray="3,5" />
+                        <text x={PAD_L - 5} y={y + 3.5} textAnchor="end" fontSize={8} fill={C.textLight} fontFamily="inherit">{fmtShort(val)}</text>
+                      </g>
+                    );
+                  })}
+                  {/* Bars */}
+                  {rows.map((row, i) => {
+                    const cx = PAD_L + i * gap + gap / 2;
+                    const x = cx - barW / 2;
+                    const kapH = ((row.kapEfterAvg - minVal) / range) * plotH;
+                    const avkH = Math.max(0, (row.avkEfterAvg / range) * plotH);
+                    return (
+                      <g key={i}>
+                        <rect x={x} y={plotH - kapH} width={barW} height={kapH} fill={b.color} opacity={0.13} rx={2} />
+                        <rect x={x} y={plotH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.6} rx={2} />
+                        <text x={cx} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={C.textLight} fontFamily="inherit">{row.y}</text>
+                        {uttakÅr === row.y && (
+                          <line x1={cx} y1={0} x2={cx} y2={plotH} stroke={C.red} strokeWidth={1} strokeDasharray="3,3" opacity={0.7} />
+                        )}
+                      </g>
+                    );
+                  })}
+                  {/* Line */}
+                  <polyline fill="none" stroke={b.color} strokeWidth={1.5} opacity={0.9}
+                    points={rows.map((row, i) => {
+                      const cx = PAD_L + i * gap + gap / 2;
+                      const y = toY(row.kapEfterAvg);
+                      return `${cx},${y}`;
+                    }).join(" ")} />
+                  {/* Dots */}
+                  {rows.map((row, i) => {
+                    const cx = PAD_L + i * gap + gap / 2;
+                    const y = toY(row.kapEfterAvg);
+                    return <circle key={i} cx={cx} cy={y} r={2.5} fill={b.color} stroke="#fff" strokeWidth={1.2} />;
+                  })}
+                </svg>
+              );
+            })()}
+            <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 7, background: b.color, opacity: 0.6, borderRadius: 1 }} /><span style={{ fontSize: 10, color: C.textLight }}>Årets avkastning</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 7, background: b.color, opacity: 0.13, borderRadius: 1 }} /><span style={{ fontSize: 10, color: C.textLight }}>Kapitaluppbyggnad</span></div>
+              {uttakÅr && <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 10, height: 1.5, background: C.red, opacity: 0.7 }} /><span style={{ fontSize: 10, color: C.textLight }}>Uttag år {uttakÅr}</span></div>}
             </div>
           </div>
 
@@ -2408,15 +2412,17 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 function MainApp({ onLogout }) {
     const [tab, setTab] = useState("kalkylator");
   const [förenkladVy, setFörenkladVy] = useState(false);
-  const [intäkterMode, setIntäkterMode] = useState("timbaserat"); // "timbaserat" | "marginal"
+  const [intäkterMode, setIntäkterMode] = useState("timbaserat"); // "timbaserat" | "omsättning"
   const [timpris, setTimpris] = useState(0);
   const [timmar, setTimmar] = useState(1832);
   const [debiteringsgrad, setDebiteringsgrad] = useState(0);
   const [direktOmsättning, setDirektOmsättning] = useState(0);
   const [vinstmarginal, setVinstmarginal] = useState(0);
   const [bruttolön, setBruttolön] = useState(0);
+  const [bruttolönÅr, setBruttolönÅr] = useState(0);
   const [lönPeriod, setLönPeriod] = useState("mån");
   const [pensionMån, setPensionMån] = useState(0);
+  const [antalÄgare, setAntalÄgare] = useState(1);
   const [övriga, setÖvriga] = useState([
     { label: "Hyra / kontorsplats", amount: 0 },
     { label: "Mjukvara & verktyg", amount: 0 },
@@ -2424,7 +2430,7 @@ function MainApp({ onLogout }) {
   ]);
   const [utdelning, setUtdelning] = useState(0);
   const [buffertPct, setBuffertPct] = useState(0);
-  const [buffertMode, setBuffertMode] = useState("pct"); // "pct" | "kr"
+  const [buffertMode, setBuffertMode] = useState("kr"); // "pct" | "kr"
   const [buffertKr, setBuffertKr] = useState(0);
   const [övrigaPeriod, setÖvrigaPeriod] = useState("mån"); // "mån" | "år"
 
@@ -2433,15 +2439,15 @@ function MainApp({ onLogout }) {
     const omsättning = intäkterMode === "timbaserat"
       ? timpris * faktTim
       : direktOmsättning;
-    const lönTotal = bruttolön * 12 * 1.3142;
-    const pension = pensionMån * 12;
+    const lönTotal = (lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 1.3142 * antalÄgare;
+    const pension = pensionMån * 12 * antalÄgare;
     const pensionSLP = pension * 0.2426;
     const pensionTotal = pension + pensionSLP;
     const övrigaRaw = övriga.reduce((s, k) => s + (k.amount || 0), 0);
     const övrigaSum = övrigaPeriod === "mån" ? övrigaRaw * 12 : övrigaRaw;
-    const ebit = intäkterMode === "marginal"
-      ? omsättning * (vinstmarginal / 100) - lönTotal - pensionTotal - övrigaSum
-      : omsättning - lönTotal - pensionTotal - övrigaSum;
+
+    const ebit = omsättning - lönTotal - pensionTotal - övrigaSum;
+
     const bolagsskatt = Math.max(0, ebit) * 0.206;
     const resultatEfterSkatt = ebit - bolagsskatt;
     const buffert = buffertMode === "pct"
@@ -2458,7 +2464,7 @@ function MainApp({ onLogout }) {
       buffert, kvarEfterBuffert, kvarEfterUtdelning, tillgängligtKF_år, tillgängligtKF_mån,
       utdelningNetto: utdelning * 0.8, faktTim
     };
-  }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, vinstmarginal, bruttolön, pensionMån, övriga, övrigaPeriod, utdelning, buffertPct, buffertMode, buffertKr]);
+  }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, vinstmarginal, bruttolön, bruttolönÅr, lönPeriod, antalÄgare, pensionMån, övriga, övrigaPeriod, utdelning, buffertPct, buffertMode, buffertKr]);
 
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
@@ -2524,7 +2530,7 @@ function MainApp({ onLogout }) {
               <div style={{ padding: "24px 20px", borderRight: `1px solid ${C.border}` }}>
                 <Section title="Intäkter">
                   <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.surface2, borderRadius: 7, padding: 4 }}>
-                    {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "marginal", label: "📊 Omsättning & Marginal" }].map(m => (
+                    {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "omsättning", label: "📊 Omsättning" }].map(m => (
                       <button key={m.id} onClick={() => setIntäkterMode(m.id)} style={{ flex: 1, padding: "8px 10px", borderRadius: 5, border: "none", background: intäkterMode === m.id ? C.navy : "transparent", color: intäkterMode === m.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{m.label}</button>
                     ))}
                   </div>
@@ -2539,31 +2545,38 @@ function MainApp({ onLogout }) {
                   ) : (
                     <>
                       <InputRow label="Omsättning / år" value={direktOmsättning} onChange={setDirektOmsättning} suffix="kr / år" step={50000} />
-                      <InputRow label="Vinstmarginal (EBIT)" value={vinstmarginal} onChange={setVinstmarginal} suffix="%" step={0.5} min={0} max={100} hint="Resultat / omsättning" />
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
                         <InfoChip label="Omsättning / mån" value={fmt(direktOmsättning / 12)} />
-                        <InfoChip label="EBIT / år" value={fmt(r.ebit)} />
+                        <InfoChip label="Resultat / år" value={fmt(r.ebit)} />
                       </div>
                     </>
                   )}
                 </Section>
                 <Section title="Lön & Arbetsgivaravgift">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, background: C.surface2, borderRadius: 7, padding: "10px 14px" }}>
+                    <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Antal ägare</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button onClick={() => setAntalÄgare(v => Math.max(1, v - 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>−</button>
+                      <span style={{ color: C.navy, fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "center" }}>{antalÄgare}</span>
+                      <button onClick={() => setAntalÄgare(v => Math.min(10, v + 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
+                    </div>
+                  </div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                     {[{ id: "mån", label: "Månadsvis" }, { id: "år", label: "Årsvis" }].map(t => (
                       <button key={t.id} onClick={() => setLönPeriod(t.id)} style={{ flex: 1, padding: "7px", borderRadius: 5, border: `1.5px solid ${lönPeriod === t.id ? C.navy : C.border}`, background: lönPeriod === t.id ? C.navy : "transparent", color: lönPeriod === t.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
                     ))}
                   </div>
-                  <InputRow label={lönPeriod === "mån" ? "Bruttolön / månad" : "Bruttolön / år"} value={lönPeriod === "mån" ? bruttolön : bruttolön * 12} onChange={v => setBruttolön(lönPeriod === "mån" ? v : Math.round(v / 12))} suffix={lönPeriod === "mån" ? "kr / mån" : "kr / år"} step={lönPeriod === "mån" ? 1000 : 12000} />
+                  <InputRow label={lönPeriod === "mån" ? "Bruttolön / månad" : "Bruttolön / år"} value={lönPeriod === "mån" ? bruttolön : bruttolönÅr} onChange={v => { if (lönPeriod === "mån") setBruttolön(v); else setBruttolönÅr(v); }} suffix={lönPeriod === "mån" ? "kr / mån" : "kr / år"} step={1000} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <InfoChip label="AG-avgift" value="31,42 %" />
-                    <InfoChip label="Lönekostnad / år" value={fmt(bruttolön * 12 * 1.3142)} />
+                    <InfoChip label={antalÄgare > 1 ? `Lönekostnad / år (${antalÄgare} ägare)` : "Lönekostnad / år"} value={fmt((lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 1.3142 * antalÄgare)} />
                   </div>
-                  <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(bruttolön)} /></div>
+                  <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(Math.round(bruttolönÅr / 12))} /></div>
                 </Section>
                 <Section title="Tjänstepension">
                   <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
-                  <InfoChip label="Pensionskostnad / år" value={fmt(pensionMån * 12)} />
-                  {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * 1.2426)} /></div>}
+                  <InfoChip label={antalÄgare > 1 ? `Pensionskostnad / år (${antalÄgare} ägare)` : "Pensionskostnad / år"} value={fmt(pensionMån * 12 * antalÄgare)} />
+                  {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * antalÄgare * 1.2426)} /></div>}
                 </Section>
                 <Section title="Övriga kostnader">
                   <div style={{ display: "flex", gap: 6, marginBottom: 12, background: C.surface2, borderRadius: 7, padding: 4 }}>
@@ -2579,12 +2592,12 @@ function MainApp({ onLogout }) {
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Likviditetsbuffert</div>
                     <div style={{ display: "flex", gap: 6, marginBottom: 8, background: C.surface2, borderRadius: 7, padding: 4 }}>
-                      {[{ id: "pct", label: "% av EBIT" }, { id: "kr", label: "Fast belopp (kr)" }].map(t => (
+                      {[{ id: "pct", label: "% av resultat" }, { id: "kr", label: "Fast belopp (kr)" }].map(t => (
                         <button key={t.id} onClick={() => setBuffertMode(t.id)} style={{ flex: 1, padding: "7px", borderRadius: 5, border: "none", background: buffertMode === t.id ? C.navy : "transparent", color: buffertMode === t.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
                       ))}
                     </div>
                     {buffertMode === "pct"
-                      ? <InputRow label="Buffert % av EBIT" value={buffertPct} onChange={setBuffertPct} suffix="%" step={1} min={0} max={100} />
+                      ? <InputRow label="Buffert % av resultat" value={buffertPct} onChange={setBuffertPct} suffix="%" step={1} min={0} max={100} />
                       : <InputRow label="Buffertbelopp" value={buffertKr} onChange={setBuffertKr} suffix="kr / år" step={10000} />
                     }
                   </div>
@@ -2613,8 +2626,8 @@ function MainApp({ onLogout }) {
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
                     <div>
-                      <div style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>EBIT</div>
-                      <div style={{ color: C.textLight, fontSize: 11, marginTop: 2 }}>Rörelseresultat före skatt</div>
+                      <div style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Resultat före skatt</div>
+                      <div style={{ color: C.textLight, fontSize: 11, marginTop: 2 }}>Före bolagsskatt</div>
                     </div>
                     <span style={{ color: r.ebit >= 0 ? C.green : C.red, fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.ebit)}</span>
                   </div>
@@ -2680,7 +2693,7 @@ function MainApp({ onLogout }) {
             <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
               <Section title="Intäkter">
                 <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.surface2, borderRadius: 7, padding: 4 }}>
-                  {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "marginal", label: "📊 Omsättning & Marginal" }].map(m => (
+                  {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "omsättning", label: "📊 Omsättning" }].map(m => (
                     <button key={m.id} onClick={() => setIntäkterMode(m.id)} style={{ flex: 1, padding: "8px 10px", borderRadius: 5, border: "none", background: intäkterMode === m.id ? C.navy : "transparent", color: intäkterMode === m.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>{m.label}</button>
                   ))}
                 </div>
@@ -2695,10 +2708,9 @@ function MainApp({ onLogout }) {
                 ) : (
                   <>
                     <InputRow label="Omsättning / år" value={direktOmsättning} onChange={setDirektOmsättning} suffix="kr / år" step={50000} />
-                    <InputRow label="Vinstmarginal (EBIT)" value={vinstmarginal} onChange={setVinstmarginal} suffix="%" step={0.5} min={0} max={100} hint="Resultat / omsättning" />
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
                       <InfoChip label="Omsättning / mån" value={fmt(direktOmsättning / 12)} />
-                      <InfoChip label="EBIT / år" value={fmt(r.ebit)} />
+                      <InfoChip label="Resultat / år" value={fmt(r.ebit)} />
                     </div>
                     <div style={{ marginTop: 8, background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "9px 12px" }}>
                       <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 2 }}>OBS — marginalläge</div>
@@ -2708,22 +2720,30 @@ function MainApp({ onLogout }) {
                 )}
               </Section>
               <Section title="Lön & Arbetsgivaravgift">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, background: C.surface2, borderRadius: 7, padding: "10px 14px" }}>
+                  <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Antal ägare</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button onClick={() => setAntalÄgare(v => Math.max(1, v - 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>−</button>
+                    <span style={{ color: C.navy, fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "center" }}>{antalÄgare}</span>
+                    <button onClick={() => setAntalÄgare(v => Math.min(10, v + 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
+                  </div>
+                </div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                   {[{ id: "mån", label: "Månadsvis" }, { id: "år", label: "Årsvis" }].map(t => (
                     <button key={t.id} onClick={() => setLönPeriod(t.id)} style={{ flex: 1, padding: "7px", borderRadius: 5, border: `1.5px solid ${lönPeriod === t.id ? C.navy : C.border}`, background: lönPeriod === t.id ? C.navy : "transparent", color: lönPeriod === t.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
                   ))}
                 </div>
-                <InputRow label={lönPeriod === "mån" ? "Bruttolön / månad" : "Bruttolön / år"} value={lönPeriod === "mån" ? bruttolön : bruttolön * 12} onChange={v => setBruttolön(lönPeriod === "mån" ? v : Math.round(v / 12))} suffix={lönPeriod === "mån" ? "kr / mån" : "kr / år"} step={lönPeriod === "mån" ? 1000 : 12000} />
+                <InputRow label={lönPeriod === "mån" ? "Bruttolön / månad" : "Bruttolön / år"} value={lönPeriod === "mån" ? bruttolön : bruttolönÅr} onChange={v => { if (lönPeriod === "mån") setBruttolön(v); else setBruttolönÅr(v); }} suffix={lönPeriod === "mån" ? "kr / mån" : "kr / år"} step={1000} />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <InfoChip label="AG-avgift" value="31,42 %" />
-                  <InfoChip label="Lönekostnad / år" value={fmt(bruttolön * 12 * 1.3142)} />
+                  <InfoChip label={antalÄgare > 1 ? `Lönekostnad / år (${antalÄgare} ägare)` : "Lönekostnad / år"} value={fmt((lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 1.3142 * antalÄgare)} />
                 </div>
-                <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(bruttolön)} /></div>
+                <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(Math.round(bruttolönÅr / 12))} /></div>
               </Section>
               <Section title="Tjänstepension">
                 <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
-                <InfoChip label="Pensionskostnad / år" value={fmt(pensionMån * 12)} />
-              {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * 1.2426)} /></div>}
+                <InfoChip label={antalÄgare > 1 ? `Pensionskostnad / år (${antalÄgare} ägare)` : "Pensionskostnad / år"} value={fmt(pensionMån * 12 * antalÄgare)} />
+              {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * antalÄgare * 1.2426)} /></div>}
               </Section>
               <Section title="Övriga kostnader">
                 <div style={{ display: "flex", gap: 6, marginBottom: 12, background: C.surface2, borderRadius: 7, padding: 4 }}>
@@ -2739,12 +2759,12 @@ function MainApp({ onLogout }) {
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Likviditetsbuffert</div>
                   <div style={{ display: "flex", gap: 6, marginBottom: 8, background: C.surface2, borderRadius: 7, padding: 4 }}>
-                    {[{ id: "pct", label: "% av EBIT" }, { id: "kr", label: "Fast belopp (kr)" }].map(t => (
+                    {[{ id: "pct", label: "% av resultat" }, { id: "kr", label: "Fast belopp (kr)" }].map(t => (
                       <button key={t.id} onClick={() => setBuffertMode(t.id)} style={{ flex: 1, padding: "7px", borderRadius: 5, border: "none", background: buffertMode === t.id ? C.navy : "transparent", color: buffertMode === t.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
                     ))}
                   </div>
                   {buffertMode === "pct"
-                    ? <InputRow label="Buffert % av EBIT" value={buffertPct} onChange={setBuffertPct} suffix="%" step={1} min={0} max={100} />
+                    ? <InputRow label="Buffert % av resultat" value={buffertPct} onChange={setBuffertPct} suffix="%" step={1} min={0} max={100} />
                     : <InputRow label="Buffertbelopp" value={buffertKr} onChange={setBuffertKr} suffix="kr / år" step={10000} />
                   }
                 </div>
@@ -2773,7 +2793,7 @@ function MainApp({ onLogout }) {
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0 7px", borderBottom: `1px solid #F0F3F7`, marginBottom: 6 }}>
                       <span style={{ color: C.textMid, fontSize: 12 }}>Rörelsekostnader (inkl. i marginal)</span>
-                      <span style={{ background: C.goldLight, color: C.gold, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 3, border: `1px solid ${C.gold}` }}>{vinstmarginal} % marginal</span>
+
                     </div>
                     <WRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} />
                     {r.pensionTotal > 0 && <WRow label="Tjänstepension inkl. SLP" value={-r.pensionTotal} />}
@@ -2781,7 +2801,7 @@ function MainApp({ onLogout }) {
                     <WRow separator />
                   </>
                 )}
-                <WRow label="EBIT (rörelseresultat)" value={r.ebit} bold />
+                <WRow label="Resultat före skatt" value={r.ebit} bold />
                 <WRow label="Bolagsskatt (20,6%)" value={-r.bolagsskatt} />
                 <WRow separator />
                 <WRow label="Resultat efter skatt" value={r.resultatEfterSkatt} bold />
@@ -2816,7 +2836,7 @@ function MainApp({ onLogout }) {
                   { label: "Buffert", value: r.buffert, color: C.blue },
                   { label: "Kapitalförsäkring", value: Math.max(0, r.tillgängligtKF_år), color: C.gold },
                 ] : [
-                  { label: "Rörelsekostnader (i marginal)", value: r.omsättning * (1 - vinstmarginal / 100), color: "#3A7BD5" },
+                  { label: "Lön (inkl. AG-avgift)", value: r.lönTotal, color: "#3A7BD5" },
                   { label: "Pension inkl. SLP", value: r.pensionTotal, color: "#7B5EA7" },
                   { label: "Övriga kostnader", value: r.övrigaSum, color: "#E08A3C" },
                   { label: "Bolagsskatt (20,6%)", value: r.bolagsskatt, color: "#C0392B" },
@@ -2852,7 +2872,7 @@ function MainApp({ onLogout }) {
                   <div style={{ color: C.navy, fontSize: 13, fontWeight: 700 }}>Kapitalförsäkring</div>
                 </div>
               </div>
-              <KFRow label="EBIT (rörelseresultat)" value={r.ebit} />
+              <KFRow label="Resultat före skatt" value={r.ebit} />
               <KFRow label={buffertMode === "pct" ? `Likviditetsbuffert (${buffertPct}% av EBIT)` : `Likviditetsbuffert (fast ${fmt(buffertKr)} kr)`} value={-r.buffert} color="blue" />
               <KFRow label="Bolagsskatt (20,6%)" value={-r.bolagsskatt} />
               <KFRow label="Resultat efter skatt" value={r.resultatEfterSkatt} />
