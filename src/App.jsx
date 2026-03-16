@@ -1312,6 +1312,414 @@ const FSect = ({ title, children }) => (
   </div>
 );
 
+// ─── TRAD AVKASTNING ────────────────────────────────────────────────────────
+const TRAD_BOLAG = {
+  skandia: {
+    namn: "Skandia",
+    återbäringsränta: 6.00,
+    snitt5år: 6.80,
+    kapitalavgift: 0.40,
+    fastAvgiftÅr: 0,
+    premieavgiftTrappor: [{ under: 500000, pct: 2.0 }, { under: 1000000, pct: 1.0 }, { under: Infinity, pct: 0 }],
+    riskkapitaljustering: 1.0,
+    återköp: [
+      { år: 1, rörlig: 3, fast: 350 },
+      { år: 2, rörlig: 3, fast: 350 },
+      { år: 3, rörlig: 3, fast: 350 },
+      { år: 4, rörlig: 2, fast: 350 },
+      { år: 5, rörlig: 2, fast: 350 },
+      { år: 6, rörlig: 2, fast: 350 },
+      { år: 7, rörlig: 2, fast: 350 },
+      { år: 8, rörlig: 1, fast: 350 },
+      { år: 9, rörlig: 1, fast: 350 },
+      { år: 10, rörlig: 1, fast: 350 },
+    ],
+    color: "#1A5296",
+  },
+  folksam: {
+    namn: "Folksam",
+    återbäringsränta: 9.00,
+    snitt5år: 6.20,
+    kapitalavgift: 0.45,
+    fastAvgiftÅr: 288,
+    premieavgiftTrappor: [{ under: 1000000, pct: 1.0 }, { under: Infinity, pct: 0 }],
+    riskkapitaljustering: 0,
+    återköp: [
+      { år: 1, ejÅterköpsbar: true },
+      { år: 2, rörlig: 3, fast: 250 },
+      { år: 3, rörlig: 3, fast: 250 },
+      { år: 4, rörlig: 3, fast: 250 },
+      { år: 5, rörlig: 2, fast: 250 },
+      { år: 6, rörlig: 2, fast: 250 },
+      { år: 7, rörlig: 2, fast: 250 },
+      { år: 8, rörlig: 1, fast: 250 },
+      { år: 9, rörlig: 1, fast: 250 },
+      { år: 10, rörlig: 0, fast: 250 },
+    ],
+    color: "#C0392B",
+  },
+};
+
+const TradView = () => {
+  const [bolag, setBolag] = useState("skandia");
+  const [kapital, setKapital] = useState(10000000);
+  const [extra, setExtra] = useState(0);
+  const [år, setÅr] = useState(10);
+  const [räntaOverride, setRäntaOverride] = useState(null);
+  const [använd5år, setAnvänd5år] = useState(false);
+  const [uttakÅr, setUttakÅr] = useState(null);
+  const [uttakBelopp, setUttakBelopp] = useState(0);
+
+  // Editerbar bolagsdata per bolag
+  const [bolagData, setBolagData] = useState({
+    skandia: { återbäringsränta: 6.00, snitt5år: 6.80, kapitalavgift: 0.40, fastAvgiftÅr: 0, riskkapitaljustering: 1.0 },
+    folksam: { återbäringsränta: 9.00, snitt5år: 6.20, kapitalavgift: 0.45, fastAvgiftÅr: 288, riskkapitaljustering: 0 },
+  });
+  const setField = (field, val) => setBolagData(prev => ({ ...prev, [bolag]: { ...prev[bolag], [field]: val } }));
+  const resetBolag = (k) => setBolagData(prev => ({
+    ...prev,
+    [k]: { återbäringsränta: TRAD_BOLAG[k].återbäringsränta, snitt5år: TRAD_BOLAG[k].snitt5år, kapitalavgift: TRAD_BOLAG[k].kapitalavgift, fastAvgiftÅr: TRAD_BOLAG[k].fastAvgiftÅr, riskkapitaljustering: TRAD_BOLAG[k].riskkapitaljustering },
+  }));
+
+  // Merge static bolag data with editable overrides
+  const b = { ...TRAD_BOLAG[bolag], ...bolagData[bolag] };
+  const ränta = räntaOverride !== null ? räntaOverride : (använd5år ? b.snitt5år : b.återbäringsränta);
+
+  const rows = useMemo(() => {
+    const res = [];
+    let kapNu = kapital + extra;
+    for (let y = 1; y <= år; y++) {
+      const avkastning = kapNu * (ränta / 100);
+      const kapital31 = kapNu + avkastning;
+      const avgift = kapital31 * (b.kapitalavgift / 100) + b.fastAvgiftÅr;
+      const kapEfterAvg = kapital31 - avgift;
+      const avkEfterAvg = kapEfterAvg - kapNu;
+      res.push({ y, kapStart: kapNu, avkastning, kapital31, avgift, kapEfterAvg, avkEfterAvg });
+      kapNu = kapEfterAvg;
+    }
+    return res;
+  }, [kapital, extra, år, ränta, b]);
+
+  const getÅterköp = (y) => {
+    const rule = b.återköp.find(r => r.år === y);
+    if (!rule) return { rörlig: 0, fast: 0, ejÅterköpsbar: false, fri: true };
+    return rule;
+  };
+
+  const uttakKalkyl = useMemo(() => {
+    if (!uttakÅr || uttakÅr < 1 || uttakÅr > rows.length) return null;
+    const row = rows[uttakÅr - 1];
+    const kapitalVid = row.kapEfterAvg;
+    const rule = getÅterköp(uttakÅr);
+    if (rule.ejÅterköpsbar) return { ejÅterköpsbar: true, kapitalVid };
+    const belopp = uttakBelopp > 0 ? Math.min(uttakBelopp, kapitalVid) : kapitalVid;
+    const rörligAvgift = belopp * ((rule.rörlig || 0) / 100);
+    const fastAvgift = rule.fast || 0;
+    const riskKostnad = bolag === "skandia" ? belopp * (b.riskkapitaljustering / 100) : 0;
+    const totalUttagsavgift = rörligAvgift + fastAvgift + riskKostnad;
+    const netto = belopp - totalUttagsavgift;
+    return { ejÅterköpsbar: false, kapitalVid, belopp, rörligAvgift, fastAvgift, riskKostnad, totalUttagsavgift, netto, rörligPct: rule.rörlig || 0, fri: rule.fri };
+  }, [uttakÅr, uttakBelopp, rows, bolag, b]);
+
+  const totalAvkastning = rows.length > 0 ? rows[rows.length - 1].kapEfterAvg - (kapital + extra) : 0;
+  const maxKap = rows.length > 0 ? Math.max(...rows.map(r => r.kapEfterAvg)) : 1;
+  const chartH = 180;
+
+  return (
+    <div style={{ padding: "28px 32px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", background: C.bg, minHeight: "calc(100vh - 130px)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 24 }}>
+
+        {/* ── VÄNSTERKOLUMN ── */}
+        <div>
+          {/* Bolagsväljare */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Bolag</h3>
+            </div>
+            <div style={{ display: "flex", gap: 6, background: C.surface2, borderRadius: 7, padding: 4 }}>
+              {Object.entries(TRAD_BOLAG).map(([k, v]) => (
+                <button key={k} onClick={() => { setBolag(k); setRäntaOverride(null); setAnvänd5år(false); }}
+                  style={{ flex: 1, padding: "9px", borderRadius: 5, border: "none", background: bolag === k ? C.navy : "transparent", color: bolag === k ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  {v.namn}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bolagsdata — editerbar */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Bolagsuppgifter</h3>
+              </div>
+              <button onClick={() => resetBolag(bolag)}
+                style={{ fontSize: 10, padding: "4px 10px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 5, color: C.textMid, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                ↺ Återställ
+              </button>
+            </div>
+            <InputRow label="Återbäringsränta" value={bolagData[bolag].återbäringsränta} onChange={v => setField("återbäringsränta", v)} suffix="% / år" step={0.1} min={0} max={30} hint="Aktuell" />
+            <InputRow label="Genomsnittlig 5 år" value={bolagData[bolag].snitt5år} onChange={v => setField("snitt5år", v)} suffix="% / år" step={0.1} min={0} max={30} hint="5-årssnitt" />
+            <InputRow label="Kapitalavgift" value={bolagData[bolag].kapitalavgift} onChange={v => setField("kapitalavgift", v)} suffix="% / år" step={0.05} min={0} max={5} hint="Ord 0,80%" />
+            {bolag === "folksam" && (
+              <InputRow label="Fast avgift / år" value={bolagData[bolag].fastAvgiftÅr} onChange={v => setField("fastAvgiftÅr", v)} suffix="kr / år" step={50} min={0} />
+            )}
+            {bolag === "skandia" && (
+              <InputRow label="Riskkapitaljustering uttag" value={bolagData[bolag].riskkapitaljustering} onChange={v => setField("riskkapitaljustering", v)} suffix="%" step={0.1} min={0} max={5} />
+            )}
+          </div>
+
+          {/* Parametrar */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Parametrar</h3>
+            </div>
+            <InputRow label="Placerat kapital" value={kapital} onChange={setKapital} suffix="kr" step={100000} hint={bolag === "folksam" ? "Min 50 000 kr" : ""} />
+            <InputRow label="Extrainsättning" value={extra} onChange={setExtra} suffix="kr" step={100000} />
+            <InputRow label="Antal år" value={år} onChange={v => setÅr(Math.max(1, Math.min(30, v)))} suffix="år" step={1} min={1} max={30} />
+
+            <div style={{ marginTop: 4 }}>
+              <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.8 }}>Ränteantagande</div>
+              <div style={{ display: "flex", gap: 6, background: C.surface2, borderRadius: 7, padding: 4, marginBottom: 8 }}>
+                {[{ id: "aktuell", label: `Aktuell ${b.återbäringsränta.toFixed(2).replace(".", ",")} %` }, { id: "snitt", label: `Snitt ${b.snitt5år.toFixed(2).replace(".", ",")} %` }, { id: "manuell", label: "Manuell" }].map(t => (
+                  <button key={t.id} onClick={() => { if (t.id === "aktuell") { setAnvänd5år(false); setRäntaOverride(null); } else if (t.id === "snitt") { setAnvänd5år(true); setRäntaOverride(null); } else { setAnvänd5år(false); setRäntaOverride(räntaOverride !== null ? räntaOverride : b.återbäringsränta); } }}
+                    style={{ flex: 1, padding: "6px 4px", borderRadius: 5, border: "none", background: (t.id === "aktuell" && !använd5år && räntaOverride === null) || (t.id === "snitt" && använd5år) || (t.id === "manuell" && räntaOverride !== null) ? C.navy : "transparent", color: (t.id === "aktuell" && !använd5år && räntaOverride === null) || (t.id === "snitt" && använd5år) || (t.id === "manuell" && räntaOverride !== null) ? "#fff" : C.textMid, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
+                ))}
+              </div>
+              {räntaOverride !== null && (
+                <InputRow label="Manuell ränta" value={räntaOverride} onChange={setRäntaOverride} suffix="% / år" step={0.1} min={0} max={30} />
+              )}
+              <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 5, padding: "8px 12px", display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: C.gold, fontSize: 11, fontWeight: 700 }}>Använd ränta</span>
+                <span style={{ color: C.gold, fontSize: 13, fontWeight: 800 }}>{ränta.toFixed(2).replace(".", ",")} %</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Återköp */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.red, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Återköp / Uttag</h3>
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.8 }}>Uttag år</div>
+                <select value={uttakÅr || ""} onChange={e => setUttakÅr(e.target.value ? Number(e.target.value) : null)}
+                  style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 13, color: C.text, background: C.surface, fontFamily: "inherit", outline: "none" }}>
+                  <option value="">— Inget uttag —</option>
+                  {Array.from({ length: år }, (_, i) => i + 1).map(y => {
+                    const rule = getÅterköp(y);
+                    return <option key={y} value={y}>År {y}{rule.ejÅterköpsbar ? " (ej återköpsbar)" : rule.fri ? " (fri)" : ` (avgift ${rule.rörlig || 0}%)`}</option>;
+                  })}
+                </select>
+              </div>
+            </div>
+            {uttakÅr && (
+              <InputRow label="Uttagsbelopp (0 = hela)" value={uttakBelopp} onChange={setUttakBelopp} suffix="kr" step={100000} hint="0 kr = hela kapitalet" />
+            )}
+            {uttakKalkyl && (
+              uttakKalkyl.ejÅterköpsbar ? (
+                <div style={{ background: "#FEF2F2", border: `1px solid ${C.red}`, borderRadius: 6, padding: "12px 14px" }}>
+                  <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>⛔ Ej återköpsbar år {uttakÅr}</div>
+                  <div style={{ color: C.textMid, fontSize: 11 }}>Folksam tillåter inte återköp under det första försäkringsåret.</div>
+                </div>
+              ) : (
+                <div style={{ background: "#F0F7FF", border: `1px solid #BFDBFE`, borderRadius: 6, padding: "12px 14px" }}>
+                  <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Uttagsberäkning — År {uttakÅr}</div>
+                  {[
+                    { label: "Kapitalvärde vid uttag", value: fmt(uttakKalkyl.kapitalVid), bold: true },
+                    { label: "Uttagsbelopp", value: fmt(uttakKalkyl.belopp) },
+                    { label: `Rörlig avgift (${uttakKalkyl.rörligPct} %)`, value: `−${fmt(uttakKalkyl.rörligAvgift)}`, red: true },
+                    ...(uttakKalkyl.fastAvgift > 0 ? [{ label: "Fast avgift", value: `−${fmt(uttakKalkyl.fastAvgift)} kr`, red: true }] : []),
+                    ...(uttakKalkyl.riskKostnad > 0 ? [{ label: `Riskkapitaljustering (${b.riskkapitaljustering} %)`, value: `−${fmt(uttakKalkyl.riskKostnad)}`, red: true }] : []),
+                    { label: "Total uttagsavgift", value: `−${fmt(uttakKalkyl.totalUttagsavgift)}`, bold: true, red: true },
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < 4 ? `1px solid #DBEAFE` : "none" }}>
+                      <span style={{ color: C.textMid, fontSize: 11 }}>{item.label}</span>
+                      <span style={{ color: item.red ? C.red : C.text, fontSize: 12, fontWeight: item.bold ? 700 : 400, fontFamily: "monospace" }}>{item.value}</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 8, background: "#1A7A4A", borderRadius: 5, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>Nettoutbetalning</span>
+                    <span style={{ color: "#fff", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(uttakKalkyl.netto)}</span>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* ── HÖGERKOLUMN ── */}
+        <div>
+          {/* Sammanfattning */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
+            {[
+              { label: "Kapital år " + år, value: rows.length > 0 ? fmt(rows[rows.length - 1].kapEfterAvg) : "—", sub: "efter avgifter" },
+              { label: "Total avkastning", value: fmt(totalAvkastning), sub: `över ${år} år`, green: true },
+              { label: "Total avgift", value: fmt(rows.reduce((s, r) => s + r.avgift, 0)), sub: "kapital- + fast avgift", red: true },
+            ].map((card, i) => (
+              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</div>
+                <div style={{ color: card.green ? C.green : card.red ? C.red : C.navy, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{card.value}</div>
+                <div style={{ color: C.textLight, fontSize: 10 }}>{card.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chart */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling — {b.namn}</span>
+            </div>
+            <svg width="100%" viewBox={`0 0 ${Math.max(400, rows.length * 42)} ${chartH + 40}`} style={{ overflow: "visible" }}>
+              {/* Grid lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map(frac => {
+                const y = chartH - frac * chartH;
+                const val = (kapital + extra) + frac * (maxKap - (kapital + extra));
+                return (
+                  <g key={frac}>
+                    <line x1={0} y1={y} x2="100%" y2={y} stroke={C.border} strokeWidth={1} strokeDasharray="4,3" />
+                    <text x={0} y={y - 3} fontSize={8} fill={C.textLight}>{fmtShort(val)}</text>
+                  </g>
+                );
+              })}
+              {/* Bars + line */}
+              {rows.map((row, i) => {
+                const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
+                const x = i * (barW + 6) + 30;
+                const kapH = ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
+                const avkH = Math.max(0, (row.avkEfterAvg / Math.max(1, maxKap - (kapital + extra))) * chartH);
+                const bY = chartH - kapH;
+                return (
+                  <g key={i}>
+                    <rect x={x} y={bY} width={barW} height={kapH} fill={b.color} opacity={0.18} rx={2} />
+                    <rect x={x} y={chartH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.7} rx={2} />
+                    <text x={x + barW / 2} y={chartH + 14} textAnchor="middle" fontSize={9} fill={C.textLight}>{row.y}</text>
+                    {uttakÅr === row.y && (
+                      <line x1={x + barW / 2} y1={0} x2={x + barW / 2} y2={chartH} stroke={C.red} strokeWidth={1.5} strokeDasharray="4,3" />
+                    )}
+                  </g>
+                );
+              })}
+              {/* Line over bars */}
+              <polyline
+                fill="none"
+                stroke={b.color}
+                strokeWidth={2}
+                points={rows.map((row, i) => {
+                  const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
+                  const x = i * (barW + 6) + 30 + barW / 2;
+                  const y = chartH - ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
+                  return `${x},${y}`;
+                }).join(" ")}
+              />
+              {/* Dots */}
+              {rows.map((row, i) => {
+                const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
+                const x = i * (barW + 6) + 30 + barW / 2;
+                const y = chartH - ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
+                return <circle key={i} cx={x} cy={y} r={3} fill={b.color} stroke="#fff" strokeWidth={1.5} />;
+              })}
+            </svg>
+            <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 8, background: b.color, opacity: 0.7, borderRadius: 2 }} /><span style={{ fontSize: 10, color: C.textLight }}>Årets avkastning</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 8, background: b.color, opacity: 0.18, borderRadius: 2 }} /><span style={{ fontSize: 10, color: C.textLight }}>Kapitaluppbyggnad</span></div>
+              {uttakÅr && <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 12, height: 2, background: C.red }} /><span style={{ fontSize: 10, color: C.textLight }}>Uttag år {uttakÅr}</span></div>}
+            </div>
+          </div>
+
+          {/* Återköpsavgifter tabell */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Återköpsavgifter — {b.namn}</span>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.navy }}>
+                    {["År", "Rörlig avgift", "Fast avgift", ...(bolag === "skandia" ? ["Rabatterad avg"] : []), "Not"].map(h => (
+                      <th key={h} style={{ padding: "8px 12px", color: "#fff", fontWeight: 700, textAlign: h === "År" ? "left" : "right", fontSize: 11 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {b.återköp.map((rule, i) => (
+                    <tr key={i} style={{ background: rule.ejÅterköpsbar ? "#FEF2F2" : i % 2 === 0 ? C.surface : C.surface2 }}>
+                      <td style={{ padding: "7px 12px", color: C.text, fontWeight: 600 }}>År {rule.år}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: rule.ejÅterköpsbar ? C.red : C.text }}>{rule.ejÅterköpsbar ? "—" : `${rule.rörlig} %`}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.text }}>{rule.ejÅterköpsbar ? "—" : `${rule.fast} kr`}</td>
+                      {bolag === "skandia" && <td style={{ padding: "7px 12px", textAlign: "right", color: C.text }}>{rule.år <= 3 ? "1,50 %" : rule.år <= 7 ? "1,00 %" : "0,50 %"}</td>}
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.red, fontSize: 11 }}>{rule.ejÅterköpsbar ? "Ej återköpsbar" : rule.fri ? "Två fria/år" : ""}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ background: C.surface2 }}>
+                    <td style={{ padding: "7px 12px", color: C.textMid }}>År 11+</td>
+                    <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontWeight: 600 }}>0 %</td>
+                    <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontWeight: 600 }}>0 kr</td>
+                    {bolag === "skandia" && <td style={{ padding: "7px 12px", textAlign: "right", color: C.green }}>—</td>}
+                    <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontSize: 11, fontWeight: 600 }}>Fritt</td>
+                  </tr>
+                </tbody>
+              </table>
+              {bolag === "skandia" && (
+                <div style={{ marginTop: 8, color: C.textLight, fontSize: 10, fontStyle: "italic" }}>* Riskkapitaljusteringskostnad vid uttag tillkommer med {b.riskkapitaljustering} %</div>
+              )}
+              {bolag === "folksam" && (
+                <div style={{ marginTop: 8, color: C.textLight, fontSize: 10, fontStyle: "italic" }}>* Från år 11 tillåts två fria återköp per år</div>
+              )}
+            </div>
+          </div>
+
+          {/* Årsvis tabell */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Årsvis beräkning</span>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.navy }}>
+                    {["År", "Avkastning", "Kapital 31/12", "Avgift", "Kapital efter avg", "Avkastn. efter avg"].map(h => (
+                      <th key={h} style={{ padding: "8px 12px", color: "#fff", fontWeight: 700, textAlign: h === "År" ? "left" : "right", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i} style={{ background: uttakÅr === row.y ? "#FFF8EC" : i % 2 === 0 ? C.surface : C.surface2 }}>
+                      <td style={{ padding: "7px 12px", color: C.text, fontWeight: 600 }}>{row.y}{uttakÅr === row.y ? " 🔴" : ""}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkastning)}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.kapital31)}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.red, fontFamily: "monospace" }}>−{fmt(row.avgift)}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", fontWeight: 700, fontFamily: "monospace" }}>{fmt(row.kapEfterAvg)}</td>
+                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkEfterAvg)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ background: C.navy }}>
+                    <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>Totalt</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#6EE0A4", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkastning, 0))}</td>
+                    <td />
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#F08080", fontFamily: "monospace", fontWeight: 700 }}>−{fmt(rows.reduce((s, r) => s + r.avgift, 0))}</td>
+                    <td />
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#6EE0A4", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkEfterAvg, 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── ÄRENDEN ────────────────────────────────────────────────────────────────
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
   const [mottagarMail, setMottagarMail] = useState("");
@@ -2058,6 +2466,7 @@ function MainApp({ onLogout }) {
     { id: "sparande", label: "Sparande & Avkastning" },
     { id: "avgifter", label: "Avgiftskalkylator" },
     { id: "offert", label: "Offertjämförelse" },
+    { id: "trad", label: "TRAD Avkastning" },
     { id: "arenden", label: "Ärenden" },
   ];
 
@@ -2506,6 +2915,7 @@ function MainApp({ onLogout }) {
       {tab === "avgifter" && <AvgiftsView defaultMånSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "offert" && <OffertView />}
       {tab === "arenden" && <ArendenView />}
+      {tab === "trad" && <TradView />}
 
       <div style={{ textAlign: "center", padding: "14px", color: C.textLight, fontSize: 11, borderTop: `1px solid ${C.border}`, background: C.surface }}>
         Beräkningar baserade på svenska skatteregler 2024 &nbsp;•&nbsp; Konsultera en revisor för rådgivning
