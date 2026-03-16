@@ -1582,8 +1582,8 @@ const TradView = () => {
                 const val = (kapital + extra) + frac * (maxKap - (kapital + extra));
                 return (
                   <g key={frac}>
-                    <line x1={0} y1={y} x2="100%" y2={y} stroke={C.border} strokeWidth={1} strokeDasharray="4,3" />
-                    <text x={0} y={y - 3} fontSize={8} fill={C.textLight}>{fmtShort(val)}</text>
+                    <line x1={0} y1={y} x2="100%" y2={y} stroke={C.border} strokeWidth={0.75} strokeDasharray="3,4" />
+                    <text x={0} y={y - 2} fontSize={6} fill={C.textLight} letterSpacing={0.2}>{fmtShort(val)}</text>
                   </g>
                 );
               })}
@@ -1596,9 +1596,9 @@ const TradView = () => {
                 const bY = chartH - kapH;
                 return (
                   <g key={i}>
-                    <rect x={x} y={bY} width={barW} height={kapH} fill={b.color} opacity={0.18} rx={2} />
-                    <rect x={x} y={chartH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.7} rx={2} />
-                    <text x={x + barW / 2} y={chartH + 14} textAnchor="middle" fontSize={9} fill={C.textLight}>{row.y}</text>
+                    <rect x={x} y={bY} width={barW} height={kapH} fill={b.color} opacity={0.15} rx={2} />
+                    <rect x={x} y={chartH - avkH} width={barW} height={avkH} fill={b.color} opacity={0.65} rx={2} />
+                    <text x={x + barW / 2} y={chartH + 12} textAnchor="middle" fontSize={6.5} fill={C.textLight} letterSpacing={0.3}>{row.y}</text>
                     {uttakÅr === row.y && (
                       <line x1={x + barW / 2} y1={0} x2={x + barW / 2} y2={chartH} stroke={C.red} strokeWidth={1.5} strokeDasharray="4,3" />
                     )}
@@ -1609,7 +1609,7 @@ const TradView = () => {
               <polyline
                 fill="none"
                 stroke={b.color}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 points={rows.map((row, i) => {
                   const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
                   const x = i * (barW + 6) + 30 + barW / 2;
@@ -1622,7 +1622,7 @@ const TradView = () => {
                 const barW = Math.max(20, Math.min(36, (400 / rows.length) - 6));
                 const x = i * (barW + 6) + 30 + barW / 2;
                 const y = chartH - ((row.kapEfterAvg - (kapital + extra)) / Math.max(1, maxKap - (kapital + extra))) * chartH;
-                return <circle key={i} cx={x} cy={y} r={3} fill={b.color} stroke="#fff" strokeWidth={1.5} />;
+                return <circle key={i} cx={x} cy={y} r={2.5} fill={b.color} stroke="#fff" strokeWidth={1} />;
               })}
             </svg>
             <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
