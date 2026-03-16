@@ -1360,6 +1360,26 @@ const TRAD_BOLAG = {
   },
 };
 
+const TradAvgiftCard = ({ totalAvgift }) => {
+  const [visa, setVisa] = useState(false);
+  return (
+    <div onClick={() => setVisa(v => !v)} style={{ background: visa ? "#FEF2F2" : C.surface, border: `1px solid ${visa ? "#FECACA" : C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)", cursor: "pointer", userSelect: "none" }}>
+      <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>Total avgift</span>
+        <span style={{ fontSize: 9, color: C.textLight }}>{visa ? "▲" : "▼ visa"}</span>
+      </div>
+      {visa ? (
+        <>
+          <div style={{ color: C.red, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{fmt(totalAvgift)}</div>
+          <div style={{ color: C.textLight, fontSize: 10 }}>kapital- + fast avgift</div>
+        </>
+      ) : (
+        <div style={{ color: C.textLight, fontSize: 12, marginTop: 6 }}>Klicka för att visa</div>
+      )}
+    </div>
+  );
+};
+
 const TradView = () => {
   const [bolag, setBolag] = useState("skandia");
   const [kapital, setKapital] = useState(10000000);
@@ -1556,17 +1576,17 @@ const TradView = () => {
         <div>
           {/* Sammanfattning */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
-            {[
-              { label: "Kapital år " + år, value: rows.length > 0 ? fmt(rows[rows.length - 1].kapEfterAvg) : "—", sub: "efter avgifter" },
-              { label: "Total avkastning", value: fmt(totalAvkastning), sub: `över ${år} år`, green: true },
-              { label: "Total avgift", value: fmt(rows.reduce((s, r) => s + r.avgift, 0)), sub: "kapital- + fast avgift", red: true },
-            ].map((card, i) => (
-              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
-                <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</div>
-                <div style={{ color: card.green ? C.green : card.red ? C.red : C.navy, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{card.value}</div>
-                <div style={{ color: C.textLight, fontSize: 10 }}>{card.sub}</div>
-              </div>
-            ))}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Kapital år {år}</div>
+              <div style={{ color: C.navy, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{rows.length > 0 ? fmt(rows[rows.length - 1].kapEfterAvg) : "—"}</div>
+              <div style={{ color: C.textLight, fontSize: 10 }}>efter avgifter</div>
+            </div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Total avkastning</div>
+              <div style={{ color: C.green, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{fmt(totalAvkastning)}</div>
+              <div style={{ color: C.textLight, fontSize: 10 }}>över {år} år</div>
+            </div>
+            <TradAvgiftCard totalAvgift={rows.reduce((s, r) => s + r.avgift, 0)} />
           </div>
 
           {/* Chart */}
