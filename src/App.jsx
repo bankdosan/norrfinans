@@ -6,10 +6,16 @@ const pct = (n) => `${Number(n).toFixed(2)} %`;
 const pct1 = (n) => `${Number(n).toFixed(1)} %`;
 
 const C = {
-  bg: "#F4F6F9", surface: "#FFFFFF", surface2: "#F0F3F7", border: "#DDE3ED",
-  navy: "#0F2847", gold: "#B8892A", goldLight: "#F5EDD8",
-  text: "#0F2847", textMid: "#4A5E78", textLight: "#8A9BB0",
-  green: "#1A7A4A", red: "#C0392B", blue: "#1A5296",
+  bg: "#F5F3EE", surface: "#FFFFFF", surface2: "#F0EDE6", border: "#E0D8CC",
+  navy: "#9B182D",     // Hjerta mörk burgundy (RGB 155/24/45)
+  gold: "#E73331",     // Hjerta röd (RGB 231/51/49)
+  goldLight: "#F7EDEB", // ljus röd tint
+  text: "#2A1015",     // mörk text
+  textMid: "#6B3040",  // mellanton burgundy
+  textLight: "#A87880", // ljus ton
+  green: "#1A7A4A", red: "#9B182D", blue: "#E73331",
+  tan: "#CEC09E",      // Hjerta beige/tan (RGB 206/192/158)
+  tanLight: "#F2EDE3", // ljus beige
 };
 
 const fmtInput = v => {
@@ -43,7 +49,7 @@ const InputRow = ({ label, value, onChange, suffix, step = 1000, min = 0, max, h
 );
 
 const Section = ({ title, children }) => (
-  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
       <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
       <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>{title}</h3>
@@ -72,9 +78,9 @@ const WRow = ({ label, value, bold, separator }) => {
 };
 
 const KFRow = ({ label, value, highlight, large, color }) => {
-  const bg = highlight ? C.navy : color === "blue" ? "#EEF4FF" : C.surface2;
+  const bg = highlight ? C.navy : color === "blue" ? "#FFF0F0" : C.surface2;
   const border = highlight ? C.navy : color === "blue" ? "#BFCFEE" : C.border;
-  const valColor = highlight ? "#FFF" : color === "blue" ? "#2563EB" : value < 0 ? C.red : C.text;
+  const valColor = highlight ? "#FFF" : color === "blue" ? "#9B182D" : value < 0 ? C.red : C.text;
   return (
     <div style={{ padding: "14px 16px", background: bg, border: `1px solid ${border}`, borderRadius: 7, marginBottom: 10 }}>
       <div style={{ color: highlight ? "rgba(255,255,255,0.6)" : C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 5 }}>{label}</div>
@@ -110,7 +116,7 @@ const OvrigKostnad = ({ items, onChange, period = "mån" }) => {
 
 // ── OFFERT DATA ───────────────────────────────────────────────────────────────
 const COMPANIES_DEFAULT = [
-  { id: "skandia", name: "Skandia", color: "#1A5296", premiebefrielse: 1.51, sparpremie: 10,
+  { id: "skandia", name: "Skandia", color: "#9B182D", premiebefrielse: 1.51, sparpremie: 10,
     employees: [
       { sjuk: 745, pbf: 83, tjp: 5500, lo: 62, sjukvard: 300 },
       { sjuk: 522, pbf: 83, tjp: 5500, lo: 62, sjukvard: 300 },
@@ -119,7 +125,7 @@ const COMPANIES_DEFAULT = [
       { sjuk: 0, pbf: 0, tjp: 0, lo: 0, sjukvard: 0 },
       { sjuk: 0, pbf: 0, tjp: 0, lo: 0, sjukvard: 0 },
     ]},
-  { id: "lf", name: "Länsförsäkringar", color: "#B8892A", premiebefrielse: 2.20, sparpremie: 10,
+  { id: "lf", name: "Länsförsäkringar", color: "#E73331", premiebefrielse: 2.20, sparpremie: 10,
     employees: [
       { sjuk: 635, pbf: 121, tjp: 5500, lo: 78, sjukvard: 331 },
       { sjuk: 580, pbf: 121, tjp: 5500, lo: 78, sjukvard: 331 },
@@ -128,7 +134,7 @@ const COMPANIES_DEFAULT = [
       { sjuk: 0, pbf: 0, tjp: 0, lo: 0, sjukvard: 0 },
       { sjuk: 0, pbf: 0, tjp: 0, lo: 0, sjukvard: 0 },
     ]},
-  { id: "seb", name: "SEB", color: "#7B5EA7", premiebefrielse: 2.10, sparpremie: 10,
+  { id: "seb", name: "SEB", color: "#CEC09E", premiebefrielse: 2.10, sparpremie: 10,
     employees: [
       { sjuk: 389, pbf: 116, tjp: 5500, lo: 78, sjukvard: 303 },
       { sjuk: 301, pbf: 116, tjp: 5500, lo: 78, sjukvard: 303 },
@@ -278,7 +284,7 @@ const OffertView = () => {
           <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontFamily: "monospace", marginTop: 2 }}>{fmt(best?.groupTotal)}/mån</div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 12, paddingTop: 10 }}>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginBottom: 4 }}>Besparing vs dyraste</div>
-            <div style={{ color: "#6EE0A4", fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{fmt((worst?.groupTotal || 0) - (best?.groupTotal || 0))}/mån</div>
+            <div style={{ color: "#F9C5A5", fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{fmt((worst?.groupTotal || 0) - (best?.groupTotal || 0))}/mån</div>
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10 }}>{fmt(((worst?.groupTotal || 0) - (best?.groupTotal || 0)) * 12)}/år</div>
           </div>
         </div>
@@ -303,7 +309,7 @@ const OffertView = () => {
 
         {view === "jamforelse" && (
           <>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 14 }}>Total grupppremie / mån</div>
               {ranked.map((c, i) => {
                 const barW = worst.groupTotal > 0 ? (c.groupTotal / worst.groupTotal) * 100 : 0;
@@ -325,7 +331,7 @@ const OffertView = () => {
               })}
             </div>
 
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)", marginBottom: 14 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)", marginBottom: 14 }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)` }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Komponent</div>
                 {ranked.map(c => (
@@ -341,7 +347,7 @@ const OffertView = () => {
                       const val = isTotal ? c.groupTotal : c.colSums[col.key];
                       const isMin = ranked.reduce((min, cc) => (isTotal ? cc.groupTotal : cc.colSums[col.key]) < (isTotal ? min.groupTotal : min.colSums[col.key]) ? cc : min, ranked[0]).id === c.id;
                       return (
-                        <div key={c.id} style={{ textAlign: "right", color: isTotal ? (ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)") : isMin ? C.green : C.text, fontSize: 12, fontWeight: isTotal || isMin ? 700 : 400, fontFamily: "monospace" }}>
+                        <div key={c.id} style={{ textAlign: "right", color: isTotal ? (ci === 0 ? "#F9C5A5" : "rgba(255,255,255,0.7)") : isMin ? C.green : C.text, fontSize: 12, fontWeight: isTotal || isMin ? 700 : 400, fontFamily: "monospace" }}>
                           {fmt(val)}
                         </div>
                       );
@@ -351,7 +357,7 @@ const OffertView = () => {
               })}
             </div>
 
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <div style={{ background: C.navy, padding: "10px 16px", display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)` }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>Anställd</div>
                 {ranked.map(c => <div key={c.id} style={{ color: "#fff", fontSize: 10, fontWeight: 700, textAlign: "right" }}>{c.name}</div>)}
@@ -375,7 +381,7 @@ const OffertView = () => {
               <div style={{ display: "grid", gridTemplateColumns: `140px repeat(${ranked.length}, 1fr)`, padding: "10px 16px", background: C.navy }}>
                 <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700 }}>Summa grupp</span>
                 {ranked.map((c, ci) => (
-                  <div key={c.id} style={{ textAlign: "right", color: ci === 0 ? "#6EE0A4" : "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmt(c.groupTotal)}</div>
+                  <div key={c.id} style={{ textAlign: "right", color: ci === 0 ? "#F9C5A5" : "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmt(c.groupTotal)}</div>
                 ))}
               </div>
             </div>
@@ -400,7 +406,7 @@ const OffertView = () => {
               const comp = companies.find(c => c.id === selectedCompany);
               const totals = calcTotals(comp);
               return (
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                   <div style={{ background: comp.color, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Redigera premier</div>
@@ -462,7 +468,7 @@ const OffertView = () => {
                     {COLS.map(col => (
                       <div key={col.key} style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontFamily: "monospace", textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>{fmt(totals.colSums[col.key])}</div>
                     ))}
-                    <div style={{ color: "#6EE0A4", fontSize: 13, fontWeight: 700, fontFamily: "monospace", textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>{fmt(totals.groupTotal)}</div>
+                    <div style={{ color: "#F9C5A5", fontSize: 13, fontWeight: 700, fontFamily: "monospace", textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>{fmt(totals.groupTotal)}</div>
                   </div>
                 </div>
               );
@@ -540,8 +546,8 @@ const ProviderModal = ({ provider, onSave, onClose, onReset }) => {
     </div>
   );
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,40,71,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ background: C.surface, borderRadius: 10, padding: "28px 28px 24px", width: 400, boxShadow: "0 8px 40px rgba(15,40,71,0.18)", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(155,24,45,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.surface, borderRadius: 10, padding: "28px 28px 24px", width: 400, boxShadow: "0 8px 40px rgba(155,24,45,0.18)", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
           <div>
             <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Redigera avgifter</div>
@@ -622,11 +628,11 @@ const AvgiftsView = ({ defaultMånSparande }) => {
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Billigast</span>
-                <span style={{ color: "#6EE0A4", fontSize: 12, fontWeight: 700 }}>{best.name}</span>
+                <span style={{ color: "#F9C5A5", fontSize: 12, fontWeight: 700 }}>{best.name}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>Dyrast</span>
-                <span style={{ color: "#F08080", fontSize: 12, fontWeight: 700 }}>{worst.name}</span>
+                <span style={{ color: "#FFB0B0", fontSize: 12, fontWeight: 700 }}>{worst.name}</span>
               </div>
             </div>
           </div>
@@ -639,7 +645,7 @@ const AvgiftsView = ({ defaultMånSparande }) => {
             </div>
             <div style={{ color: C.textLight, fontSize: 11 }}>Klicka på ett bolag för att redigera avgifter</div>
           </div>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 14 }}>Total avgift alla år</div>
             {results.map((p, i) => {
               const barW = worst.totalFee > 0 ? (p.totalFee / worst.totalFee) * 100 : 0;
@@ -660,7 +666,7 @@ const AvgiftsView = ({ defaultMånSparande }) => {
               );
             })}
           </div>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "grid", gridTemplateColumns: colW, background: C.navy, padding: "12px 16px", gap: 8 }}>
               <SH label="Rank" k="totalFee" /><div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Bolag</div>
               <SH label="Engångsfee" k="engångsFee" /><SH label="Avgift år 1" k="year1Fee" /><SH label="Snitt/år" k="avgFee" /><SH label="Total avgift" k="totalFee" />
@@ -812,7 +818,7 @@ const MarknadsrorelseDiagram = () => {
   for (let v = Math.ceil(minV / step) * step; v <= maxV; v += step) yTicks.push(v);
 
   return (
-    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px 24px", marginTop: 20, boxShadow: "0 2px 8px rgba(15,40,71,0.06)" }}>
+    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 10, padding: "20px 24px", marginTop: 20, boxShadow: "0 2px 8px rgba(155,24,45,0.06)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <div style={{ width: 3, height: 16, background: C.navy, borderRadius: 2 }} />
         <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Marknadsrörelser 1994–2024</span>
@@ -993,8 +999,42 @@ const SparandeView = ({ månSparande }) => {
   const [år, setÅr] = useState(0);
   const [engångs, setEngångs] = useState(0);
   const [useKF, setUseKF] = useState(!!månSparande);
-  const [färgInsatt, setFärgInsatt] = useState("#0F2847");
-  const [färgAvkastning, setFärgAvkastning] = useState("#B8892A");
+  const [färgInsatt, setFärgInsatt] = useState("#9B182D");
+  const [färgAvkastning, setFärgAvkastning] = useState("#E73331");
+  const [vy, setVy] = useState("sparande"); // "sparande" | "jamfor"
+
+  // Jämför-fonder — namn + avgift + 3 års historisk avkastning
+  const [fonder, setFonder] = useState([
+    { namn: "Länsförsäkringar Global Index", avgift: 0.20, avk1: 24.5, avk2: 18.3, avk3: 12.1 },
+    { namn: "Avanza Global", avgift: 0.05, avk1: 25.1, avk2: 18.8, avk3: 12.4 },
+    { namn: "Swedbank Robur Access Global", avgift: 0.19, avk1: 24.2, avk2: 18.0, avk3: 11.9 },
+    { namn: "SEB Sverige Index", avgift: 0.15, avk1: 14.2, avk2: 8.5, avk3: 6.1 },
+    { namn: "Aktiv förvaltad fond", avgift: 1.50, avk1: 20.0, avk2: 14.0, avk3: 9.0 },
+  ]);
+  const setFond = (i, field, val) => setFonder(prev => prev.map((f, j) => j === i ? { ...f, [field]: val } : f));
+  const addFond = () => setFonder(prev => [...prev, { namn: `Fond ${prev.length + 1}`, avgift: 0.50, avk1: 10, avk2: 8, avk3: 6 }]);
+  const removeFond = i => setFonder(prev => prev.filter((_, j) => j !== i));
+
+  // Beräkna per fond — netto = snitt 3 år minus avgift, återupprepas cykliskt
+  const jämförRows = useMemo(() => {
+    return fonder.map(fond => {
+      const årsAvk = [fond.avk1, fond.avk2, fond.avk3]; // brutto per år, cycling
+      let kapital = engångs;
+      const årsData = [];
+      for (let y = 1; y <= (år || 20); y++) {
+        const bruttoÅr = årsAvk[(y - 1) % 3];
+        const nettoÅr = bruttoÅr - fond.avgift;
+        const mRate = nettoÅr / 100 / 12;
+        for (let m = 0; m < 12; m++) kapital = kapital * (1 + mRate) + sparande;
+        const insatt = engångs + sparande * 12 * y;
+        årsData.push({ y, kapital, insatt, avk: kapital - insatt, bruttoÅr, nettoÅr });
+      }
+      const final = årsData[årsData.length - 1] || {};
+      const snittBrutto = ((fond.avk1 + fond.avk2 + fond.avk3) / 3);
+      const nettoSnitt = snittBrutto - fond.avgift;
+      return { ...fond, årsData, final, nettoSnitt, snittBrutto };
+    });
+  }, [fonder, sparande, engångs, år]);
 
   const rows = useMemo(() => {
     const mRate = avkastning / 100 / 12;
@@ -1012,8 +1052,32 @@ const SparandeView = ({ månSparande }) => {
   const maxVal = final.kapital || 1;
   const milestones = rows.filter(r => [1,2,3,5,7,10,15,20,25,30].includes(r.y));
 
+  // Colors for comparison
+  const FOND_COLORS = ["#9B182D", "#E73331", "#CEC09E", "#1A7A4A", "#6B3040", "#E08A3C", "#3A7BD5"];
+
+  const JAMFOR_ÅR = år || 20;
+  const maxJämförKap = jämförRows.length > 0
+    ? Math.max(...jämförRows.map(f => f.final.kapital || 0))
+    : 1;
+  const bestFond = jämförRows.reduce((b, f) => (f.final.kapital || 0) > (b.final.kapital || 0) ? f : b, jämförRows[0] || {});
+  const worstFond = jämförRows.reduce((b, f) => (f.final.kapital || 0) < (b.final.kapital || 0) ? f : b, jämförRows[0] || {});
+
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "calc(100vh - 90px)" }}>
+    <div style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+      {/* ── VY-TOGGLE ── */}
+      <div style={{ display: "flex", gap: 8, padding: "12px 20px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
+        {[{ id: "sparande", label: "📈 Sparande & Avkastning" }, { id: "jamfor", label: "⚖️ Jämför fondavgifter" }].map(v => (
+          <button key={v.id} onClick={() => setVy(v.id)}
+            style={{ padding: "8px 18px", borderRadius: 7, border: `1.5px solid ${vy === v.id ? C.navy : C.border}`, background: vy === v.id ? C.navy : "transparent", color: vy === v.id ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── SPARANDE VY ── */}
+      {vy === "sparande" && (
+    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "calc(100vh - 130px)" }}>
       <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}` }}>
         <Section title="Sparparametrar">
           {månSparande > 0 && (
@@ -1074,7 +1138,7 @@ const SparandeView = ({ månSparande }) => {
           <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
           <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling över {år} år</span>
         </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px 20px 24px 80px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "24px 20px 24px 80px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 180, paddingBottom: 28, position: "relative" }}>
             {[0.25,0.5,0.75,1].map(f => (
               <div key={f} style={{ position: "absolute", left: -60, right: 0, bottom: 28 + f * 152, borderTop: `1px dashed ${C.border}`, zIndex: 0 }}>
@@ -1106,7 +1170,7 @@ const SparandeView = ({ månSparande }) => {
             ))}
           </div>
         </div>
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr", background: C.navy, padding: "10px 16px" }}>
             {["År","Totalt kapital","Varav insatt","Varav avkastning"].map(h => (
               <div key={h} style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{h}</div>
@@ -1129,6 +1193,211 @@ const SparandeView = ({ månSparande }) => {
         </div>
         <MarknadsrorelseDiagram />
       </div>
+    </div>
+      )}
+
+      {/* ── JÄMFÖR VY ── */}
+      {vy === "jamfor" && (
+        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", minHeight: "calc(100vh - 130px)" }}>
+
+          {/* Vänster — inställningar */}
+          <div style={{ padding: "20px 16px", borderRight: `1px solid ${C.border}`, overflowY: "auto" }}>
+            <Section title="Sparparametrar">
+              <InputRow label="Månatligt sparande" value={sparande} onChange={setSparande} suffix="kr / mån" step={500} />
+              <InputRow label="Engångsinsättning" value={engångs} onChange={setEngångs} suffix="kr" step={10000} hint="Startkapital" />
+              <InputRow label="Spartid" value={år || 20} onChange={v => setÅr(Math.max(1, Math.min(40, v)))} suffix="år" step={1} min={1} max={40} />
+
+            </Section>
+
+            <Section title="Fonder att jämföra">
+              {fonder.map((fond, i) => (
+                <div key={i} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 14px", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 2, background: FOND_COLORS[i % FOND_COLORS.length], flexShrink: 0 }} />
+                    <input value={fond.namn} onChange={e => setFond(i, "namn", e.target.value)}
+                      style={{ flex: 1, background: "transparent", border: "none", borderBottom: `1px solid ${C.border}`, color: C.text, padding: "4px 0", fontSize: 12, fontWeight: 700, outline: "none", fontFamily: "inherit" }} />
+                    <button onClick={() => removeFond(i)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, color: C.textLight, cursor: "pointer", padding: "3px 7px", fontSize: 11 }}>✕</button>
+                  </div>
+                  {/* Avgift */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ color: C.textMid, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, width: 60, flexShrink: 0 }}>Avgift</span>
+                    <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 5, overflow: "hidden", flex: 1 }}>
+                      <input type="number" value={fond.avgift} min={0} max={5} step={0.05}
+                        onChange={e => setFond(i, "avgift", Number(e.target.value))}
+                        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 12, fontWeight: 600, padding: "5px 8px", fontFamily: "inherit" }} />
+                      <span style={{ color: C.textLight, padding: "5px 8px", fontSize: 10, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>% / år</span>
+                    </div>
+                  </div>
+                  {/* 3 års avkastning */}
+                  <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Historisk avkastning (brutto)</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+                    {[{label:"År 1", field:"avk1"},{label:"År 2", field:"avk2"},{label:"År 3", field:"avk3"}].map(({label, field}) => (
+                      <div key={field}>
+                        <div style={{ color: C.textLight, fontSize: 9, marginBottom: 3 }}>{label}</div>
+                        <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 5, overflow: "hidden" }}>
+                          <input type="number" value={fond[field]} min={-50} max={100} step={0.5}
+                            onChange={e => setFond(i, field, Number(e.target.value))}
+                            style={{ flex: 1, minWidth: 0, width: 0, background: "transparent", border: "none", outline: "none", color: fond[field] >= 0 ? C.green : C.red, fontSize: 11, fontWeight: 600, padding: "5px 6px", fontFamily: "inherit" }} />
+                          <span style={{ color: C.textLight, padding: "5px 5px", fontSize: 9, borderLeft: `1px solid ${C.border}`, flexShrink: 0 }}>%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: C.textLight, fontSize: 10 }}>Snitt brutto</span>
+                    <span style={{ color: C.green, fontSize: 11, fontWeight: 700 }}>{((fond.avk1+fond.avk2+fond.avk3)/3).toFixed(1).replace(".",",")} %</span>
+                    <span style={{ color: C.textLight, fontSize: 10 }}>Snitt netto</span>
+                    <span style={{ color: C.navy, fontSize: 11, fontWeight: 700 }}>{(((fond.avk1+fond.avk2+fond.avk3)/3)-fond.avgift).toFixed(1).replace(".",",")} %</span>
+                  </div>
+                </div>
+              ))}
+              {fonder.length < 7 && (
+                <button onClick={addFond} style={{ width: "100%", padding: "8px", background: C.goldLight, border: `1.5px dashed ${C.gold}`, borderRadius: 6, color: C.gold, cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "inherit" }}>+ Lägg till fond</button>
+              )}
+            </Section>
+          </div>
+
+          {/* Höger — resultat */}
+          <div style={{ padding: "20px 24px", overflowY: "auto" }}>
+
+            {/* Sammanfattning */}
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(fonder.length, 4)}, 1fr)`, gap: 10, marginBottom: 20 }}>
+              {jämförRows.map((fond, i) => {
+                const isBest = fond.namn === bestFond?.namn;
+                const isWorst = fond.namn === worstFond?.namn && fonder.length > 1;
+                return (
+                  <div key={i} style={{ background: isBest ? C.navy : C.surface, border: `1px solid ${isBest ? C.navy : C.border}`, borderRadius: 8, padding: "14px 16px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: FOND_COLORS[i % FOND_COLORS.length] }} />
+                      <div style={{ color: isBest ? "rgba(255,255,255,0.7)" : C.textLight, fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fond.namn}</div>
+                    </div>
+                    <div style={{ color: isBest ? "#F9C5A5" : isWorst ? C.red : C.navy, fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(fond.final.kapital || 0)}</div>
+                    <div style={{ color: isBest ? "rgba(255,255,255,0.5)" : C.textLight, fontSize: 10, marginTop: 2 }}>{fond.avgift.toFixed(2).replace(".", ",")} % avgift · netto {fond.nettoSnitt.toFixed(2).replace(".", ",")} %</div>
+                    {isBest && fonder.length > 1 && <div style={{ marginTop: 6, background: C.gold, borderRadius: 4, padding: "2px 8px", display: "inline-block", color: "#fff", fontSize: 9, fontWeight: 700 }}>BÄST</div>}
+                    {isWorst && fonder.length > 1 && <div style={{ marginTop: 6, background: "#FEE2E2", borderRadius: 4, padding: "2px 8px", display: "inline-block", color: C.red, fontSize: 9, fontWeight: 700 }}>DYRAST</div>}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Besparing */}
+            {fonder.length > 1 && bestFond?.final?.kapital && worstFond?.final?.kapital && (
+              <div style={{ background: C.navy, borderRadius: 8, padding: "14px 20px", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Skillnad billigast vs dyrast efter {JAMFOR_ÅR} år</div>
+                  <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}>{bestFond.namn} vs {worstFond.namn}</div>
+                </div>
+                <div style={{ color: "#F9C5A5", fontSize: 24, fontWeight: 800, fontFamily: "monospace" }}>{fmt((bestFond.final.kapital || 0) - (worstFond.final.kapital || 0))}</div>
+              </div>
+            )}
+
+            {/* Linjediagram */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling — {JAMFOR_ÅR} år</span>
+              </div>
+              {(() => {
+                const VW = 800, VH = 220, PAD_L = 72, PAD_B = 22, PAD_T = 16;
+                const plotW = VW - PAD_L - 8, plotH = VH - PAD_B - PAD_T;
+                const maxKap = Math.max(...jämförRows.map(f => Math.max(...f.årsData.map(r => r.kapital))), 1);
+                const toY = v => PAD_T + plotH - (v / maxKap) * plotH;
+                const gap = plotW / JAMFOR_ÅR;
+                return (
+                  <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block" }}>
+                    {[0, 0.25, 0.5, 0.75, 1].map(frac => {
+                      const val = frac * maxKap;
+                      const y = toY(val);
+                      return (
+                        <g key={frac}>
+                          <line x1={PAD_L} y1={y} x2={VW - 8} y2={y} stroke={C.border} strokeWidth={0.6} strokeDasharray="3,5" />
+                          <text x={PAD_L - 5} y={y + 3.5} textAnchor="end" fontSize={8} fill={C.textLight} fontFamily="inherit">{fmtShort(val)}</text>
+                        </g>
+                      );
+                    })}
+                    {jämförRows.map((fond, fi) => (
+                      <polyline key={fi} fill="none" stroke={FOND_COLORS[fi % FOND_COLORS.length]} strokeWidth={fi === 0 ? 2.5 : 1.8} opacity={0.9}
+                        points={fond.årsData.map((r, i) => `${PAD_L + i * gap + gap / 2},${toY(r.kapital)}`).join(" ")} />
+                    ))}
+                    {jämförRows.map((fond, fi) => {
+                      const last = fond.årsData[fond.årsData.length - 1];
+                      if (!last) return null;
+                      const cx = PAD_L + (fond.årsData.length - 1) * gap + gap / 2;
+                      return <circle key={fi} cx={cx} cy={toY(last.kapital)} r={3} fill={FOND_COLORS[fi % FOND_COLORS.length]} stroke="#fff" strokeWidth={1.2} />;
+                    })}
+                    {jämförRows[0]?.årsData.filter((_, i) => (i + 1) % 5 === 0 || i === 0).map((r, i) => {
+                      const cx = PAD_L + r.y * gap - gap / 2;
+                      return <text key={i} x={cx} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={C.textLight} fontFamily="inherit">{r.y}</text>;
+                    })}
+                  </svg>
+                );
+              })()}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 8 }}>
+                {jämförRows.map((fond, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: 20, height: 2.5, background: FOND_COLORS[i % FOND_COLORS.length], borderRadius: 2 }} />
+                    <span style={{ fontSize: 10, color: C.textLight }}>{fond.namn} ({fond.avgift.toFixed(2).replace(".", ",")} %)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Avgiftstabell */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Detaljerad jämförelse</span>
+              </div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.navy }}>
+                    {["Fond", "Avgift / år", "Nettoavk.", `Kapital år ${JAMFOR_ÅR}`, "Avkastning", "Avgiftskostnad*"].map(h => (
+                      <th key={h} style={{ padding: "8px 12px", color: "#fff", fontWeight: 700, textAlign: h === "Fond" ? "left" : "right", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {jämförRows
+                    .map((fond, i) => ({ ...fond, origIdx: i }))
+                    .sort((a, b) => (b.final.kapital || 0) - (a.final.kapital || 0))
+                    .map((fond, rank) => {
+                      const isBest = rank === 0 && fonder.length > 1;
+                      const insattTotal = engångs + sparande * 12 * JAMFOR_ÅR;
+                      // Avgiftskostnad: skill mot noll-avgift men med samma bruttosekvens
+                      const avgiftKostnad = (() => {
+                        const årsAvk = [fond.avk1, fond.avk2, fond.avk3];
+                        let kap = engångs;
+                        for (let y = 1; y <= JAMFOR_ÅR; y++) {
+                          const bruttoÅr = årsAvk[(y-1)%3];
+                          const mRate = bruttoÅr / 100 / 12;
+                          for (let m = 0; m < 12; m++) kap = kap * (1 + mRate) + sparande;
+                        }
+                        return kap - (fond.final.kapital || 0);
+                      })();
+                      return (
+                        <tr key={fond.origIdx} style={{ background: isBest ? "#FFF0F0" : rank % 2 === 0 ? C.surface : C.surface2 }}>
+                          <td style={{ padding: "9px 12px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: 2, background: FOND_COLORS[fond.origIdx % FOND_COLORS.length] }} />
+                              <span style={{ color: C.text, fontWeight: isBest ? 700 : 400 }}>{fond.namn}</span>
+                              {isBest && <span style={{ background: C.navy, color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3 }}>BÄST</span>}
+                            </div>
+                          </td>
+                          <td style={{ padding: "9px 12px", textAlign: "right", color: fond.avgift > 1 ? C.red : C.text, fontFamily: "monospace" }}>{fond.avgift.toFixed(2).replace(".", ",")} %</td>
+                          <td style={{ padding: "9px 12px", textAlign: "right", fontFamily: "monospace", color: C.green }}>{fond.nettoSnitt.toFixed(2).replace(".", ",")} %</td>
+                          <td style={{ padding: "9px 12px", textAlign: "right", fontWeight: 700, fontFamily: "monospace", color: isBest ? C.green : C.text }}>{fmt(fond.final.kapital || 0)}</td>
+                          <td style={{ padding: "9px 12px", textAlign: "right", fontFamily: "monospace", color: C.green }}>{fmt(fond.final.avk || 0)}</td>
+                          <td style={{ padding: "9px 12px", textAlign: "right", fontFamily: "monospace", color: C.red }}>−{fmt(avgiftKostnad)}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+              <div style={{ color: C.textLight, fontSize: 10, marginTop: 8, fontStyle: "italic" }}>* Avgiftskostnad = skillnad mot 0 % avgift med samma bruttoavkastning</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1217,7 +1486,7 @@ const LikviditetsanalysView = ({ r, utdelning, buffertPct, buffertMode, buffertK
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: "auto", borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: "0 2px 8px rgba(15,40,71,0.07)" }}>
+      <div style={{ overflowX: "auto", borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: "0 2px 8px rgba(155,24,45,0.07)" }}>
         <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 780 }}>
           <thead>
             <tr style={{ background: C.navy }}>
@@ -1406,9 +1675,9 @@ const LönesummaView = () => {
 
       <div style={{ padding: "28px 32px" }}>
       {/* Info banner */}
-      <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 8, padding: "12px 18px", marginBottom: 24, display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <div style={{ background: "#FFF0F0", border: "1px solid #BFDBFE", borderRadius: 8, padding: "12px 18px", marginBottom: 24, display: "flex", gap: 16, alignItems: "flex-start" }}>
         <span style={{ fontSize: 16 }}>ℹ️</span>
-        <div style={{ color: "#1E40AF", fontSize: 12, lineHeight: 1.7 }}>
+        <div style={{ color: "#7A1020", fontSize: 12, lineHeight: 1.7 }}>
           <strong>Nya 3:12-regler fr.o.m. inkomstår 2026 (K10 deklaration 2027).</strong> Gränsbeloppet beräknas enligt en gemensam modell: Grundbelopp (4 IBB × ägarandel) + Lönebaserat utrymme + Sparat utdelningsutrymme. Löneuttagskravet och 4%-kapitalandelskravet är avskaffade. IBB 2026 = {fmt(IBB_2026)}.
         </div>
       </div>
@@ -1418,7 +1687,7 @@ const LönesummaView = () => {
         <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 24 }}>
           {/* Vänster input */}
           <div>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <SektionRubrik title="Bolagets lönesumma" />
               <InputRow label="Total kontant ersättning föregående år" value={totLönesumma} onChange={setTotLönesumma} suffix="kr / år" step={50000} hint="Alla anställda inkl. ägare" />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
@@ -1426,7 +1695,7 @@ const LönesummaView = () => {
                 <InfoChip label="Grundbelopp (4 IBB)" value={fmt(grundbeloppTotal)} />
               </div>
             </div>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <SektionRubrik title="Delägare" />
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.surface2, borderRadius: 7, padding: "10px 14px", marginBottom: 16 }}>
                 <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Antal delägare</span>
@@ -1436,7 +1705,7 @@ const LönesummaView = () => {
                   <button onClick={() => syncAntal(Math.min(10, antalDelägare + 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
                 </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, padding: "8px 12px", borderRadius: 6, background: ägarandelOk ? "#F0FDF4" : "#FEF2F2", border: `1px solid ${ägarandelOk ? "#86EFAC" : "#FECACA"}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, padding: "8px 12px", borderRadius: 6, background: ägarandelOk ? "#FFF0F0" : "#FEF2F2", border: `1px solid ${ägarandelOk ? "#F5C5C5" : "#FECACA"}` }}>
                 <span style={{ fontSize: 11, color: ägarandelOk ? C.green : C.red, fontWeight: 600 }}>Totala ägarandel</span>
                 <span style={{ fontSize: 13, fontWeight: 800, color: ägarandelOk ? C.green : C.red, fontFamily: "monospace" }}>{totÄgarandel.toFixed(1)} %</span>
               </div>
@@ -1488,7 +1757,7 @@ const LönesummaView = () => {
             {beräkningar.map((b, i) => {
               const d = delägare[i];
               return (
-                <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 3, height: 20, background: C.gold, borderRadius: 2 }} />
@@ -1504,14 +1773,14 @@ const LönesummaView = () => {
                   </div>
                   {/* Tre delar */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 7, padding: "12px 14px" }}>
-                      <div style={{ color: "#166534", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Grundbelopp</div>
-                      <div style={{ color: "#166534", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.grundbelopp)}</div>
-                      <div style={{ color: "#4ADE80", fontSize: 10, marginTop: 2 }}>4 IBB × {d.ägarandel} %</div>
+                    <div style={{ background: "#FFF0F0", border: "1px solid #86EFAC", borderRadius: 7, padding: "12px 14px" }}>
+                      <div style={{ color: "#7A1020", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Grundbelopp</div>
+                      <div style={{ color: "#7A1020", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.grundbelopp)}</div>
+                      <div style={{ color: "#E5A0A0", fontSize: 10, marginTop: 2 }}>4 IBB × {d.ägarandel} %</div>
                     </div>
-                    <div style={{ background: b.lönebaseratUtrymme > 0 ? "#EFF6FF" : C.surface2, border: `1px solid ${b.lönebaseratUtrymme > 0 ? "#93C5FD" : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
-                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#1E40AF" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Lönebaserat</div>
-                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#1E40AF" : C.textLight, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.lönebaseratUtrymme)}</div>
+                    <div style={{ background: b.lönebaseratUtrymme > 0 ? "#FFF0F0" : C.surface2, border: `1px solid ${b.lönebaseratUtrymme > 0 ? "#E5A0A0" : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
+                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Lönebaserat</div>
+                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.lönebaseratUtrymme)}</div>
                       <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>{b.begränsadAvLön ? "⚠ Begränsat av 50×-tak" : totLönesumma === 0 ? "Ange lönesumma" : b.lönebasRaw <= 0 ? "Under löneavdrag" : "(lön × andel − 8 IBB) × 50%"}</div>
                     </div>
                     <div style={{ background: b.sparatUtrymme > 0 ? "#FFF8EC" : C.surface2, border: `1px solid ${b.sparatUtrymme > 0 ? C.gold : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
@@ -1526,10 +1795,10 @@ const LönesummaView = () => {
                       <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Skatt inom gränsbelopp</div>
                       <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>2/3 × 30 % = 20 % effektivt</div>
                     </div>
-                    <div style={{ color: "#6EE0A4", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.skattInomGräns)}</div>
+                    <div style={{ color: "#F9C5A5", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.skattInomGräns)}</div>
                   </div>
                   {b.begränsadAvLön && (
-                    <div style={{ marginTop: 10, background: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 6, padding: "8px 12px", color: "#92400E", fontSize: 11 }}>
+                    <div style={{ marginTop: 10, background: "#FFF5F0", border: "1px solid #FCD34D", borderRadius: 6, padding: "8px 12px", color: "#7A1020", fontSize: 11 }}>
                       ⚠ Lönebaserat utrymme begränsat till 50× din lön ({fmt(b.maxLönebaserat)}). Höj din lön för att öka utrymmet.
                     </div>
                   )}
@@ -1547,7 +1816,7 @@ const LönesummaView = () => {
                 ))}
                 <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, marginTop: 6 }}>
                   <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 700 }}>Totalt gränsbelopp</span>
-                  <span style={{ color: "#6EE0A4", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(beräkningar.reduce((s, b) => s + b.gränsbelopp, 0))}</span>
+                  <span style={{ color: "#F9C5A5", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(beräkningar.reduce((s, b) => s + b.gränsbelopp, 0))}</span>
                 </div>
               </div>
             )}
@@ -1562,7 +1831,7 @@ const LönesummaView = () => {
         {/* ── VÄNSTER ── */}
         <div>
           {/* Bolagets lönesumma */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <SektionRubrik title="Bolagets lönesumma" />
             <InputRow label="Total kontant ersättning föregående år" value={totLönesumma} onChange={setTotLönesumma} suffix="kr / år" step={50000} hint="Alla anställda inkl. ägare" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
@@ -1572,7 +1841,7 @@ const LönesummaView = () => {
           </div>
 
           {/* Antal delägare */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <SektionRubrik title="Delägare" />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.surface2, borderRadius: 7, padding: "10px 14px", marginBottom: 16 }}>
               <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Antal delägare</span>
@@ -1584,7 +1853,7 @@ const LönesummaView = () => {
             </div>
 
             {/* Ägarandelsvalidering */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, padding: "8px 12px", borderRadius: 6, background: ägarandelOk ? "#F0FDF4" : "#FEF2F2", border: `1px solid ${ägarandelOk ? "#86EFAC" : "#FECACA"}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, padding: "8px 12px", borderRadius: 6, background: ägarandelOk ? "#FFF0F0" : "#FEF2F2", border: `1px solid ${ägarandelOk ? "#F5C5C5" : "#FECACA"}` }}>
               <span style={{ fontSize: 11, color: ägarandelOk ? C.green : C.red, fontWeight: 600 }}>Totala ägarandel</span>
               <span style={{ fontSize: 13, fontWeight: 800, color: ägarandelOk ? C.green : C.red, fontFamily: "monospace" }}>{totÄgarandel.toFixed(1)} %</span>
             </div>
@@ -1644,7 +1913,7 @@ const LönesummaView = () => {
           {beräkningar.map((b, i) => {
             const d = delägare[i];
             return (
-              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                 {/* Rubrik */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1663,16 +1932,16 @@ const LönesummaView = () => {
                 {/* Beräkningssteg */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                   {/* Grundbelopp */}
-                  <div style={{ background: "#F0FDF4", border: "1px solid #86EFAC", borderRadius: 7, padding: "12px 14px" }}>
-                    <div style={{ color: "#166534", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>① Grundbelopp</div>
-                    <div style={{ color: "#166534", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.grundbelopp)}</div>
-                    <div style={{ color: "#4ADE80", fontSize: 10, marginTop: 2 }}>4 IBB × {d.ägarandel} %</div>
+                  <div style={{ background: "#FFF0F0", border: "1px solid #86EFAC", borderRadius: 7, padding: "12px 14px" }}>
+                    <div style={{ color: "#7A1020", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>① Grundbelopp</div>
+                    <div style={{ color: "#7A1020", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.grundbelopp)}</div>
+                    <div style={{ color: "#E5A0A0", fontSize: 10, marginTop: 2 }}>4 IBB × {d.ägarandel} %</div>
                   </div>
 
                   {/* Lönebaserat */}
-                  <div style={{ background: b.lönebaseratUtrymme > 0 ? "#EFF6FF" : C.surface2, border: `1px solid ${b.lönebaseratUtrymme > 0 ? "#93C5FD" : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
-                    <div style={{ color: b.lönebaseratUtrymme > 0 ? "#1E40AF" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>② Lönebaserat utrymme</div>
-                    <div style={{ color: b.lönebaseratUtrymme > 0 ? "#1E40AF" : C.textLight, fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.lönebaseratUtrymme)}</div>
+                  <div style={{ background: b.lönebaseratUtrymme > 0 ? "#FFF0F0" : C.surface2, border: `1px solid ${b.lönebaseratUtrymme > 0 ? "#E5A0A0" : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
+                    <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>② Lönebaserat utrymme</div>
+                    <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.lönebaseratUtrymme)}</div>
                     <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>
                       {totLönesumma === 0 ? "Ange lönesumma" : b.lönebasRaw <= 0 ? `Löneunderlag (${fmt(b.löneunderlagAndel)}) < löneavdrag` : b.begränsadAvLön ? `Begränsat av max lön (50× ${fmt(d.egnLön)})` : `(${fmt(b.löneunderlagAndel)} − 8 IBB) × 50 %`}
                     </div>
@@ -1688,7 +1957,7 @@ const LönesummaView = () => {
                   {/* Skatteeffekt */}
                   <div style={{ background: C.navy, borderRadius: 7, padding: "12px 14px" }}>
                     <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Skatt inom gränsbelopp</div>
-                    <div style={{ color: "#6EE0A4", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.skattInomGräns)}</div>
+                    <div style={{ color: "#F9C5A5", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.skattInomGräns)}</div>
                     <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>2/3 × 30 % = 20 % effektivt</div>
                   </div>
                 </div>
@@ -1706,8 +1975,8 @@ const LönesummaView = () => {
                     { label: "Sparat utdelningsutrymme", value: fmt(b.sparatUtrymme) },
                   ].map((row, j) => (
                     <div key={j} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: j < 6 ? `1px solid ${C.border}` : "none" }}>
-                      <span style={{ color: row.warn ? "#D97706" : C.textMid, fontSize: 11 }}>{row.label}</span>
-                      <span style={{ color: row.warn ? "#D97706" : C.text, fontSize: 11, fontWeight: 600, fontFamily: "monospace" }}>{row.value}</span>
+                      <span style={{ color: row.warn ? "#C04020" : C.textMid, fontSize: 11 }}>{row.label}</span>
+                      <span style={{ color: row.warn ? "#C04020" : C.text, fontSize: 11, fontWeight: 600, fontFamily: "monospace" }}>{row.value}</span>
                     </div>
                   ))}
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 0", marginTop: 4 }}>
@@ -1731,7 +2000,7 @@ const LönesummaView = () => {
               ))}
               <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, marginTop: 6 }}>
                 <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 700 }}>Totalt gränsbelopp</span>
-                <span style={{ color: "#6EE0A4", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(beräkningar.reduce((s, b) => s + b.gränsbelopp, 0))}</span>
+                <span style={{ color: "#F9C5A5", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(beräkningar.reduce((s, b) => s + b.gränsbelopp, 0))}</span>
               </div>
             </div>
           )}
@@ -1791,8 +2060,8 @@ const TradFondView = () => {
   const totalAvgifter = rows.reduce((s, r) => s + r.tAvgift + r.fAvgiftKr, 0);
   const maxTot = rows.length > 0 ? Math.max(...rows.map(r => r.totalt)) : 1;
 
-  const [TRAD_COLOR, setTradColor] = useState("#1A5296");
-  const [FOND_COLOR, setFondColor] = useState("#7B5EA7");
+  const [TRAD_COLOR, setTradColor] = useState("#9B182D");
+  const [FOND_COLOR, setFondColor] = useState("#CEC09E");
 
   const SektionRubrik = ({ title, color = C.gold }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -1812,7 +2081,7 @@ const TradFondView = () => {
           { label: `TRAD (${tradPct} %)`, value: rows.length > 0 ? fmt(rows[rows.length-1].tKap) : fmt(tradKapital), color: TRAD_COLOR },
           { label: `Fond (${fondPct} %)`, value: rows.length > 0 ? fmt(rows[rows.length-1].fKap) : fmt(fondKapital), color: FOND_COLOR },
         ].map((card, i) => (
-          <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</div>
             <div style={{ color: card.color, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{card.value}</div>
           </div>
@@ -1824,7 +2093,7 @@ const TradFondView = () => {
         {/* ── VÄNSTER ── */}
         <div>
           {/* Totalkapital & fördelning */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <SektionRubrik title="Kapital & fördelning" />
             <InputRow label="Totalt kapital" value={totalKapital} onChange={setTotalKapital} suffix="kr" step={100000} />
             <InputRow label="Antal år" value={år} onChange={v => setÅr(Math.max(1, Math.min(30, v)))} suffix="år" step={1} min={1} max={30} />
@@ -1844,7 +2113,7 @@ const TradFondView = () => {
           </div>
 
           {/* TRAD parametrar */}
-          <div style={{ background: C.surface, border: `1.5px solid ${TRAD_COLOR}22`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1.5px solid ${TRAD_COLOR}22`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 16, background: TRAD_COLOR, borderRadius: 2 }} />
@@ -1863,7 +2132,7 @@ const TradFondView = () => {
           </div>
 
           {/* Fond parametrar */}
-          <div style={{ background: C.surface, border: `1.5px solid ${FOND_COLOR}22`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1.5px solid ${FOND_COLOR}22`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 16, background: FOND_COLOR, borderRadius: 2 }} />
@@ -1884,7 +2153,7 @@ const TradFondView = () => {
         {/* ── HÖGER ── */}
         <div>
           {/* Kumulativt diagram */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
@@ -1978,7 +2247,7 @@ const TradFondView = () => {
                         left: alignRight ? "auto" : `${Math.max(0, pct - 8)}%`,
                         right: alignRight ? `${100 - pct - 8}%` : "auto",
                         background: C.navy, borderRadius: 8, padding: "10px 14px",
-                        boxShadow: "0 4px 16px rgba(15,40,71,0.25)", pointerEvents: "none", minWidth: 170, zIndex: 10
+                        boxShadow: "0 4px 16px rgba(155,24,45,0.25)", pointerEvents: "none", minWidth: 170, zIndex: 10
                       }}>
                         <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>År {row.y}</div>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
@@ -1997,7 +2266,7 @@ const TradFondView = () => {
                         </div>
                         <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 7, display: "flex", justifyContent: "space-between" }}>
                           <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 11, fontWeight: 700 }}>Totalt</span>
-                          <span style={{ color: "#6EE0A4", fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(row.totalt)}</span>
+                          <span style={{ color: "#F9C5A5", fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(row.totalt)}</span>
                         </div>
                       </div>
                     );
@@ -2008,7 +2277,7 @@ const TradFondView = () => {
           </div>
 
           {/* Årsvis tabell */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Årsvis utveckling</span>
@@ -2044,18 +2313,18 @@ const TradFondView = () => {
                   <tr style={{ background: C.navy }}>
                     <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>Totalt</td>
                     <td colSpan={1} />
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#7DB8F7", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s,r)=>s+r.tAvk,0))}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#E8A0A0", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s,r)=>s+r.tAvk,0))}</td>
                     <td colSpan={1} />
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#C4A8E8", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s,r)=>s+r.fNettoAvk,0))}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#CEC09E", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s,r)=>s+r.fNettoAvk,0))}</td>
                     <td style={{ padding: "8px 12px", textAlign: "right" }}>
                       <div style={{ display: "flex", justifyContent: "flex-end", gap: 4, alignItems: "center" }}>
-                        <span style={{ color: "#7DB8F7", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>{rows.length > 0 ? fmt(rows[rows.length-1].tKap) : ""}</span>
+                        <span style={{ color: "#E8A0A0", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>{rows.length > 0 ? fmt(rows[rows.length-1].tKap) : ""}</span>
                         <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10 }}>+</span>
-                        <span style={{ color: "#C4A8E8", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>{rows.length > 0 ? fmt(rows[rows.length-1].fKap) : ""}</span>
+                        <span style={{ color: "#CEC09E", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>{rows.length > 0 ? fmt(rows[rows.length-1].fKap) : ""}</span>
                       </div>
                       <div style={{ color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "monospace", textAlign: "right", marginTop: 1 }}>{fmt(slutKapital)}</div>
                     </td>
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#6EE0A4", fontFamily: "monospace", fontWeight: 700 }}>{fmt(totalAvk)}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#F9C5A5", fontFamily: "monospace", fontWeight: 700 }}>{fmt(totalAvk)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -2089,7 +2358,7 @@ const TRAD_BOLAG = {
       { år: 9, rörlig: 1, fast: 350 },
       { år: 10, rörlig: 1, fast: 350 },
     ],
-    color: "#1A5296",
+    color: "#9B182D",
   },
   folksam: {
     namn: "Folksam",
@@ -2118,7 +2387,7 @@ const TRAD_BOLAG = {
 const TradAvgiftCard = ({ totalAvgift }) => {
   const [visa, setVisa] = useState(false);
   return (
-    <div onClick={() => setVisa(v => !v)} style={{ background: visa ? "#FEF2F2" : C.surface, border: `1px solid ${visa ? "#FECACA" : C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)", cursor: "pointer", userSelect: "none" }}>
+    <div onClick={() => setVisa(v => !v)} style={{ background: visa ? "#FEF2F2" : C.surface, border: `1px solid ${visa ? "#FECACA" : C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)", cursor: "pointer", userSelect: "none" }}>
       <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span>Total avgift</span>
         <span style={{ fontSize: 9, color: C.textLight }}>{visa ? "▲" : "▼ visa"}</span>
@@ -2144,6 +2413,8 @@ const TradView = () => {
   const [använd5år, setAnvänd5år] = useState(false);
   const [uttakÅr, setUttakÅr] = useState(null);
   const [uttakBelopp, setUttakBelopp] = useState(0);
+  const [inkluderaAvkSkatt, setInkluderaAvkSkatt] = useState(true);
+  const [slr, setSlr] = useState(2.62); // statslåneränta, default 2026
 
   // Editerbar bolagsdata per bolag
   const [bolagData, setBolagData] = useState({
@@ -2160,20 +2431,40 @@ const TradView = () => {
   const b = { ...TRAD_BOLAG[bolag], ...bolagData[bolag] };
   const ränta = räntaOverride !== null ? räntaOverride : (använd5år ? b.snitt5år : b.återbäringsränta);
 
+  const avkSkattSats = (slr + 1) * 0.75 / 100; // (SLR + 1pp) × 0,75
+
   const rows = useMemo(() => {
     const res = [];
     let kapNu = kapital + extra;
     for (let y = 1; y <= år; y++) {
+      const avkSkatt = inkluderaAvkSkatt ? kapNu * avkSkattSats : 0;
       const avkastning = kapNu * (ränta / 100);
       const kapital31 = kapNu + avkastning;
       const avgift = kapital31 * (b.kapitalavgift / 100) + b.fastAvgiftÅr;
-      const kapEfterAvg = kapital31 - avgift;
+      let kapEfterAvg = kapital31 - avgift;
       const avkEfterAvg = kapEfterAvg - kapNu;
-      res.push({ y, kapStart: kapNu, avkastning, kapital31, avgift, kapEfterAvg, avkEfterAvg });
+
+      // Tillämpa uttag om detta är uttaksåret
+      let uttagGjort = null;
+      if (uttakÅr === y) {
+        const rule = b.återköp.find(r => r.år === y);
+        if (rule && !rule.ejÅterköpsbar) {
+          const belopp = uttakBelopp > 0 ? Math.min(uttakBelopp, kapEfterAvg) : kapEfterAvg;
+          const rörligAvgift = belopp * ((rule.rörlig || 0) / 100);
+          const fastAvgiftUttag = rule.fast || 0;
+          const riskKostnad = bolag === "skandia" ? belopp * (b.riskkapitaljustering / 100) : 0;
+          const totalUttagsavgift = rörligAvgift + fastAvgiftUttag + riskKostnad;
+          const netto = belopp - totalUttagsavgift;
+          kapEfterAvg = kapEfterAvg - belopp;
+          uttagGjort = { belopp, totalUttagsavgift, netto };
+        }
+      }
+
+      res.push({ y, kapStart: kapNu, avkastning, kapital31, avgift, kapEfterAvg, avkEfterAvg, uttagGjort, avkSkatt });
       kapNu = kapEfterAvg;
     }
     return res;
-  }, [kapital, extra, år, ränta, b]);
+  }, [kapital, extra, år, ränta, b, uttakÅr, uttakBelopp, bolag, inkluderaAvkSkatt, avkSkattSats]);
 
   const getÅterköp = (y) => {
     const rule = b.återköp.find(r => r.år === y);
@@ -2207,7 +2498,7 @@ const TradView = () => {
         {/* ── VÄNSTERKOLUMN ── */}
         <div>
           {/* Bolagsväljare */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Bolag</h3>
@@ -2223,7 +2514,7 @@ const TradView = () => {
           </div>
 
           {/* Bolagsdata — editerbar */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
@@ -2246,7 +2537,7 @@ const TradView = () => {
           </div>
 
           {/* Parametrar */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Parametrar</h3>
@@ -2271,10 +2562,50 @@ const TradView = () => {
                 <span style={{ color: C.gold, fontSize: 13, fontWeight: 800 }}>{ränta.toFixed(2).replace(".", ",")} %</span>
               </div>
             </div>
+
+            {/* Avkastningsskatt */}
+            <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: inkluderaAvkSkatt ? 10 : 0 }}>
+                <div>
+                  <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Avkastningsskatt</div>
+                  <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>(SLR + 1 pp) × 0,75 × ingående kapital</div>
+                </div>
+                <button onClick={() => setInkluderaAvkSkatt(v => !v)}
+                  style={{ padding: "6px 14px", borderRadius: 20, border: `1.5px solid ${inkluderaAvkSkatt ? C.navy : C.border}`, background: inkluderaAvkSkatt ? C.navy : "transparent", color: inkluderaAvkSkatt ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  {inkluderaAvkSkatt ? "Aktiv" : "Av"}
+                </button>
+              </div>
+              {inkluderaAvkSkatt && (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: C.textLight, fontSize: 10, marginBottom: 4 }}>Statslåneränta (SLR)</div>
+                      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+                        <input type="number" value={slr} min={0} max={10} step={0.01}
+                          onChange={e => setSlr(Number(e.target.value))}
+                          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "8px 10px", fontFamily: "inherit" }} />
+                        <span style={{ color: C.textLight, padding: "8px 10px", fontSize: 11, borderLeft: `1px solid ${C.border}` }}>%</span>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: C.textLight, fontSize: 10, marginBottom: 4 }}>Effektiv skattesats</div>
+                      <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "9px 12px", color: C.navy, fontSize: 13, fontWeight: 700 }}>
+                        {(avkSkattSats * 100).toFixed(3).replace(".", ",")} %
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ background: "#FFF5F0", border: `1px solid ${C.gold}`, borderRadius: 6, padding: "8px 12px" }}>
+                    <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.6 }}>
+                      Betalas av <strong>bolaget</strong> utanför försäkringen. Påverkar inte kapitalvärdet i KF men är en verklig kostnad som redovisas separat nedan.
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Återköp */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.red, borderRadius: 2 }} />
               <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Återköp / Uttag</h3>
@@ -2330,22 +2661,29 @@ const TradView = () => {
         {/* ── HÖGERKOLUMN ── */}
         <div>
           {/* Sammanfattning */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: inkluderaAvkSkatt ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Kapital år {år}</div>
               <div style={{ color: C.navy, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{rows.length > 0 ? fmt(rows[rows.length - 1].kapEfterAvg) : "—"}</div>
               <div style={{ color: C.textLight, fontSize: 10 }}>efter avgifter</div>
             </div>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
               <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Total avkastning</div>
               <div style={{ color: C.green, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>{fmt(totalAvkastning)}</div>
               <div style={{ color: C.textLight, fontSize: 10 }}>över {år} år</div>
             </div>
             <TradAvgiftCard totalAvgift={rows.reduce((s, r) => s + r.avgift, 0)} />
+            {inkluderaAvkSkatt && (
+              <div style={{ background: "#FFF5F0", border: `1px solid ${C.gold}`, borderRadius: 8, padding: "16px 18px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+                <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Avkastningsskatt totalt</div>
+                <div style={{ color: C.gold, fontSize: 20, fontWeight: 800, fontFamily: "monospace", marginBottom: 2 }}>−{fmt(rows.reduce((s, r) => s + r.avkSkatt, 0))}</div>
+                <div style={{ color: C.textLight, fontSize: 10 }}>{(avkSkattSats * 100).toFixed(3).replace(".", ",")} % / år på ingående kap.</div>
+              </div>
+            )}
           </div>
 
           {/* Chart */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Kapitalutveckling — {b.namn}</span>
@@ -2413,7 +2751,7 @@ const TradView = () => {
           </div>
 
           {/* Återköpsavgifter tabell */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Återköpsavgifter — {b.namn}</span>
@@ -2456,7 +2794,7 @@ const TradView = () => {
           </div>
 
           {/* Årsvis tabell */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Årsvis beräkning</span>
@@ -2465,29 +2803,55 @@ const TradView = () => {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: C.navy }}>
-                    {["År", "Avkastning", "Kapital 31/12", "Avgift", "Kapital efter avg", "Avkastn. efter avg"].map(h => (
+                    {["År", "Avkastning", "Kapital 31/12", "Avgift", "Kapital efter avg", "Avkastn. efter avg", ...(inkluderaAvkSkatt ? ["Avk.skatt (ext.)"] : [])].map(h => (
                       <th key={h} style={{ padding: "8px 12px", color: "#fff", fontWeight: 700, textAlign: h === "År" ? "left" : "right", fontSize: 11, whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row, i) => (
-                    <tr key={i} style={{ background: uttakÅr === row.y ? "#FFF8EC" : i % 2 === 0 ? C.surface : C.surface2 }}>
-                      <td style={{ padding: "7px 12px", color: C.text, fontWeight: 600 }}>{row.y}{uttakÅr === row.y ? " 🔴" : ""}</td>
-                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkastning)}</td>
-                      <td style={{ padding: "7px 12px", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.kapital31)}</td>
-                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.red, fontFamily: "monospace" }}>−{fmt(row.avgift)}</td>
-                      <td style={{ padding: "7px 12px", textAlign: "right", fontWeight: 700, fontFamily: "monospace" }}>{fmt(row.kapEfterAvg)}</td>
-                      <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkEfterAvg)}</td>
-                    </tr>
+                    <>
+                      <tr key={i} style={{ background: uttakÅr === row.y ? "#FFF5F0" : i % 2 === 0 ? C.surface : C.surface2 }}>
+                        <td style={{ padding: "7px 12px", color: C.text, fontWeight: 600 }}>
+                          {row.y}{uttakÅr === row.y ? " 🔴" : ""}
+                        </td>
+                        <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkastning)}</td>
+                        <td style={{ padding: "7px 12px", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.kapital31)}</td>
+                        <td style={{ padding: "7px 12px", textAlign: "right", color: C.red, fontFamily: "monospace" }}>−{fmt(row.avgift)}</td>
+                        <td style={{ padding: "7px 12px", textAlign: "right", fontWeight: 700, fontFamily: "monospace" }}>
+                          {row.uttagGjort ? fmt(row.kapital31 - row.avgift) : fmt(row.kapEfterAvg)}
+                        </td>
+                        <td style={{ padding: "7px 12px", textAlign: "right", color: C.green, fontFamily: "monospace" }}>{fmt(row.avkEfterAvg)}</td>
+                        {inkluderaAvkSkatt && (
+                          <td style={{ padding: "7px 12px", textAlign: "right", color: "#C04020", fontFamily: "monospace", fontSize: 11 }}>−{fmt(row.avkSkatt)}</td>
+                        )}
+                      </tr>
+                      {row.uttagGjort && (
+                        <tr key={`uttag-${i}`} style={{ background: "#FEF2F2", borderLeft: `3px solid ${C.red}` }}>
+                          <td style={{ padding: "7px 12px", color: C.red, fontWeight: 700, fontSize: 11 }}>↳ Uttag år {row.y}</td>
+                          <td style={{ padding: "7px 12px", textAlign: "right", color: C.textMid, fontSize: 11, fontFamily: "monospace" }}>Belopp: {fmt(row.uttagGjort.belopp)}</td>
+                          <td style={{ padding: "7px 12px", textAlign: "right", color: C.red, fontSize: 11, fontFamily: "monospace" }}>Avgift: −{fmt(row.uttagGjort.totalUttagsavgift)}</td>
+                          <td colSpan={2} style={{ padding: "7px 12px", textAlign: "right" }}>
+                            <span style={{ color: C.green, fontWeight: 700, fontSize: 12, fontFamily: "monospace" }}>Netto: {fmt(row.uttagGjort.netto)}</span>
+                          </td>
+                          <td style={{ padding: "7px 12px", textAlign: "right", color: C.navy, fontWeight: 700, fontSize: 11, fontFamily: "monospace" }}>
+                            Kvar: {fmt(row.kapEfterAvg)}
+                          </td>
+                          {inkluderaAvkSkatt && <td />}
+                        </tr>
+                      )}
+                    </>
                   ))}
                   <tr style={{ background: C.navy }}>
                     <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>Totalt</td>
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#6EE0A4", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkastning, 0))}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#F9C5A5", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkastning, 0))}</td>
                     <td />
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#F08080", fontFamily: "monospace", fontWeight: 700 }}>−{fmt(rows.reduce((s, r) => s + r.avgift, 0))}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#FFB0B0", fontFamily: "monospace", fontWeight: 700 }}>−{fmt(rows.reduce((s, r) => s + r.avgift, 0))}</td>
                     <td />
-                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#6EE0A4", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkEfterAvg, 0))}</td>
+                    <td style={{ padding: "8px 12px", textAlign: "right", color: "#F9C5A5", fontFamily: "monospace", fontWeight: 700 }}>{fmt(rows.reduce((s, r) => s + r.avkEfterAvg, 0))}</td>
+                    {inkluderaAvkSkatt && (
+                      <td style={{ padding: "8px 12px", textAlign: "right", color: "#FFD0B0", fontFamily: "monospace", fontWeight: 700 }}>−{fmt(rows.reduce((s, r) => s + r.avkSkatt, 0))}</td>
+                    )}
                   </tr>
                 </tbody>
               </table>
@@ -2919,7 +3283,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
                         <input type="number" value={nt.ägare[i].andel}
                           onChange={e => { const a = nt.ägare.map((o,j) => j===i ? {...o, andel: e.target.value} : o); updNt("ägare", a); }}
                           placeholder="0" min={0} max={100}
-                          style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${hasAny ? (isOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: hasAny ? (isOk ? "#F0FDF4" : "#FEF2F2") : "#fff" }} />
+                          style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${hasAny ? (isOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: hasAny ? (isOk ? "#FFF0F0" : "#FEF2F2") : "#fff" }} />
                       </div>
                     </div>
                   ))}
@@ -3006,7 +3370,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
                             <input type="number" value={nt.tjpFonder[i].procent}
                               onChange={e => { const f = nt.tjpFonder.map((o,j) => j===i ? {...o, procent: e.target.value} : o); updNt("tjpFonder", f); }}
                               placeholder="0" min={0} max={100}
-                              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${harNgt ? (fondOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: harNgt ? (fondOk ? "#F0FDF4" : "#FEF2F2") : "#fff" }} />
+                              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${harNgt ? (fondOk ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 6, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: harNgt ? (fondOk ? "#FFF0F0" : "#FEF2F2") : "#fff" }} />
                           </div>
                         </div>
                       ))}
@@ -3035,7 +3399,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
                     <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Klarar hälsokrav 14/90</label>
                     <div style={{ display: "flex", gap: 10 }}>
                       {["Ja", "Nej"].map(v => (
-                        <label key={v} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", border: `1.5px solid ${nt.psHalsokrav === v ? (v === "Ja" ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 7, cursor: "pointer", background: nt.psHalsokrav === v ? (v === "Ja" ? "#F0FDF4" : "#FEF2F2") : "#fff" }}>
+                        <label key={v} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", border: `1.5px solid ${nt.psHalsokrav === v ? (v === "Ja" ? "#16A34A" : "#EF4444") : C.border}`, borderRadius: 7, cursor: "pointer", background: nt.psHalsokrav === v ? (v === "Ja" ? "#FFF0F0" : "#FEF2F2") : "#fff" }}>
                           <input type="radio" name="halsokrav" value={v} checked={nt.psHalsokrav === v} onChange={() => updNt("psHalsokrav", v)} style={{ accentColor: v === "Ja" ? "#16A34A" : "#EF4444" }} />
                           <span style={{ fontSize: 13, fontWeight: 600, color: nt.psHalsokrav === v ? (v === "Ja" ? "#15803D" : "#B91C1C") : C.textMid }}>{v}</span>
                         </label>
@@ -3063,7 +3427,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 
             {/* ── Gruppliv sub-form ── */}
             {nt.gruppliv && (
-              <div style={{ background: "#F0FDF4", border: "1.5px solid #86EFAC", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+              <div style={{ background: "#FFF0F0", border: "1.5px solid #86EFAC", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
                 <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Gruppliv — detaljer</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                   <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
@@ -3258,7 +3622,7 @@ function MainApp({ onLogout }) {
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", color: C.text }}>
       <div style={{ background: C.navy, padding: "0 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ padding: "18px 0", borderRight: `1px solid rgba(255,255,255,0.08)`, paddingRight: 28, marginRight: 28 }}>
-          <div style={{ color: C.gold, fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Norrfinans</div>
+          <div style={{ color: "#CEC09E", fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Norrfinans</div>
         </div>
         <div style={{ display: "flex", gap: 2, flex: 1 }}>
           {tabs.map(t => (
@@ -3277,7 +3641,7 @@ function MainApp({ onLogout }) {
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
           {/* ── VY-TOGGLE BAR ── */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", background: C.surface, borderBottom: `1px solid ${C.border}`, boxShadow: "0 1px 3px rgba(15,40,71,0.05)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", background: C.surface, borderBottom: `1px solid ${C.border}`, boxShadow: "0 1px 3px rgba(155,24,45,0.05)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <button
                 onClick={() => setFörenkladVy(v => !v)}
@@ -3369,13 +3733,13 @@ function MainApp({ onLogout }) {
               </div>
 
               {/* Kolumn 2: Förenklad resultat + KF */}
-              <div style={{ padding: "24px 20px", background: "#EEF2F7" }}>
+              <div style={{ padding: "24px 20px", background: "#F2EDE3" }}>
                 {/* Förenklad resultatöversikt */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                   <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                   <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Resultatöversikt — Helår</span>
                 </div>
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
                     <span style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Omsättning</span>
                     <span style={{ color: C.text, fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.omsättning)}</span>
@@ -3410,7 +3774,7 @@ function MainApp({ onLogout }) {
                 </div>
 
                 {/* Utdelning & Buffert — inline */}
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                     <div style={{ width: 3, height: 14, background: C.gold, borderRadius: 2 }} />
                     <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.3, textTransform: "uppercase" }}>Utdelning & Buffert</span>
@@ -3432,7 +3796,7 @@ function MainApp({ onLogout }) {
                 </div>
 
                 {/* Disponering — buffert + kvar i bolaget */}
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 20, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
                     <span style={{ color: C.text, fontSize: 14 }}>Total likviditet bolaget</span>
                     <span style={{ color: C.text, fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>{fmt(r.resultatEfterSkatt)}</span>
@@ -3548,7 +3912,7 @@ function MainApp({ onLogout }) {
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                 <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Resultatöversikt — Helår</span>
               </div>
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 12, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                 <WRow label="Omsättning" value={r.omsättning} bold />
                 <WRow separator />
                 {intäkterMode === "timbaserat" ? (
@@ -3598,11 +3962,11 @@ function MainApp({ onLogout }) {
                   <InfoChip label="Buffertbelopp / år" value={fmt(r.buffert)} />
                 </div>
                 {r.buffert > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", background: "#EEF4FF", borderRadius: 5, margin: "4px 0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 14px", background: "#FFF0F0", borderRadius: 5, margin: "4px 0" }}>
                     <div>
-                      <span style={{ color: "#2563EB", fontSize: 12, fontWeight: 600 }}>{buffertMode === "pct" ? `Likviditetsbuffert (${buffertPct}% av EBIT)` : `Likviditetsbuffert (fast belopp)`}</span>
+                      <span style={{ color: "#9B182D", fontSize: 12, fontWeight: 600 }}>{buffertMode === "pct" ? `Likviditetsbuffert (${buffertPct}% av EBIT)` : `Likviditetsbuffert (fast belopp)`}</span>
                     </div>
-                    <span style={{ color: "#2563EB", fontSize: 13, fontFamily: "monospace", fontWeight: 600 }}>−{fmt(r.buffert)}</span>
+                    <span style={{ color: "#9B182D", fontSize: 13, fontFamily: "monospace", fontWeight: 600 }}>−{fmt(r.buffert)}</span>
                   </div>
                 )}
                 <WRow label="Planerad utdelning (brutto)" value={-utdelning} />
@@ -3611,17 +3975,17 @@ function MainApp({ onLogout }) {
                 <WRow separator />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: C.navy, borderRadius: 6, marginTop: 6 }}>
                   <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600 }}>Tillgängligt för kapitalförsäkring / år</span>
-                  <span style={{ color: r.tillgängligtKF_år >= 0 ? "#6EE0A4" : "#F08080", fontSize: 15, fontWeight: 700, fontFamily: "monospace" }}>{r.tillgängligtKF_år >= 0 ? "" : "−"}{fmt(Math.abs(r.tillgängligtKF_år))}</span>
+                  <span style={{ color: r.tillgängligtKF_år >= 0 ? "#F9C5A5" : "#FFB0B0", fontSize: 15, fontWeight: 700, fontFamily: "monospace" }}>{r.tillgängligtKF_år >= 0 ? "" : "−"}{fmt(Math.abs(r.tillgängligtKF_år))}</span>
                 </div>
               </div>
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(15,40,71,0.06)" }}>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                   <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                   <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Fördelning av omsättning</span>
                 </div>
                 {(intäkterMode === "timbaserat" ? [
                   { label: "Lön (inkl. AG-avgift)", value: r.lönTotal, color: "#3A7BD5" },
-                  { label: "Pension inkl. SLP", value: r.pensionTotal, color: "#7B5EA7" },
+                  { label: "Pension inkl. SLP", value: r.pensionTotal, color: "#CEC09E" },
                   { label: "Övriga kostnader", value: r.övrigaSum, color: "#E08A3C" },
                   { label: "Bolagsskatt (20,6%)", value: r.bolagsskatt, color: "#C0392B" },
                   { label: "Utdelning (brutto)", value: utdelning, color: C.green },
@@ -3629,7 +3993,7 @@ function MainApp({ onLogout }) {
                   { label: "Kapitalförsäkring", value: Math.max(0, r.tillgängligtKF_år), color: C.gold },
                 ] : [
                   { label: "Lön (inkl. AG-avgift)", value: r.lönTotal, color: "#3A7BD5" },
-                  { label: "Pension inkl. SLP", value: r.pensionTotal, color: "#7B5EA7" },
+                  { label: "Pension inkl. SLP", value: r.pensionTotal, color: "#CEC09E" },
                   { label: "Övriga kostnader", value: r.övrigaSum, color: "#E08A3C" },
                   { label: "Bolagsskatt (20,6%)", value: r.bolagsskatt, color: "#C0392B" },
                   { label: "Utdelning (brutto)", value: utdelning, color: C.green },
@@ -3656,7 +4020,7 @@ function MainApp({ onLogout }) {
             </div>
 
             {/* ── KF PANEL ── */}
-            <div style={{ padding: "20px 16px", background: "#EEF2F7" }}>
+            <div style={{ padding: "20px 16px", background: "#F2EDE3" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                 <div>
@@ -3764,7 +4128,7 @@ export default function App() {
               <span style={{ color: "#fff", fontSize: 22, fontWeight: 900 }}>N</span>
             </div>
             <div style={{ textAlign: "left" }}>
-              <div style={{ color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>Norrfinans</div>
+              <div style={{ color: "#CEC09E", fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>Norrfinans</div>
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" }}>Rådgivningsverktyg</div>
             </div>
           </div>
