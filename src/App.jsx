@@ -4470,22 +4470,238 @@ ${extraRows}
   );
 }
 
+// ─── MOBILE APP ──────────────────────────────────────────────────────────────
+const MobileApp = ({ onLogout }) => {
+  const [tab, setTab] = useState("kalkylator");
+  const [intäkterMode, setIntäkterMode] = useState("timbaserat");
+  const [timpris, setTimpris] = useState(0);
+  const [timmar, setTimmar] = useState(1832);
+  const [debiteringsgrad, setDebiteringsgrad] = useState(0);
+  const [direktOmsättning, setDirektOmsättning] = useState(0);
+  const [bruttolön, setBruttolön] = useState(0);
+  const [bruttolönÅr, setBruttolönÅr] = useState(0);
+  const [lönPeriod, setLönPeriod] = useState("mån");
+  const [pensionMån, setPensionMån] = useState(0);
+  const [antalÄgare, setAntalÄgare] = useState(1);
+  const [utdelning, setUtdelning] = useState(0);
+  const [buffertKr, setBuffertKr] = useState(0);
+
+  const r = useMemo(() => {
+    const faktTim = timmar * (debiteringsgrad / 100);
+    const omsättning = intäkterMode === "timbaserat" ? timpris * faktTim : direktOmsättning;
+    const lönTotal = (lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 1.3142 * antalÄgare;
+    const pension = pensionMån * 12 * antalÄgare;
+    const pensionTotal = pension * 1.2426;
+    const ebit = omsättning - lönTotal - pensionTotal;
+    const bolagsskatt = Math.max(0, ebit) * 0.206;
+    const resultatEfterSkatt = ebit - bolagsskatt;
+    const kvarEfterUtdelning = resultatEfterSkatt - utdelning - buffertKr;
+    return { omsättning, lönTotal, pensionTotal, ebit, bolagsskatt, resultatEfterSkatt, kvarEfterUtdelning, faktTim };
+  }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, bruttolön, bruttolönÅr, lönPeriod, antalÄgare, pensionMån, utdelning, buffertKr]);
+
+  const MRow = ({ label, value, bold, red }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
+      <span style={{ color: bold ? C.text : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 400 }}>{label}</span>
+      <span style={{ color: red ? C.red : bold ? C.navy : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 500, fontFamily: "monospace" }}>
+        {value < 0 ? "−" : ""}{fmt(Math.abs(value))}
+      </span>
+    </div>
+  );
+
+  const MInput = ({ label, value, onChange, suffix, step = 1000 }) => {
+    const [localVal, setLocalVal] = useState(value === 0 ? "" : String(value));
+    // sync if parent changes externally
+    React.useEffect(() => { setLocalVal(value === 0 ? "" : String(value)); }, [value]);
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ color: C.textMid, fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{label}</label>
+        <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={localVal}
+            placeholder="0"
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9]/g, "");
+              setLocalVal(raw);
+              onChange(raw === "" ? 0 : Number(raw));
+            }}
+            style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16, fontWeight: 600, padding: "14px 16px", fontFamily: "inherit" }}
+          />
+          <span style={{ color: C.textLight, padding: "14px 14px", fontSize: 13, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const mobileTabs = [
+    { id: "kalkylator", label: "Kalkylator", icon: "📊" },
+    { id: "resultat", label: "Resultat", icon: "💰" },
+    { id: "kf", label: "KF", icon: "🏦" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", color: C.text, maxWidth: 480, margin: "0 auto", position: "relative" }}>
+
+      {/* Header */}
+      <div style={{ background: C.navy, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: C.gold, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 16, fontWeight: 900 }}>N</div>
+          <span style={{ color: "#CEC09E", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>Norrfinans</span>
+        </div>
+        <button onClick={onLogout} style={{ background: "transparent", border: `1px solid rgba(255,255,255,0.2)`, borderRadius: 6, color: "rgba(255,255,255,0.6)", padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Logga ut</button>
+      </div>
+
+      {/* Tab nav */}
+      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", position: "sticky", top: 64, zIndex: 99 }}>
+        {mobileTabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ flex: 1, padding: "14px 8px", border: "none", borderBottom: `3px solid ${tab === t.id ? C.gold : "transparent"}`, background: "transparent", color: tab === t.id ? C.navy : C.textLight, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+            <span style={{ fontSize: 18 }}>{t.icon}</span>
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: "20px 16px", paddingBottom: 32 }}>
+
+        {/* ── KALKYLATOR ── */}
+        {tab === "kalkylator" && (
+          <div>
+            {/* Intäkter */}
+            <div style={{ background: C.surface, borderRadius: 12, padding: "18px 16px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Intäkter</span>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 14, background: C.surface2, borderRadius: 8, padding: 4 }}>
+                {[{ id: "timbaserat", label: "⏱ Timbaserat" }, { id: "omsättning", label: "📊 Omsättning" }].map(m => (
+                  <button key={m.id} onClick={() => setIntäkterMode(m.id)}
+                    style={{ flex: 1, padding: "10px", borderRadius: 6, border: "none", background: intäkterMode === m.id ? C.navy : "transparent", color: intäkterMode === m.id ? "#fff" : C.textMid, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{m.label}</button>
+                ))}
+              </div>
+              {intäkterMode === "timbaserat" ? (
+                <>
+                  <MInput label="Timpris" value={timpris} onChange={setTimpris} suffix="kr/tim" step={50} />
+                  <MInput label="Timmar / år" value={timmar} onChange={setTimmar} suffix="tim" step={10} />
+                  <MInput label="Debiteringsgrad" value={debiteringsgrad} onChange={setDebiteringsgrad} suffix="%" step={1} />
+                </>
+              ) : (
+                <MInput label="Omsättning / år" value={direktOmsättning} onChange={setDirektOmsättning} suffix="kr/år" step={50000} />
+              )}
+            </div>
+
+            {/* Lön */}
+            <div style={{ background: C.surface, borderRadius: 12, padding: "18px 16px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Lön & Pension</span>
+              </div>
+              {/* Antal ägare */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, background: C.surface2, borderRadius: 8, padding: "10px 14px" }}>
+                <span style={{ color: C.textMid, fontSize: 13, fontWeight: 600 }}>Antal ägare</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button onClick={() => setAntalÄgare(v => Math.max(1, v-1))} style={{ width: 36, height: 36, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 20, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>−</button>
+                  <span style={{ color: C.navy, fontSize: 18, fontWeight: 800, minWidth: 24, textAlign: "center" }}>{antalÄgare}</span>
+                  <button onClick={() => setAntalÄgare(v => Math.min(10, v+1))} style={{ width: 36, height: 36, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 20, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+</button>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {[{ id: "mån", label: "Månadsvis" }, { id: "år", label: "Årsvis" }].map(t => (
+                  <button key={t.id} onClick={() => setLönPeriod(t.id)}
+                    style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1.5px solid ${lönPeriod === t.id ? C.navy : C.border}`, background: lönPeriod === t.id ? C.navy : "transparent", color: lönPeriod === t.id ? "#fff" : C.textMid, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t.label}</button>
+                ))}
+              </div>
+              <MInput label={lönPeriod === "mån" ? "Bruttolön / mån" : "Bruttolön / år"}
+                value={lönPeriod === "mån" ? bruttolön : bruttolönÅr}
+                onChange={v => lönPeriod === "mån" ? setBruttolön(v) : setBruttolönÅr(v)}
+                suffix={lönPeriod === "mån" ? "kr/mån" : "kr/år"} step={1000} />
+              <MInput label="Pension / mån" value={pensionMån} onChange={setPensionMån} suffix="kr/mån" step={500} />
+            </div>
+
+            {/* Utdelning & Buffert */}
+            <div style={{ background: C.surface, borderRadius: 12, padding: "18px 16px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Utdelning & Buffert</span>
+              </div>
+              <MInput label="Utdelning / år (brutto)" value={utdelning} onChange={setUtdelning} suffix="kr/år" step={10000} />
+              <MInput label="Likviditetsbuffert" value={buffertKr} onChange={setBuffertKr} suffix="kr" step={10000} />
+            </div>
+          </div>
+        )}
+
+        {/* ── RESULTAT ── */}
+        {tab === "resultat" && (
+          <div>
+            <div style={{ background: C.surface, borderRadius: 12, padding: "18px 16px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Resultatöversikt</span>
+              </div>
+              <MRow label="Omsättning" value={r.omsättning} bold />
+              <MRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} red />
+              <MRow label="Pension inkl. SLP" value={-r.pensionTotal} red />
+              <MRow label="Resultat före skatt" value={r.ebit} bold />
+              <MRow label="Bolagsskatt (20,6 %)" value={-r.bolagsskatt} red />
+              <MRow label="Resultat efter skatt" value={r.resultatEfterSkatt} bold />
+              <MRow label="Utdelning (brutto)" value={-utdelning} red />
+              <MRow label="Likviditetsbuffert" value={-buffertKr} red />
+            </div>
+
+            {/* Highlight card */}
+            <div style={{ background: C.navy, borderRadius: 12, padding: "20px 18px" }}>
+              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Kvar för KF-placering</div>
+              <div style={{ color: "#F9C5A5", fontSize: 32, fontWeight: 800, fontFamily: "monospace", marginBottom: 4 }}>{fmt(r.kvarEfterUtdelning)}</div>
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{fmt(r.kvarEfterUtdelning / 12)} / mån</div>
+            </div>
+          </div>
+        )}
+
+        {/* ── KF ── */}
+        {tab === "kf" && (
+          <div>
+            <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+              <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Info — Företagsägd KF</div>
+              <div style={{ color: C.textMid, fontSize: 12, lineHeight: 1.6 }}>Premien betalas med bolagets beskattade medel. Avkastning beskattas med avkastningsskatt (~2 %/år) istället för bolagsskatt.</div>
+            </div>
+            {[
+              { label: "Möjlig KF-inbetalning / mån", value: r.kvarEfterUtdelning / 12 },
+              { label: "Möjlig KF-inbetalning / år", value: r.kvarEfterUtdelning, big: true },
+            ].map((k, i) => (
+              <div key={i} style={{ background: i === 1 ? C.navy : C.surface, border: `1px solid ${i === 1 ? C.navy : C.border}`, borderRadius: 12, padding: "18px 16px", marginBottom: 10 }}>
+                <div style={{ color: i === 1 ? "rgba(255,255,255,0.55)" : C.textLight, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 6 }}>{k.label}</div>
+                <div style={{ color: i === 1 ? "#fff" : C.navy, fontSize: i === 1 ? 28 : 22, fontWeight: 800, fontFamily: "monospace" }}>{fmt(k.value)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [authed, setAuthed] = useState(false);
+  const [mobileMode, setMobileMode] = useState(false);
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = (mobile = false) => {
     if (loginUser.trim() === "Norrfinans" && loginPass === "NorrfinansLIV") {
+      setMobileMode(mobile);
       setAuthed(true);
     } else {
       setLoginErr(true);
     }
   };
 
-  if (authed) return <MainApp onLogout={() => { setAuthed(false); setLoginUser(""); setLoginPass(""); }} />;
+  if (authed && !mobileMode) return <MainApp onLogout={() => { setAuthed(false); setLoginUser(""); setLoginPass(""); }} />;
+  if (authed && mobileMode) return <MobileApp onLogout={() => { setAuthed(false); setLoginUser(""); setLoginPass(""); }} />;
 
   return (
     <div style={{ minHeight: "100vh", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
@@ -4507,14 +4723,14 @@ export default function App() {
           <div style={{ marginBottom: 16 }}>
             <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Användarnamn</label>
             <input type="text" value={loginUser} onChange={e => { setLoginUser(e.target.value); setLoginErr(false); }}
-              onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="Användarnamn"
+              onKeyDown={e => e.key === "Enter" && handleLogin(false)} placeholder="Användarnamn"
               style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", border: `1.5px solid ${loginErr ? C.red : C.border}`, borderRadius: 7, fontSize: 14, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
           </div>
           <div style={{ marginBottom: 24 }}>
             <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Lösenord</label>
             <div style={{ position: "relative" }}>
               <input type={showPass ? "text" : "password"} value={loginPass} onChange={e => { setLoginPass(e.target.value); setLoginErr(false); }}
-                onKeyDown={e => e.key === "Enter" && handleLogin()} placeholder="Lösenord"
+                onKeyDown={e => e.key === "Enter" && handleLogin(false)} placeholder="Lösenord"
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 42px 11px 14px", border: `1.5px solid ${loginErr ? C.red : C.border}`, borderRadius: 7, fontSize: 14, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
               <button onClick={() => setShowPass(p => !p)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.textLight, fontSize: 16, padding: 0 }}>
                 {showPass ? "🙈" : "👁️"}
@@ -4526,8 +4742,11 @@ export default function App() {
               Fel användarnamn eller lösenord
             </div>
           )}
-          <button onClick={handleLogin} style={{ width: "100%", padding: "13px", background: C.navy, border: "none", borderRadius: 8, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => handleLogin(false)} style={{ width: "100%", padding: "13px", background: C.navy, border: "none", borderRadius: 8, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 10 }}>
             Logga in →
+          </button>
+          <button onClick={() => handleLogin(true)} style={{ width: "100%", padding: "13px", background: "transparent", border: `1.5px solid ${C.border}`, borderRadius: 8, color: C.navy, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span>📱</span> Mobilanpassad sida
           </button>
         </div>
         <div style={{ textAlign: "center", marginTop: 24, color: "rgba(255,255,255,0.25)", fontSize: 11 }}>
