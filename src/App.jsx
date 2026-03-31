@@ -2883,9 +2883,11 @@ const ArendenView = () => {
     // Plansjuk sub
     psHalsokrav: "", psForsAkradLon: "", psForsAkradTjp: "", psFaktura: "",
     // Gruppliv sub
-    glSjukvard: "", glSjukOlycka: "", glLiv: "",
+    glSjukvard: "", glSjukOlycka: "", glSjukOlyckaBolag: "", glSjukOlyckaPBB: "10", glLiv: "", glLivPBB: "1",
+    // Kassplacering
+    kassInsättningsTyp: "engång", kassPremie: "", kassForvaltning: "traditionell", kassTradPct: 50,
     // Önskat
-    startdatum: "", forsakringsbelopp: "",
+    startdatum: "",
     // Förmedlare
     formedlarNamn: "", formedlarTel: "", formedlarEmail: "",
     // Övrigt
@@ -2958,7 +2960,10 @@ ${sep2}
 ${sep2}
   KASSPLACERING
 ${sep2}
-  (Inga tilläggsuppgifter)`;
+  ${pad("Insättningstyp:")}${nt.kassInsättningsTyp === "engång" ? "Engångsinsättning" : "Månadsinsättning"}
+  ${pad("Premie:")}${nt.kassPremie || "–"} kr
+  ${pad("Förvaltningsform:")}${nt.kassForvaltning === "traditionell" ? "Traditionell försäkring" : nt.kassForvaltning === "fond" ? "Fondförsäkring" : "Kombinerad"}
+  ${pad("Fördelning (om kombinerad):")}${nt.kassForvaltning === "kombinerad" ? "Traditionell " + nt.kassTradPct + "% / Fond " + (100 - nt.kassTradPct) + "%" : "–"}`;
     }
 
     const valtaTyper = [
@@ -3427,9 +3432,10 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 
             {/* ── Gruppliv sub-form ── */}
             {nt.gruppliv && (
-              <div style={{ background: "#FFF0F0", border: "1.5px solid #86EFAC", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+              <div style={{ background: "#FFF0F0", border: "1.5px solid #E5A0A0", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
                 <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Gruppliv — detaljer</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  {/* Sjukvårdsförsäkring */}
                   <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
                     <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Sjukvårdsförsäkring</label>
                     <select value={nt.glSjukvard} onChange={e => updNt("glSjukvard", e.target.value)}
@@ -3445,24 +3451,106 @@ Skickat via Norrfinans Rådgivningsverktyg`;
                       <option>Sjukvårdsförsäkring BAS (självrisk 750 kr) (LF)</option>
                     </select>
                   </div>
+                  {/* Sjuk & Olycksfall + PBB-val */}
                   <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
                     <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Sjuk & Olycksfallsförsäkring</label>
-                    <select value={nt.glSjukOlycka} onChange={e => updNt("glSjukOlycka", e.target.value)}
-                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
-                      <option value="">— Välj —</option>
-                      <option>Olycksfallsförsäkring (EA)</option>
-                      <option>Olycksfallsförsäkring (LF)</option>
-                      <option>Olycksfallsförsäkring Plus (LF)</option>
-                    </select>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
+                      <select value={nt.glSjukOlycka} onChange={e => updNt("glSjukOlycka", e.target.value)}
+                        style={{ padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                        <option value="">— Välj bolag —</option>
+                        <option value="EA">Euro Accident (EA)</option>
+                        <option value="LF">Länsförsäkringar (LF)</option>
+                      </select>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <select value={nt.glSjukOlyckaPBB} onChange={e => updNt("glSjukOlyckaPBB", e.target.value)}
+                          style={{ padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer", minWidth: 80 }}>
+                          {[10,20,30,40,50].map(n => <option key={n} value={String(n)}>{n} PBB</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    {nt.glSjukOlycka && <div style={{ marginTop: 5, color: C.textLight, fontSize: 10 }}>
+                      Försäkringsbelopp: {nt.glSjukOlyckaPBB} × 57 300 kr = {(Number(nt.glSjukOlyckaPBB) * 57300).toLocaleString("sv-SE")} kr
+                    </div>}
                   </div>
+                  {/* Livförsäkring + PBB-val */}
                   <div style={{ flex: "1 1 100%", marginBottom: 14 }}>
                     <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>Livförsäkring</label>
-                    <select value={nt.glLiv} onChange={e => updNt("glLiv", e.target.value)}
-                      style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
-                      <option value="">— Välj —</option>
-                      <option>Livförsäkring mot full arbetsförhet (EA)</option>
-                    </select>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
+                      <select value={nt.glLiv} onChange={e => updNt("glLiv", e.target.value)}
+                        style={{ padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer" }}>
+                        <option value="">— Välj bolag —</option>
+                        <option value="EA">Euro Accident (EA)</option>
+                        <option value="LF">Länsförsäkringar (LF)</option>
+                      </select>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <select value={nt.glLivPBB} onChange={e => updNt("glLivPBB", e.target.value)}
+                          style={{ padding: "9px 12px", border: `1.5px solid ${C.border}`, borderRadius: 6, fontSize: 12, color: C.text, outline: "none", fontFamily: "inherit", background: "#fff", cursor: "pointer", minWidth: 80 }}>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(n => <option key={n} value={String(n)}>{n} PBB</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    {nt.glLiv && <div style={{ marginTop: 5, color: C.textLight, fontSize: 10 }}>
+                      Försäkringsbelopp: {nt.glLivPBB} × 57 300 kr = {(Number(nt.glLivPBB) * 57300).toLocaleString("sv-SE")} kr
+                    </div>}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Kassplacering sub-form ── */}
+            {nt.kassplacering && (
+              <div style={{ background: C.tanLight, border: `1.5px solid ${C.tan}`, borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+                <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Kassplacering — detaljer</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  {/* Insättningstyp */}
+                  <div style={{ flex: "1 1 100%", marginBottom: 4 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Insättningstyp</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {[{ val: "engång", label: "Engångsinsättning" }, { val: "månadsvis", label: "Månadsinsättning" }].map(t => (
+                        <label key={t.val} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", border: `1.5px solid ${nt.kassInsättningsTyp === t.val ? C.navy : C.border}`, borderRadius: 7, cursor: "pointer", background: nt.kassInsättningsTyp === t.val ? C.goldLight : "#fff", flex: 1, justifyContent: "center" }}>
+                          <input type="radio" name="kassTyp" value={t.val} checked={nt.kassInsättningsTyp === t.val} onChange={() => updNt("kassInsättningsTyp", t.val)} style={{ accentColor: C.navy }} />
+                          <span style={{ fontSize: 12, fontWeight: 600, color: nt.kassInsättningsTyp === t.val ? C.navy : C.textMid }}>{t.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Premie */}
+                  <div style={{ flex: "1 1 100%", marginBottom: 4 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 5 }}>
+                      Premie / {nt.kassInsättningsTyp === "engång" ? "engång" : "mån"}
+                    </label>
+                    <div style={{ display: "flex", alignItems: "center", background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+                      <input type="number" value={nt.kassPremie} placeholder="0" min={0} step={10000}
+                        onChange={e => updNt("kassPremie", e.target.value)}
+                        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "9px 12px", fontFamily: "inherit" }} />
+                      <span style={{ color: C.textLight, padding: "9px 12px", fontSize: 11, borderLeft: `1px solid ${C.border}` }}>kr</span>
+                    </div>
+                  </div>
+                  {/* Förvaltningsform */}
+                  <div style={{ flex: "1 1 100%", marginBottom: 4 }}>
+                    <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Förvaltningsform</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {[{ val: "traditionell", label: "Traditionell" }, { val: "fond", label: "Fondförsäkring" }, { val: "kombinerad", label: "Kombinerad" }].map(t => (
+                        <button key={t.val} onClick={() => updNt("kassForvaltning", t.val)}
+                          style={{ flex: 1, padding: "9px 8px", borderRadius: 7, border: `1.5px solid ${nt.kassForvaltning === t.val ? C.navy : C.border}`, background: nt.kassForvaltning === t.val ? C.navy : "#fff", color: nt.kassForvaltning === t.val ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Fördelning vid kombinerad */}
+                  {nt.kassForvaltning === "kombinerad" && (
+                    <div style={{ flex: "1 1 100%", background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+                      <label style={{ color: C.textMid, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 10 }}>Fördelning Traditionell / Fond</label>
+                      <input type="range" min={0} max={100} step={5} value={nt.kassTradPct}
+                        onChange={e => updNt("kassTradPct", Number(e.target.value))}
+                        style={{ width: "100%", accentColor: C.navy, marginBottom: 10 }} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ flex: nt.kassTradPct, background: C.navy, borderRadius: 4, padding: "7px 0", textAlign: "center", color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 28, transition: "flex 0.2s" }}>{nt.kassTradPct}% Trad</div>
+                        <div style={{ flex: 100 - nt.kassTradPct, background: C.gold, borderRadius: 4, padding: "7px 0", textAlign: "center", color: "#fff", fontSize: 11, fontWeight: 700, minWidth: 28, transition: "flex 0.2s" }}>{100 - nt.kassTradPct}% Fond</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -3470,7 +3558,6 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 
           <FSect title="Önskade villkor">
             <FInput label="Önskat startdatum" value={nt.startdatum} onChange={v => updNt("startdatum", v)} placeholder="2025-01-01" half type="date" />
-            <FInput label="Önskat försäkringsbelopp" value={nt.forsakringsbelopp} onChange={v => updNt("forsakringsbelopp", v)} placeholder="t.ex. 20 prisbasbelopp" />
           </FSect>
 
           <FSect title="Förmedlare">
@@ -3564,6 +3651,17 @@ function MainApp({ onLogout }) {
   const [lönPeriod, setLönPeriod] = useState("mån");
   const [pensionMån, setPensionMån] = useState(0);
   const [antalÄgare, setAntalÄgare] = useState(1);
+  const [användKompletteringsregel, setAnvändKompletteringsregel] = useState(false);
+
+  // Avdragsrätt tjänstepension — beräknas per ägare individuellt
+  const PBB_2026 = 57300; // Prisbasbelopp 2026
+  const MAX_AVDRAG_PER_PERSON = 10 * PBB_2026; // 573 000 kr
+  const lönPerÄgareÅr = lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr;
+  const avdragsgilltPerÄgare = Math.min(lönPerÄgareÅr * 0.35, MAX_AVDRAG_PER_PERSON);
+  const totalAvdragsgillt = avdragsgilltPerÄgare * antalÄgare;
+  const pensionÅr = pensionMån * 12 * antalÄgare;
+  const överskjutandePension = Math.max(0, pensionÅr - totalAvdragsgillt);
+  const visaPensionVarning = pensionMån > 0 && överskjutandePension >= 1;
   const [övriga, setÖvriga] = useState([
     { label: "Hyra / kontorsplats", amount: 0 },
     { label: "Mjukvara & verktyg", amount: 0 },
@@ -3866,9 +3964,68 @@ ${extraRows}
                   <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(Math.round(bruttolönÅr / 12))} /></div>
                 </Section>
                 <Section title="Tjänstepension">
-                  <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
+                  <button onClick={() => {
+                    const lönÅr = lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr;
+                    const maxÅr = Math.min(lönÅr * 0.35, MAX_AVDRAG_PER_PERSON);
+                    setPensionMån(Math.round(maxÅr / 12));
+                  }} style={{ width: "100%", marginBottom: 12, padding: "9px 14px", borderRadius: 7, border: `1.5px solid ${C.tan}`, background: C.tanLight, color: C.navy, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>🎯 Max pensionsavsättning</span>
+                    <span style={{ color: C.textMid, fontSize: 10 }}>{fmt(Math.round(Math.min((lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 0.35, MAX_AVDRAG_PER_PERSON) / 12))} / mån</span>
+                  </button>                  <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
                   <InfoChip label={antalÄgare > 1 ? `Pensionskostnad / år (${antalÄgare} ägare)` : "Pensionskostnad / år"} value={fmt(pensionMån * 12 * antalÄgare)} />
                   {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * antalÄgare * 1.2426)} /></div>}
+
+                  {/* ── Avdragsrättsvarning ── */}
+                  {visaPensionVarning && (
+                    <div style={{ marginTop: 10, background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 8, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Avdragsrätten kan överskridas</div>
+                          <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 10 }}>
+                            Enligt <strong>huvudregeln</strong> är max avdragsgillt <strong>{fmt(avdragsgilltPerÄgare)}/ägare/år</strong> (35 % av lön, max 10 PBB = {fmt(MAX_AVDRAG_PER_PERSON)}).
+                            Nuvarande premie överstiger detta med <strong style={{ color: C.red }}>{fmt(överskjutandePension)}</strong> totalt.
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                            {[
+                              { label: "Avdragsgillt/ägare", value: fmt(avdragsgilltPerÄgare) },
+                              { label: `Totalt avdragsgillt (${antalÄgare} ägare)`, value: fmt(totalAvdragsgillt) },
+                              { label: "Överskjutande belopp", value: fmt(överskjutandePension), red: true },
+                            ].map((k, i) => (
+                              <div key={i} style={{ background: k.red ? "#FEE2E2" : C.surface, border: `1px solid ${k.red ? "#FECACA" : C.border}`, borderRadius: 6, padding: "8px 10px" }}>
+                                <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 3 }}>{k.label}</div>
+                                <div style={{ color: k.red ? C.red : C.navy, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{k.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ borderTop: `1px solid #FECACA`, paddingTop: 10 }}>
+                            <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>Tillämpa kompletteringsregeln?</div>
+                            <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.7, marginBottom: 10 }}>
+                              Kompletteringsregeln kan i vissa fall tillåta högre avdrag — exempelvis vid <strong>förtida avgång</strong> från anställning eller när en anställd historiskt haft en <strong>otillräckligt tryggad pensionsutfästelse</strong> ("köpa i kapp"). Regeln gäller <em>engångspremier</em> och Skatteverket är restriktivt med tillämpningen. Den är <strong>inte</strong> tillämplig vid exempelvis bonusväxling.
+                            </div>
+                            <button onClick={() => setAnvändKompletteringsregel(v => !v)}
+                              style={{ width: "100%", padding: "10px 14px", borderRadius: 7, border: `1.5px solid ${användKompletteringsregel ? C.navy : C.border}`, background: användKompletteringsregel ? C.navy : "transparent", color: användKompletteringsregel ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: 16 }}>{användKompletteringsregel ? "✓" : "○"}</span>
+                              <span>Använd kompletteringsregeln</span>
+                            </button>
+                            {användKompletteringsregel && (
+                              <div style={{ marginTop: 10, background: "#FFF0F0", border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px" }}>
+                                <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 4 }}>⚖️ Kompletteringsregeln aktiv</div>
+                                <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.7 }}>
+                                  Avdraget behandlas som tillåtet enligt kompletteringsregeln. Säkerställ att förutsättningarna är uppfyllda och dokumentera beslutsunderlaget. Konsultera en skatterådgivare innan avsättning görs.
+                                </div>
+                              </div>
+                            )}
+                            {!användKompletteringsregel && (
+                              <div style={{ marginTop: 8, color: C.textLight, fontSize: 10, lineHeight: 1.6 }}>
+                                Det överskjutande beloppet ({fmt(överskjutandePension)}) är <strong>ej avdragsgillt</strong> och påverkar bolagets skatteberäkning.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Section>
                 <Section title="Övriga kostnader">
                   <div style={{ display: "flex", gap: 6, marginBottom: 12, background: C.surface2, borderRadius: 7, padding: 4 }}>
@@ -4041,9 +4198,68 @@ ${extraRows}
                 <div style={{ marginTop: 8 }}><InfoChip label={lönPeriod === "mån" ? "Motsvarar årslön" : "Motsvarar månadsslön"} value={lönPeriod === "mån" ? fmt(bruttolön * 12) : fmt(Math.round(bruttolönÅr / 12))} /></div>
               </Section>
               <Section title="Tjänstepension">
-                <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
+                <button onClick={() => {
+                  const lönÅr = lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr;
+                  const maxÅr = Math.min(lönÅr * 0.35, MAX_AVDRAG_PER_PERSON);
+                  setPensionMån(Math.round(maxÅr / 12));
+                }} style={{ width: "100%", marginBottom: 12, padding: "9px 14px", borderRadius: 7, border: `1.5px solid ${C.tan}`, background: C.tanLight, color: C.navy, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>🎯 Max pensionsavsättning</span>
+                  <span style={{ color: C.textMid, fontSize: 10 }}>{fmt(Math.round(Math.min((lönPeriod === "mån" ? bruttolön * 12 : bruttolönÅr) * 0.35, MAX_AVDRAG_PER_PERSON) / 12))} / mån</span>
+                </button>                <InputRow label="Premie tjänstepension" value={pensionMån} onChange={setPensionMån} suffix="kr / mån" step={500} min={0} hint="Bolagets kostnad" />
                 <InfoChip label={antalÄgare > 1 ? `Pensionskostnad / år (${antalÄgare} ägare)` : "Pensionskostnad / år"} value={fmt(pensionMån * 12 * antalÄgare)} />
               {pensionMån > 0 && <div style={{ marginTop: 8 }}><InfoChip label="Inkl. SLP (24,26%) — totalkostnad" value={fmt(pensionMån * 12 * antalÄgare * 1.2426)} /></div>}
+
+                  {/* ── Avdragsrättsvarning ── */}
+                  {visaPensionVarning && (
+                    <div style={{ marginTop: 10, background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 8, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Avdragsrätten kan överskridas</div>
+                          <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 10 }}>
+                            Enligt <strong>huvudregeln</strong> är max avdragsgillt <strong>{fmt(avdragsgilltPerÄgare)}/ägare/år</strong> (35 % av lön, max 10 PBB = {fmt(MAX_AVDRAG_PER_PERSON)}).
+                            Nuvarande premie överstiger detta med <strong style={{ color: C.red }}>{fmt(överskjutandePension)}</strong> totalt.
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                            {[
+                              { label: "Avdragsgillt/ägare", value: fmt(avdragsgilltPerÄgare) },
+                              { label: `Totalt avdragsgillt (${antalÄgare} ägare)`, value: fmt(totalAvdragsgillt) },
+                              { label: "Överskjutande belopp", value: fmt(överskjutandePension), red: true },
+                            ].map((k, i) => (
+                              <div key={i} style={{ background: k.red ? "#FEE2E2" : C.surface, border: `1px solid ${k.red ? "#FECACA" : C.border}`, borderRadius: 6, padding: "8px 10px" }}>
+                                <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 3 }}>{k.label}</div>
+                                <div style={{ color: k.red ? C.red : C.navy, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{k.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ borderTop: `1px solid #FECACA`, paddingTop: 10 }}>
+                            <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>Tillämpa kompletteringsregeln?</div>
+                            <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.7, marginBottom: 10 }}>
+                              Kompletteringsregeln kan i vissa fall tillåta högre avdrag — exempelvis vid <strong>förtida avgång</strong> från anställning eller när en anställd historiskt haft en <strong>otillräckligt tryggad pensionsutfästelse</strong> ("köpa i kapp"). Regeln gäller <em>engångspremier</em> och Skatteverket är restriktivt med tillämpningen. Den är <strong>inte</strong> tillämplig vid exempelvis bonusväxling.
+                            </div>
+                            <button onClick={() => setAnvändKompletteringsregel(v => !v)}
+                              style={{ width: "100%", padding: "10px 14px", borderRadius: 7, border: `1.5px solid ${användKompletteringsregel ? C.navy : C.border}`, background: användKompletteringsregel ? C.navy : "transparent", color: användKompletteringsregel ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: 16 }}>{användKompletteringsregel ? "✓" : "○"}</span>
+                              <span>Använd kompletteringsregeln</span>
+                            </button>
+                            {användKompletteringsregel && (
+                              <div style={{ marginTop: 10, background: "#FFF0F0", border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px" }}>
+                                <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, marginBottom: 4 }}>⚖️ Kompletteringsregeln aktiv</div>
+                                <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.7 }}>
+                                  Avdraget behandlas som tillåtet enligt kompletteringsregeln. Säkerställ att förutsättningarna är uppfyllda och dokumentera beslutsunderlaget. Konsultera en skatterådgivare innan avsättning görs.
+                                </div>
+                              </div>
+                            )}
+                            {!användKompletteringsregel && (
+                              <div style={{ marginTop: 8, color: C.textLight, fontSize: 10, lineHeight: 1.6 }}>
+                                Det överskjutande beloppet ({fmt(överskjutandePension)}) är <strong>ej avdragsgillt</strong> och påverkar bolagets skatteberäkning.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
               </Section>
               <Section title="Övriga kostnader">
                 <div style={{ display: "flex", gap: 6, marginBottom: 12, background: C.surface2, borderRadius: 7, padding: 4 }}>
