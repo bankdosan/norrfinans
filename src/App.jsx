@@ -4470,6 +4470,30 @@ ${extraRows}
   );
 }
 
+// ─── MOBILE INPUT ────────────────────────────────────────────────────────────
+const MInput = ({ label, value, onChange, suffix }) => {
+  const [localVal, setLocalVal] = useState(value === 0 ? "" : String(value));
+  React.useEffect(() => {
+    setLocalVal(prev => Number(prev) === value ? prev : (value === 0 ? "" : String(value)));
+  }, [value]);
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ color: C.textMid, fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{label}</label>
+      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+        <input type="text" inputMode="numeric" pattern="[0-9]*" value={localVal} placeholder="0"
+          onChange={e => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            setLocalVal(raw);
+            onChange(raw === "" ? 0 : Number(raw));
+          }}
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16, fontWeight: 600, padding: "14px 16px", fontFamily: "inherit" }}
+        />
+        <span style={{ color: C.textLight, padding: "14px 14px", fontSize: 13, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
+      </div>
+    </div>
+  );
+};
+
 // ─── MOBILE APP ──────────────────────────────────────────────────────────────
 const MobileApp = ({ onLogout }) => {
   const [tab, setTab] = useState("kalkylator");
@@ -4508,32 +4532,7 @@ const MobileApp = ({ onLogout }) => {
     </div>
   );
 
-  const MInput = ({ label, value, onChange, suffix, step = 1000 }) => {
-    const [localVal, setLocalVal] = useState(value === 0 ? "" : String(value));
-    // sync if parent changes externally
-    React.useEffect(() => { setLocalVal(value === 0 ? "" : String(value)); }, [value]);
-    return (
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ color: C.textMid, fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{label}</label>
-        <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={localVal}
-            placeholder="0"
-            onChange={e => {
-              const raw = e.target.value.replace(/[^0-9]/g, "");
-              setLocalVal(raw);
-              onChange(raw === "" ? 0 : Number(raw));
-            }}
-            style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16, fontWeight: 600, padding: "14px 16px", fontFamily: "inherit" }}
-          />
-          <span style={{ color: C.textLight, padding: "14px 14px", fontSize: 13, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
-        </div>
-      </div>
-    );
-  };
+
 
   const mobileTabs = [
     { id: "kalkylator", label: "Kalkylator", icon: "📊" },
