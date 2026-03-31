@@ -3552,6 +3552,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 function MainApp({ onLogout }) {
     const [tab, setTab] = useState("kalkylator");
   const [förenkladVy, setFörenkladVy] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const [intäkterMode, setIntäkterMode] = useState("timbaserat"); // "timbaserat" | "omsättning"
   const [timpris, setTimpris] = useState(0);
   const [timmar, setTimmar] = useState(1832);
@@ -3606,6 +3607,152 @@ function MainApp({ onLogout }) {
     };
   }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, vinstmarginal, bruttolön, bruttolönÅr, lönPeriod, antalÄgare, pensionMån, övriga, övrigaPeriod, utdelning, buffertPct, buffertMode, buffertKr]);
 
+  const generatePdf = (typ) => {
+    setShowPdfModal(false);
+    const datum = new Date().toLocaleDateString("sv-SE");
+    const tid = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
+    const fmtH = (n) => new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: 0 }).format(n);
+
+    const row = (label, value, alt, red) =>
+      `<div class="row${alt ? " alt" : ""}"><div class="label">${label}</div><div class="value${red ? " red" : ""}">${value}</div></div>`;
+    const sec = (title, body) =>
+      `<div class="section"><div class="sec-head">${title}</div><div class="sec-body">${body}</div></div>`;
+
+    const basRows =
+      row("Omsättning / år", fmtH(r.omsättning), false) +
+      row("Lön & arbetsgivaravgift", "−" + fmtH(r.lönTotal), true, true) +
+      row("Tjänstepension inkl. SLP", "−" + fmtH(r.pensionTotal), false, true) +
+      row("Övriga kostnader", "−" + fmtH(r.övrigaSum), true, true) +
+      row("Resultat före skatt (EBIT)", fmtH(r.ebit), false) +
+      row("Bolagsskatt 20,6 %", "−" + fmtH(r.bolagsskatt), true, true) +
+      row("Resultat efter skatt", fmtH(r.resultatEfterSkatt), false) +
+      row("Planerad utdelning (brutto)", "−" + fmtH(utdelning), true, true) +
+      row("Likviditetsbuffert", "−" + fmtH(r.buffert), false, true) +
+      row("Likviditet möjlig för placering", fmtH(r.kvarEfterUtdelning), true);
+
+    const kfRows =
+      row("Möjlig KF-inbetalning / mån", fmtH(r.tillgängligtKF_mån), false) +
+      row("Möjlig KF-inbetalning / år", fmtH(r.tillgängligtKF_år), true);
+
+    let extraRows = "";
+    if (typ === "avancerad") {
+      extraRows = sec("Intäktsdetaljer",
+        row("Intäktsmodell", intäkterMode === "timbaserat" ? "Timbaserat" : "Omsättning", false) +
+        (intäkterMode === "timbaserat"
+          ? row("Timpris", fmtH(timpris), true) +
+            row("Timmar / år", timmar + " tim", false) +
+            row("Debiteringsgrad", debiteringsgrad + " %", true) +
+            row("Fakturerbara timmar", Math.round(r.faktTim) + " tim", false)
+          : "") +
+        row("Omsättning / år", fmtH(r.omsättning), true)
+      ) + sec("Personalkostnader",
+        row("Antal ägare", antalÄgare + " st", false) +
+        row("Bruttolön / mån", fmtH(lönPeriod === "mån" ? bruttolön : Math.round(bruttolönÅr / 12)), true) +
+        row("Total lönekostnad / år inkl. AG-avg", fmtH(r.lönTotal), false) +
+        row("Pensionspremie / mån", fmtH(pensionMån), true) +
+        row("Särskild löneskatt (SLP 24,26 %)", fmtH(r.pensionSLP), false) +
+        row("Total pensionskostnad / år", fmtH(r.pensionTotal), true)
+      ) + sec("Övriga kostnader",
+        övriga.filter(k => k.amount > 0).map((k, i) =>
+          row(k.label || ("Post " + (i + 1)), fmtH(k.amount) + " / " + övrigaPeriod, i % 2 !== 0)
+        ).join("") +
+        row("Totalt övriga kostnader / år", fmtH(r.övrigaSum), övriga.filter(k => k.amount > 0).length % 2 === 0)
+      );
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Likviditetskalkylator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;font-size:11px;color:#2A1015;background:#fff;padding:32px 40px}
+.header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #9B182D}
+.logo{width:40px;height:40px;background:#E73331;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0}
+.brand{color:#9B182D;font-size:17px;font-weight:800;letter-spacing:1px}
+.sub{color:#A87880;font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.doc-title{margin-left:auto;text-align:right}
+.doc-title .typ{font-size:12px;font-weight:700;color:#9B182D}
+.doc-title .dat{font-size:10px;color:#A87880;margin-top:2px}
+.section{margin-bottom:14px}
+.sec-head{background:#9B182D;color:#fff;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 14px;border-radius:4px 4px 0 0}
+.sec-body{border:1px solid #E0D8CC;border-top:none;border-radius:0 0 4px 4px;overflow:hidden}
+.row{display:flex;border-bottom:1px solid #F0EDE6}
+.row:last-child{border-bottom:none}
+.row.alt{background:#F5F3EE}
+.label{width:250px;flex-shrink:0;padding:7px 14px;color:#6B3040;font-weight:600;font-size:10px}
+.value{padding:7px 14px;color:#2A1015;font-size:10px;flex:1;font-weight:700;text-align:right}
+.value.red{color:#9B182D}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.card{background:#F5F3EE;border:1px solid #E0D8CC;border-radius:6px;padding:12px 16px}
+.card-label{color:#A87880;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.card-value{color:#9B182D;font-size:17px;font-weight:800}
+.card-sub{color:#A87880;font-size:9px;margin-top:2px}
+.card.dark{background:#9B182D;border-color:#7A1020}
+.card.dark .card-label{color:rgba(255,255,255,0.6)}
+.card.dark .card-value{color:#fff;font-size:20px}
+.card.dark .card-sub{color:rgba(255,255,255,0.45)}
+.footer{margin-top:24px;padding-top:10px;border-top:1px solid #E0D8CC;color:#A87880;font-size:9px;display:flex;justify-content:space-between}
+@media print{body{padding:20px}}
+</style></head><body>
+<div class="header">
+  <div class="logo">N</div>
+  <div><div class="brand">Norrfinans</div><div class="sub">Rådgivningsverktyg</div></div>
+  <div class="doc-title">
+    <div class="typ">Likviditetskalkylator — ${typ === "förenklad" ? "Förenklad" : "Avancerad"}</div>
+    <div class="dat">Genererad ${datum} kl. ${tid}</div>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><div class="card-label">Omsättning / år</div><div class="card-value">${fmtH(r.omsättning)}</div></div>
+  <div class="card"><div class="card-label">Resultat efter skatt</div><div class="card-value">${fmtH(r.resultatEfterSkatt)}</div></div>
+  <div class="card dark"><div class="card-label">KF-inbetalning möjlig / år</div><div class="card-value">${fmtH(r.tillgängligtKF_år)}</div><div class="card-sub">${fmtH(r.tillgängligtKF_mån)} / mån</div></div>
+  <div class="card"><div class="card-label">Likviditetsbuffert</div><div class="card-value">${fmtH(r.buffert)}</div><div class="card-sub">${buffertMode === "pct" ? buffertPct + " % av EBIT" : "Fast belopp"}</div></div>
+</div>
+${sec("Resultatöversikt", basRows)}
+${sec("Företagsägd Kapitalförsäkring", kfRows)}
+${extraRows}
+<div class="footer"><span>Norrfinans — Konfidentiellt</span><span>${datum}</span></div>
+</body></html>`;
+
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 500); }
+  };
+
+  const PdfModal = () => (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(42,16,21,0.65)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" }}
+      onClick={() => setShowPdfModal(false)}>
+      <div style={{ background: "#fff", borderRadius: 14, padding: "32px 32px 28px", width: 480, boxShadow: "0 24px 60px rgba(155,24,45,0.28)", border: `1px solid ${C.border}` }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div>
+            <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Likviditetskalkylator</div>
+            <div style={{ color: C.navy, fontSize: 18, fontWeight: 800 }}>Generera PDF</div>
+          </div>
+          <button onClick={() => setShowPdfModal(false)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.textLight, cursor: "pointer", padding: "6px 10px", fontSize: 14 }}>✕</button>
+        </div>
+        <div style={{ color: C.textMid, fontSize: 12, marginBottom: 22, lineHeight: 1.6 }}>
+          Välj vilken typ av PDF som ska genereras. Dokumentet öppnas i en ny flik — välj <strong>Spara som PDF</strong> eller <strong>Skriv ut</strong>.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {[
+            { typ: "förenklad", emoji: "📄", rubrik: "Förenklad", desc: "Resultatöversikt + KF-sammanfattning. Passar som kundpresentation." },
+            { typ: "avancerad", emoji: "📊", rubrik: "Avancerad", desc: "Alla detaljer: intäkter, personalkostnader, övriga poster och KF-beräkning." },
+          ].map(v => (
+            <button key={v.typ} onClick={() => generatePdf(v.typ)}
+              style={{ padding: "20px 18px", borderRadius: 10, border: `2px solid ${C.border}`, background: C.surface, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.background = C.goldLight; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.surface; }}>
+              <div style={{ fontSize: 26, marginBottom: 8 }}>{v.emoji}</div>
+              <div style={{ color: C.navy, fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{v.rubrik}</div>
+              <div style={{ color: C.textLight, fontSize: 11, lineHeight: 1.5 }}>{v.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
     { id: "analys", label: "Likviditetsanalys" },
@@ -3636,6 +3783,9 @@ function MainApp({ onLogout }) {
         </button>
       </div>
       <div style={{ height: 3, background: `linear-gradient(90deg,${C.gold},#E8B84B,${C.gold})` }} />
+
+      {/* PDF Modal */}
+      {showPdfModal && tab === "kalkylator" && <PdfModal />}
 
       {tab === "kalkylator" && (
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -3832,6 +3982,7 @@ function MainApp({ onLogout }) {
                 <KFRow label="Möjlig inbetalning / år" value={r.tillgängligtKF_år} highlight large />
 
                 <button onClick={() => setTab("sparande")} style={{ width: "100%", marginTop: 16, padding: "13px", background: C.goldLight, border: `1.5px solid ${C.gold}`, borderRadius: 7, color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📈 Se sparande & avkastning →</button>
+                <button onClick={() => setShowPdfModal(true)} style={{ width: "100%", marginTop: 8, padding: "13px", background: C.navy, border: "none", borderRadius: 7, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 Generera PDF</button>
               </div>
             </div>
 
@@ -4080,6 +4231,7 @@ function MainApp({ onLogout }) {
               <button onClick={() => setTab("sparande")} style={{ width: "100%", marginTop: 10, padding: "12px", background: C.goldLight, border: `1.5px solid ${C.gold}`, borderRadius: 7, color: C.gold, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📈 Se sparande & avkastning →</button>
               <button onClick={() => setTab("avgifter")} style={{ width: "100%", marginTop: 8, padding: "12px", background: C.surface2, border: `1.5px solid ${C.border}`, borderRadius: 7, color: C.navy, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>🏦 Jämför KF-avgifter →</button>
               <button onClick={() => setTab("offert")} style={{ width: "100%", marginTop: 8, padding: "12px", background: C.surface2, border: `1.5px solid ${C.border}`, borderRadius: 7, color: C.navy, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📋 Jämför försäkringsofferter →</button>
+              <button onClick={() => setShowPdfModal(true)} style={{ width: "100%", marginTop: 12, padding: "12px", background: C.navy, border: "none", borderRadius: 7, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>📄 Generera PDF</button>
             </div>
           </div>
           )}
