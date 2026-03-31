@@ -68,7 +68,7 @@ const InfoChip = ({ label, value }) => (
 const WRow = ({ label, value, bold, separator }) => {
   if (separator) return <div style={{ borderTop: `1px solid ${C.border}`, margin: "6px 0" }} />;
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid #F0F3F7` }}>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid #F0EDE6` }}>
       <span style={{ color: bold ? C.text : C.textMid, fontSize: bold ? 13 : 12, fontWeight: bold ? 700 : 400 }}>{label}</span>
       <span style={{ color: bold ? C.text : value >= 0 ? C.green : C.red, fontSize: bold ? 13 : 12, fontWeight: bold ? 700 : 500, fontFamily: "monospace" }}>
         {value >= 0 ? "" : "−"}{fmt(Math.abs(value))}
@@ -443,7 +443,7 @@ const OffertView = () => {
                           <div key={field} style={{ display: "flex", alignItems: "center" }}>
                             {isActive ? (
                               field === "tjp" || field === "pbf" ? (
-                                <div style={{ width: "100%", textAlign: "right", fontSize: 11, fontFamily: "monospace", color: C.navy, fontWeight: 600, padding: "4px 6px", background: "#f0f4ff", border: `1px solid #c7d2fe`, borderRadius: 4 }} title={field === "tjp" ? `${comp.sparpremie}% av lön` : `${comp.premiebefrielse}% av premier`}>
+                                <div style={{ width: "100%", textAlign: "right", fontSize: 11, fontFamily: "monospace", color: C.navy, fontWeight: 600, padding: "4px 6px", background: "#F0EDE6", border: `1px solid #E0D8CC`, borderRadius: 4 }} title={field === "tjp" ? `${comp.sparpremie}% av lön` : `${comp.premiebefrielse}% av premier`}>
                                   {fmt(calc[field])}
                                 </div>
                               ) : (
@@ -844,8 +844,8 @@ const MarknadsrorelseDiagram = () => {
             if (y < PAD.t || y > PAD.t + gH) return null;
             return (
               <g key={v}>
-                <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} stroke="#E5E9F0" strokeWidth="0.7" />
-                <text x={PAD.l - 7} y={y + 3.5} textAnchor="end" fill="#9AA5B4" fontSize="8">{v >= 1000 ? (v/1000).toFixed(1)+"k" : v}</text>
+                <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y} stroke="#F0EDE6" strokeWidth="0.7" />
+                <text x={PAD.l - 7} y={y + 3.5} textAnchor="end" fill="#A87880" fontSize="8">{v >= 1000 ? (v/1000).toFixed(1)+"k" : v}</text>
               </g>
             );
           })}
@@ -936,17 +936,17 @@ const MarknadsrorelseDiagram = () => {
 
           {/* X-axis year labels */}
           {yearTicks.filter((_, i) => i % 2 === 0 || i === yearTicks.length - 1).map(({ yr, i }) => (
-            <text key={yr} x={xPos(i)} y={H - 6} textAnchor="middle" fill="#9AA5B4" fontSize="8">{yr}</text>
+            <text key={yr} x={xPos(i)} y={H - 6} textAnchor="middle" fill="#A87880" fontSize="8">{yr}</text>
           ))}
 
           {/* X-axis baseline */}
-          <line x1={PAD.l} x2={W - PAD.r} y1={PAD.t + gH} y2={PAD.t + gH} stroke="#C8D0DA" strokeWidth="1" />
+          <line x1={PAD.l} x2={W - PAD.r} y1={PAD.t + gH} y2={PAD.t + gH} stroke="#E0D8CC" strokeWidth="1" />
         </svg>
       </div>
 
       {/* Bar chart: quarterly returns */}
       <div style={{ marginTop: 10 }}>
-        <div style={{ color: "#9AA5B4", fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 6 }}>Kvartalsvisa rörelser (%)</div>
+        <div style={{ color: "#A87880", fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 6 }}>Kvartalsvisa rörelser (%)</div>
         <div style={{ overflowX: "auto" }}>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 64, minWidth: 600, position: "relative" }}>
             <div style={{ position: "absolute", left: 0, right: 0, top: "50%", borderTop: `1px solid ${C.border}`, zIndex: 0 }} />
@@ -984,7 +984,7 @@ const MarknadsrorelseDiagram = () => {
         ].map(l => (
           <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: l.color, opacity: l.opacity || 1 }} />
-            <span style={{ color: "#9AA5B4", fontSize: 10 }}>{l.label}</span>
+            <span style={{ color: "#A87880", fontSize: 10 }}>{l.label}</span>
           </div>
         ))}
       </div>
@@ -1675,7 +1675,7 @@ const LönesummaView = () => {
 
       <div style={{ padding: "28px 32px" }}>
       {/* Info banner */}
-      <div style={{ background: "#FFF0F0", border: "1px solid #BFDBFE", borderRadius: 8, padding: "12px 18px", marginBottom: 24, display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <div style={{ background: "#FFF0F0", border: "1px solid #F5C5C5", borderRadius: 8, padding: "12px 18px", marginBottom: 24, display: "flex", gap: 16, alignItems: "flex-start" }}>
         <span style={{ fontSize: 16 }}>ℹ️</span>
         <div style={{ color: "#7A1020", fontSize: 12, lineHeight: 1.7 }}>
           <strong>Nya 3:12-regler fr.o.m. inkomstår 2026 (K10 deklaration 2027).</strong> Gränsbeloppet beräknas enligt en gemensam modell: Grundbelopp (4 IBB × ägarandel) + Lönebaserat utrymme + Sparat utdelningsutrymme. Löneuttagskravet och 4%-kapitalandelskravet är avskaffade. IBB 2026 = {fmt(IBB_2026)}.
@@ -2633,7 +2633,7 @@ const TradView = () => {
                   <div style={{ color: C.textMid, fontSize: 11 }}>Folksam tillåter inte återköp under det första försäkringsåret.</div>
                 </div>
               ) : (
-                <div style={{ background: "#F0F7FF", border: `1px solid #BFDBFE`, borderRadius: 6, padding: "12px 14px" }}>
+                <div style={{ background: "#F0F7FF", border: `1px solid #F5C5C5`, borderRadius: 6, padding: "12px 14px" }}>
                   <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Uttagsberäkning — År {uttakÅr}</div>
                   {[
                     { label: "Kapitalvärde vid uttag", value: fmt(uttakKalkyl.kapitalVid), bold: true },
@@ -3054,24 +3054,24 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Inter', Arial, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; padding: 32px 40px; }
-  .header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:16px; border-bottom:3px solid #0F2847; }
-  .logo { width:38px; height:38px; background:#B8892A; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:900; flex-shrink:0; }
-  .brand { color:#0F2847; font-size:16px; font-weight:800; letter-spacing:1px; }
+  body { font-family: 'Inter', Arial, sans-serif; font-size: 11px; color: #2A1015; background: #F5F3EE; padding: 32px 40px; }
+  .header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:16px; border-bottom:3px solid #9B182D; }
+  .logo { width:38px; height:38px; background:#E73331; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:900; flex-shrink:0; }
+  .brand { color:#9B182D; font-size:16px; font-weight:800; letter-spacing:1px; }
   .subtitle { color:#888; font-size:9px; letter-spacing:2px; text-transform:uppercase; }
-  .doc-title { font-size:14px; font-weight:700; color:#0F2847; margin-left:auto; }
+  .doc-title { font-size:14px; font-weight:700; color:#9B182D; margin-left:auto; }
   .section { margin-bottom:18px; }
-  .section-header { background:#0F2847; color:#fff; font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 12px; border-radius:4px 4px 0 0; }
-  .section-body { border:1px solid #dde3ed; border-top:none; border-radius:0 0 4px 4px; overflow:hidden; }
+  .section-header { background:#9B182D; color:#fff; font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 12px; border-radius:4px 4px 0 0; }
+  .section-body { border:1px solid #E0D8CC; border-top:none; border-radius:0 0 4px 4px; overflow:hidden; }
   .row { display:flex; border-bottom:1px solid #f0f3f7; }
   .row:last-child { border-bottom:none; }
-  .row.alt { background:#f8fafc; }
-  .label { width:200px; flex-shrink:0; padding:7px 12px; color:#556; font-weight:600; font-size:10px; }
-  .value { padding:7px 12px; color:#1a1a2e; font-size:10px; flex:1; }
+  .row.alt { background:#F5F3EE; }
+  .label { width:200px; flex-shrink:0; padding:7px 12px; color:#6B3040; font-weight:600; font-size:10px; }
+  .value { padding:7px 12px; color:#2A1015; font-size:10px; flex:1; }
   .value.bold { font-weight:700; }
-  .subsection-title { background:#f0f4ff; color:#0F2847; font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:6px 12px; border-bottom:1px solid #dde3ed; }
-  .chip { display:inline-block; background:#0F2847; color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:3px; margin-right:4px; }
-  .footer { margin-top:32px; padding-top:12px; border-top:1px solid #dde3ed; color:#aaa; font-size:9px; display:flex; justify-content:space-between; }
+  .subsection-title { background:#F0EDE6; color:#9B182D; font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:6px 12px; border-bottom:1px solid #E0D8CC; }
+  .chip { display:inline-block; background:#9B182D; color:#fff; font-size:9px; font-weight:700; padding:2px 8px; border-radius:3px; margin-right:4px; }
+  .footer { margin-top:32px; padding-top:12px; border-top:1px solid #E0D8CC; color:#aaa; font-size:9px; display:flex; justify-content:space-between; }
   @media print { body { padding: 20px; } }
 </style>
 </head>
@@ -3329,7 +3329,7 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 
             {/* ── Tjänstepension sub-form ── */}
             {nt.tjanstepension && (
-              <div style={{ background: "#EEF2FF", border: "1.5px solid #C7D2FE", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
+              <div style={{ background: "#EEF2FF", border: "1.5px solid #E0D8CC", borderRadius: 9, padding: "18px 20px", marginBottom: 12 }}>
                 <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>Tjänstepension — detaljer</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                   <div style={{ flex: "0 0 calc(50% - 6px)", marginBottom: 14 }}>
@@ -4292,7 +4292,7 @@ ${extraRows}
                   </>
                 ) : (
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0 7px", borderBottom: `1px solid #F0F3F7`, marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0 7px", borderBottom: `1px solid #F0EDE6`, marginBottom: 6 }}>
                       <span style={{ color: C.textMid, fontSize: 12 }}>Rörelsekostnader (inkl. i marginal)</span>
 
                     </div>
