@@ -2863,6 +2863,476 @@ const TradView = () => {
   );
 };
 
+// ─── LÖNEVÄXLING ─────────────────────────────────────────────────────────────
+const LöneväxlingView = () => {
+  const [bruttolön, setBruttolön] = useState(50000);
+  const [växling, setVäxling] = useState(5000);
+  const [marginalskatt, setMarginalskatt] = useState(52);
+  const [kompensationPct, setKompensationPct] = useState(100);
+  const [kompensationVäxlingPct, setKompensationVäxlingPct] = useState(10);
+  const [kompMode, setKompMode] = useState("agbesparing"); // "agbesparing" | "växling"
+  const [sparÅr, setSparÅr] = useState(20);
+  const [uttagSkatt, setUttagSkatt] = useState(30);
+  const [pensionAvk, setPensionAvk] = useState(5.5);
+  const [fondAvk, setFondAvk] = useState(7.0);
+
+  const AG_AVG = 0.3142;
+  const SLP = 0.2426;
+  const AVK_SKATT = 0.02; // avkastningsskatt approximation
+
+  const calc = useMemo(() => {
+    // ── Utan löneväxling ──
+    const lönMånUtan = bruttolön;
+    const nettoMånUtan = lönMånUtan * (1 - marginalskatt / 100);
+    const arbKostnadUtan = lönMånUtan * (1 + AG_AVG);
+
+    // ── Med löneväxling ──
+    const lönMånMed = bruttolön - växling;
+    const nettoMånMed = lönMånMed * (1 - marginalskatt / 100);
+    const arbKostnadMed_lön = lönMånMed * (1 + AG_AVG);
+
+    // AG-avgift besparing på växlingsbelopp
+    const agBesparing = växling * AG_AVG;
+    // Kompensation: antingen andel av AG-besparing eller % av växlingsbelopp
+    const kompensation = kompMode === "agbesparing"
+      ? agBesparing * (kompensationPct / 100)
+      : växling * (kompensationVäxlingPct / 100);
+    // Total pensionspremie (växling + eventuell kompensation)
+    const pensionPremie = växling + kompensation;
+    // SLP på pension
+    const slpKostnad = pensionPremie * SLP;
+    // Total arbetsgivarkostnad med växling
+    const arbKostnadMed = arbKostnadMed_lön + pensionPremie + slpKostnad;
+    // Kostnadsskillnad för arbetsgivaren
+    const arbKostnadDiff = arbKostnadMed - arbKostnadUtan;
+
+    // ── Nettolön jämförelse ──
+    const nettoMånDiff = nettoMånMed - nettoMånUtan; // negativ (lägre lön)
+    const nettoÅrDiff = nettoMånDiff * 12;
+
+    // ── Värde av pension vs lön (per år växlat) ──
+    // Om man tar växlingen som lön: netto = växling * (1 - marginalskatt%)
+    const växlingSomLönNetto = växling * (1 - marginalskatt / 100);
+    // Om man tar det som pension: premie = pensionPremie, beskattas med avk.skatt under spartid
+    // och uttag beskattas som inkomst (uttagSkatt)
+    const pensionNetto = pensionPremie * (1 - uttagSkatt / 100); // approximation av nettovärde
+
+    // ── Ackumulerat kapital över sparperioden ──
+    const avkPension = pensionAvk / 100;
+    const avkFond = fondAvk / 100;
+
+    // Pension: pensionPremie/mån växer med avkastning minus avkastningsskatt
+    const pensionNettoAvk = avkPension - AVK_SKATT;
+    const mRatePension = pensionNettoAvk / 12;
+    let pensionKapital = 0;
+    const pensionSeries = [];
+    const fondSeries = [];
+    const mRateFond = avkFond / 12;
+    let fondKapital = 0;
+    for (let y = 1; y <= sparÅr; y++) {
+      for (let m = 0; m < 12; m++) {
+        pensionKapital = pensionKapital * (1 + mRatePension) + pensionPremie;
+        fondKapital = fondKapital * (1 + mRateFond) + växlingSomLönNetto;
+      }
+      pensionSeries.push({ y, brutto: pensionKapital, netto: pensionKapital * (1 - uttagSkatt / 100) });
+      const insatt = växlingSomLönNetto * y * 12;
+      const vinst = Math.max(0, fondKapital - insatt);
+      fondSeries.push({ y, brutto: fondKapital, netto: fondKapital - vinst * 0.30 });
+    }
+    const pensionEfterSkatt = pensionSeries[pensionSeries.length - 1]?.netto || 0;
+    const fondEfterSkatt = fondSeries[fondSeries.length - 1]?.netto || 0;
+
+    const kapitalFördel = pensionEfterSkatt - fondEfterSkatt;
+    const månFördel = pensionPremie - växlingSomLönNetto;
+
+    return {
+      lönMånUtan, nettoMånUtan, arbKostnadUtan,
+      lönMånMed, nettoMånMed, arbKostnadMed,
+      agBesparing, kompensation, pensionPremie, slpKostnad,
+      arbKostnadDiff, nettoMånDiff, nettoÅrDiff,
+      växlingSomLönNetto, pensionNetto,
+      månFördel, pctFördel: (månFördel / växlingSomLönNetto) * 100,
+      pensionEfterSkatt, fondEfterSkatt, kapitalFördel,
+      pensionKapital: pensionSeries[pensionSeries.length - 1]?.brutto || 0,
+      fondKapital: fondSeries[fondSeries.length - 1]?.brutto || 0,
+      pensionSeries, fondSeries,
+    };
+  }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk]);
+
+  const Chip = ({ label, value, color, sub }) => (
+    <div style={{ background: color ? color : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+      <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+      <div style={{ color: color ? "#fff" : C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{value}</div>
+      {sub && <div style={{ color: color ? "rgba(255,255,255,0.55)" : C.textLight, fontSize: 10, marginTop: 3 }}>{sub}</div>}
+    </div>
+  );
+
+  const CompRow = ({ label, utan, med, diffPositive }) => {
+    const diff = med - utan;
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderBottom: `1px solid ${C.border}`, padding: "9px 0" }}>
+        <span style={{ color: C.textMid, fontSize: 12 }}>{label}</span>
+        <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(utan)}</span>
+        <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(med)}</span>
+        <span style={{ color: diff === 0 ? C.textLight : (diffPositive ? diff > 0 : diff < 0) ? C.green : C.red, fontSize: 12, fontFamily: "monospace", textAlign: "right", fontWeight: 600 }}>
+          {diff >= 0 ? "+" : "−"}{fmt(Math.abs(diff))}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ padding: "28px 32px", background: C.bg, minHeight: "calc(100vh - 130px)", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24 }}>
+
+        {/* ── VÄNSTER: INSTÄLLNINGAR ── */}
+        <div>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Löneparametrar</h3>
+            </div>
+            <InputRow label="Bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+            <InputRow label="Löneväxlingsbelopp" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
+            <InputRow label="Marginalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={1} min={0} max={60} hint="Din skattenivå" />
+            <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: C.textMid, lineHeight: 1.6 }}>
+              AG-avgift: <strong>31,42 %</strong> · SLP pension: <strong>24,26 %</strong>
+            </div>
+          </div>
+
+          {/* PGI-varning */}
+          {(() => {
+            const PBB_2026 = 57300;
+            const IBB_2026 = 80600;
+            // Lönegräns för att alls tjäna in PGI: 42,3% av PBB
+            const pgiMinÅr = PBB_2026 * 0.423; // ~24 238 kr/år
+            // Intjänandepension tak: 7,5 × IBB
+            const pgiTakÅr = IBB_2026 * 7.5; // 604 500 kr/år
+            const lönEfterÅr = (bruttolön - växling) * 12;
+            const lönUtanÅr = bruttolön * 12;
+            const underMin = lönEfterÅr < pgiMinÅr;
+            const passatTak = lönUtanÅr > pgiTakÅr && (lönEfterÅr <= pgiTakÅr);
+            const näraMin = !underMin && lönEfterÅr < pgiMinÅr * 1.2;
+            if (!underMin && !passatTak && !näraMin) return null;
+            return (
+              <div style={{ background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 8, padding: "14px 16px", marginBottom: 14 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                      {underMin ? "Lönen understiger PGI-gränsen!" : passatTak ? "Löneväxling minskar pensionsintjänandet" : "Lönen närmar sig PGI-miniminivån"}
+                    </div>
+                    {underMin && (
+                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
+                        Lönen efter växling (<strong>{fmt((bruttolön - växling) * 12)} kr/år</strong>) understiger PGI-minimum på <strong>{fmt(Math.round(pgiMinÅr))} kr/år</strong> (42,3 % av PBB {fmt(PBB_2026)}). Du kan gå miste om hela den allmänna pensionsintjäningen.
+                      </div>
+                    )}
+                    {passatTak && (
+                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
+                        Din nuvarande lön ({fmt(lönUtanÅr)} kr/år) är över PGI-taket (<strong>{fmt(pgiTakÅr)} kr/år</strong> = 7,5 × IBB). Löneväxlingen minskar lönen under taket, vilket påverkar den pensionsgrundande inkomsten. Kompensera gärna med extra pensionspremie.
+                      </div>
+                    )}
+                    {näraMin && !underMin && (
+                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
+                        Lönen efter växling (<strong>{fmt(lönEfterÅr)} kr/år</strong>) är nära PGI-minimum ({fmt(Math.round(pgiMinÅr))} kr/år). Kontrollera att du fortfarande tjänar in till allmän pension.
+                      </div>
+                    )}
+                    <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
+                      <div style={{ background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
+                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>Lön efter växling</div>
+                        <div style={{ color: underMin ? C.red : C.navy, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(lönEfterÅr)} kr/år</div>
+                      </div>
+                      <div style={{ background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
+                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>PGI-minimum</div>
+                        <div style={{ color: C.textMid, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(pgiMinÅr))} kr/år</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Arbetsgivarkompensation</h3>
+            </div>
+
+            {/* Mode toggle */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 14, background: C.surface2, borderRadius: 7, padding: 4 }}>
+              {[
+                { id: "agbesparing", label: "% av AG-besparing" },
+                { id: "växling", label: "% av växlingsbelopp" },
+              ].map(m => (
+                <button key={m.id} onClick={() => setKompMode(m.id)}
+                  style={{ flex: 1, padding: "8px 10px", borderRadius: 5, border: "none", background: kompMode === m.id ? C.navy : "transparent", color: kompMode === m.id ? "#fff" : C.textMid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {kompMode === "agbesparing" ? (
+              <>
+                <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 12 }}>
+                  Arbetsgivaren sparar <strong>{fmt(calc.agBesparing)}/mån</strong> i minskad AG-avgift. Välj hur stor andel som ges tillbaka som extra pensionspremie.
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700 }}>Andel av AG-besparing</span>
+                  <span style={{ color: C.navy, fontSize: 13, fontWeight: 800 }}>{kompensationPct} %</span>
+                </div>
+                <input type="range" min={0} max={100} step={5} value={kompensationPct} onChange={e => setKompensationPct(Number(e.target.value))}
+                  style={{ width: "100%", accentColor: C.navy, marginBottom: 6 }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.textLight, marginBottom: 10 }}>
+                  <span>0 % — Inget extra</span>
+                  <span>100 % — Hela besparingen</span>
+                </div>
+                <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: C.textMid }}>
+                  Max kostnadsneutralt: <strong>{fmt(calc.agBesparing)}/mån</strong> (= 100 % av AG-besparingen)
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 12 }}>
+                  Arbetsgivaren lägger till en procentsats direkt på växlingsbeloppet som extra pensionspremie, oberoende av AG-avgiftsbesparingen.
+                </div>
+                <InputRow label="Kompensation på växlingsbelopp" value={kompensationVäxlingPct} onChange={setKompensationVäxlingPct} suffix="% av växlingen" step={1} min={0} max={100} />
+                <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: C.textMid }}>
+                  = <strong>{fmt(växling * kompensationVäxlingPct / 100)}/mån</strong> extra på pensionen
+                </div>
+              </>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 }}>Kompensation</div>
+                <div style={{ color: C.navy, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.kompensation)}</div>
+                <div style={{ color: C.textLight, fontSize: 10 }}>per mån extra</div>
+              </div>
+              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 }}>Total pension/mån</div>
+                <div style={{ color: C.green, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionPremie)}</div>
+                <div style={{ color: C.textLight, fontSize: 10 }}>inkl. kompensation</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Långsiktig jämförelse</h3>
+            </div>
+            <InputRow label="Sparperiod" value={sparÅr} onChange={setSparÅr} suffix="år" step={1} min={1} max={45} />
+            <InputRow label="Skatt vid uttag (pension)" value={uttagSkatt} onChange={setUttagSkatt} suffix="%" step={1} min={0} max={55} hint="Kommunalskatt + statlig" />
+            <InputRow label="Avkastning" value={pensionAvk} onChange={v => { setPensionAvk(v); setFondAvk(v); }} suffix="% / år" step={0.5} min={0} max={20} hint="Gäller pension & fond" />
+          </div>
+        </div>
+
+        {/* ── HÖGER: RESULTAT ── */}
+        <div>
+
+          {/* Fördel per månad */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
+            <Chip label="Nettolön minskar med" value={fmt(Math.abs(calc.nettoMånDiff))} sub="per månad" />
+            <Chip label="Pensionspremie ökar med" value={fmt(calc.pensionPremie)} sub="per månad (inkl. komp.)" />
+            <Chip label={`Fördel pension vs lön`} value={`${calc.pctFördel >= 0 ? "+" : ""}${calc.pctFördel.toFixed(1).replace(".", ",")} %`}
+              color={calc.månFördel >= 0 ? C.navy : undefined}
+              sub={`${calc.månFördel >= 0 ? "+" : ""}${fmt(calc.månFördel)} / mån`} />
+          </div>
+
+          {/* Lön vs pension förklaring */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Växlingsbeloppet — lön vs pension</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ color: C.red, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>Som lön (utan växling)</div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Brutto: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{fmt(växling)}/mån</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Marginalskatt {marginalskatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.red }}>−{fmt(växling * marginalskatt / 100)}</span></div>
+                <div style={{ borderTop: `1px solid #FECACA`, paddingTop: 8, marginTop: 4 }}>
+                  <div style={{ color: C.textMid, fontSize: 10, marginBottom: 2 }}>Netto i handen</div>
+                  <div style={{ color: C.red, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.växlingSomLönNetto)}/mån</div>
+                </div>
+              </div>
+              <div style={{ background: "#F0FBF5", border: `1px solid #6EE7B7`, borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ color: C.green, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>Som pension (med växling)</div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Premie in: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{fmt(calc.pensionPremie)}/mån</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Avk.skatt ~2 %/år: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.textMid }}>låg</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Skatt vid uttag {uttagSkatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#888" }}>vid pensionering</span></div>
+                <div style={{ borderTop: `1px solid #6EE7B7`, paddingTop: 8, marginTop: 4 }}>
+                  <div style={{ color: C.textMid, fontSize: 10, marginBottom: 2 }}>Nettopremie (approx.)</div>
+                  <div style={{ color: C.green, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionNetto)}/mån</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ background: C.navy, borderRadius: 8, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Skillnad per månad</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginTop: 2 }}>Pension vs att ta ut som lön</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: calc.månFördel >= 0 ? "#F9C5A5" : "#FFB0B0", fontSize: 22, fontWeight: 800, fontFamily: "monospace" }}>
+                  {calc.månFördel >= 0 ? "+" : "−"}{fmt(Math.abs(calc.månFördel))}
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10 }}>
+                  {calc.pctFördel >= 0 ? "+" : ""}{calc.pctFördel.toFixed(1).replace(".", ",")} % mer värde i pension
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Arbetsgivarkostnad */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Arbetsgivarkostnad / mån</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0, marginBottom: 4 }}>
+              {[["Post", "left"], ["Utan växling", "right"], ["Med växling", "right"], ["Skillnad", "right"]].map(([h, align]) => (
+                <div key={h} style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, padding: "6px 0", borderBottom: `2px solid ${C.border}`, textAlign: align }}>{h}</div>
+              ))}
+            </div>
+            <CompRow label="Bruttolön" utan={calc.lönMånUtan} med={calc.lönMånMed} diffPositive={false} />
+            <CompRow label="AG-avgift (31,42 %)" utan={calc.lönMånUtan * AG_AVG} med={calc.lönMånMed * AG_AVG} diffPositive={false} />
+            <CompRow label="Pensionspremie" utan={0} med={calc.pensionPremie} diffPositive={true} />
+            <CompRow label="SLP på pension (24,26 %)" utan={0} med={calc.slpKostnad} diffPositive={false} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderTop: `2px solid ${C.border}`, paddingTop: 8, marginTop: 4 }}>
+              <span style={{ color: C.navy, fontSize: 12, fontWeight: 700 }}>Total kostnad</span>
+              <span style={{ color: C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmt(calc.arbKostnadUtan)}</span>
+              <span style={{ color: C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmt(calc.arbKostnadMed)}</span>
+              <span style={{ color: Math.abs(calc.arbKostnadDiff) < 10 ? C.green : calc.arbKostnadDiff > 0 ? C.red : C.green, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>
+                {calc.arbKostnadDiff >= 0 ? "+" : "−"}{fmt(Math.abs(calc.arbKostnadDiff))}
+              </span>
+            </div>
+            {Math.abs(calc.arbKostnadDiff) < 100 && (
+              <div style={{ marginTop: 10, background: "#F0FBF5", border: "1px solid #6EE7B7", borderRadius: 6, padding: "8px 12px", color: C.green, fontSize: 11, fontWeight: 600 }}>
+                ✓ Nästan kostnadsneutralt för arbetsgivaren ({fmt(calc.arbKostnadDiff)} diff)
+              </div>
+            )}
+          </div>
+
+          {/* Kapitalutveckling — pension only */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+                <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Pensionskapital över {sparÅr} år</span>
+              </div>
+              <div style={{ display: "flex", gap: 14 }}>
+                {[
+                  { color: C.navy, dash: false, label: `Kapital (${pensionAvk} % avk.)` },
+                  { color: C.gold, dash: true, label: `Netto efter uttag (${uttagSkatt} %)` },
+                ].map((l, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <svg width={20} height={3}><line x1={0} y1={1.5} x2={20} y2={1.5} stroke={l.color} strokeWidth={2} strokeDasharray={l.dash ? "4,3" : "0"} /></svg>
+                    <span style={{ fontSize: 10, color: C.textLight, whiteSpace: "nowrap" }}>{l.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {(() => {
+              const [hovered, setHovered] = useState(null);
+              const ps = calc.pensionSeries;
+              if (!ps.length) return null;
+              const VW = 800, VH = 240, PAD_L = 72, PAD_B = 22, PAD_T = 16;
+              const plotW = VW - PAD_L - 8, plotH = VH - PAD_B - PAD_T;
+              const maxVal = Math.max(...ps.map(r => r.brutto), 1);
+              const toY = v => PAD_T + plotH - (v / maxVal) * plotH;
+              const gap = plotW / sparÅr;
+              const toX = y => PAD_L + (y - 1) * gap + gap / 2;
+              const linePath = ps.map((r, i) => `${i === 0 ? "M" : "L"}${toX(r.y).toFixed(1)},${toY(r.brutto).toFixed(1)}`).join(" ");
+              const nettoPath = ps.map((r, i) => `${i === 0 ? "M" : "L"}${toX(r.y).toFixed(1)},${toY(r.netto).toFixed(1)}`).join(" ");
+              const areaPath = linePath + ` L${toX(sparÅr).toFixed(1)},${(PAD_T + plotH).toFixed(1)} L${toX(1).toFixed(1)},${(PAD_T + plotH).toFixed(1)} Z`;
+              return (
+                <div style={{ position: "relative" }}>
+                  <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block" }}>
+                    <defs>
+                      <linearGradient id="pensionGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={C.navy} stopOpacity="0.18" />
+                        <stop offset="100%" stopColor={C.navy} stopOpacity="0.02" />
+                      </linearGradient>
+                    </defs>
+                    {[0, 0.25, 0.5, 0.75, 1].map(f => {
+                      const val = f * maxVal;
+                      const y = toY(val);
+                      return (
+                        <g key={f}>
+                          <line x1={PAD_L} y1={y} x2={VW - 8} y2={y} stroke={C.border} strokeWidth={0.6} strokeDasharray="3,5" />
+                          <text x={PAD_L - 5} y={y + 3.5} textAnchor="end" fontSize={8} fill={C.textLight} fontFamily="inherit">{fmtShort(val)}</text>
+                        </g>
+                      );
+                    })}
+                    {hovered && <rect x={toX(hovered) - gap / 2} y={PAD_T} width={gap} height={plotH} fill={C.navy} opacity={0.05} />}
+                    {/* Area fill */}
+                    <path d={areaPath} fill="url(#pensionGrad)" />
+                    {/* Netto streckad */}
+                    <path d={nettoPath} fill="none" stroke={C.gold} strokeWidth={1.5} strokeDasharray="5,3" opacity={0.8} />
+                    {/* Brutto heldragen */}
+                    <path d={linePath} fill="none" stroke={C.navy} strokeWidth={2.5} opacity={0.95} />
+                    {/* Dots vid hvert 5:e år och sista */}
+                    {ps.filter(r => r.y % Math.max(1, Math.floor(sparÅr / 8)) === 0 || r.y === sparÅr).map(r => (
+                      <circle key={r.y} cx={toX(r.y)} cy={toY(r.brutto)} r={hovered === r.y ? 5 : 3} fill={C.navy} stroke="#fff" strokeWidth={1.2} />
+                    ))}
+                    {/* Year labels */}
+                    {ps.filter(r => r.y % Math.max(1, Math.floor(sparÅr / 8)) === 0 || r.y === sparÅr).map(r => (
+                      <text key={r.y} x={toX(r.y)} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={hovered === r.y ? C.navy : C.textLight} fontWeight={hovered === r.y ? "bold" : "normal"} fontFamily="inherit">{r.y}</text>
+                    ))}
+                    {/* Hover targets */}
+                    {ps.map(r => (
+                      <rect key={r.y} x={toX(r.y) - gap / 2} y={PAD_T} width={gap} height={plotH}
+                        fill="transparent" onMouseEnter={() => setHovered(r.y)} onMouseLeave={() => setHovered(null)} />
+                    ))}
+                  </svg>
+                  {hovered && (() => {
+                    const pr = ps.find(r => r.y === hovered);
+                    if (!pr) return null;
+                    const xPct = (toX(hovered) / VW) * 100;
+                    const alignRight = xPct > 60;
+                    return (
+                      <div style={{
+                        position: "absolute", top: 8,
+                        left: alignRight ? "auto" : `${Math.max(0, xPct - 5)}%`,
+                        right: alignRight ? `${100 - xPct - 5}%` : "auto",
+                        background: C.navy, borderRadius: 8, padding: "12px 16px",
+                        boxShadow: "0 4px 16px rgba(155,24,45,0.2)", pointerEvents: "none", minWidth: 180, zIndex: 10
+                      }}>
+                        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>År {hovered}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>Kapital (brutto)</span>
+                          <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(pr.brutto)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+                          <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 11 }}>Netto (efter {uttagSkatt} %)</span>
+                          <span style={{ color: "#F9C5A5", fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{fmtShort(pr.netto)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
+            {/* Summary cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16 }}>
+              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Pensionskapital (brutto)</div>
+                <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionKapital)}</div>
+                <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>{pensionAvk} % avk. · avk.skatt dragen</div>
+              </div>
+              <div style={{ background: C.navy, border: `1px solid ${C.navy}`, borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Netto efter uttag</div>
+                <div style={{ color: "#F9C5A5", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionEfterSkatt)}</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>efter {uttagSkatt} % uttagsskatt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── ÄRENDEN ────────────────────────────────────────────────────────────────
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
@@ -3860,6 +4330,7 @@ ${extraRows}
     { id: "trad", label: "TRAD Avkastning" },
     { id: "trad-fond", label: "TRAD & Fond" },
     { id: "lönesumma", label: "Lönesumma" },
+    { id: "löneväxling", label: "Löneväxling" },
     { id: "arenden", label: "Ärenden" },
   ];
 
@@ -4459,6 +4930,7 @@ ${extraRows}
       {tab === "avgifter" && <AvgiftsView defaultMånSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "offert" && <OffertView />}
       {tab === "arenden" && <ArendenView />}
+      {tab === "löneväxling" && <LöneväxlingView />}
       {tab === "trad" && <TradView />}
       {tab === "trad-fond" && <TradFondView />}
       {tab === "lönesumma" && <LönesummaView />}
