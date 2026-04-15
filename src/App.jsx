@@ -3511,6 +3511,8 @@ const LöneväxlingView = () => {
     </div>
   );
 };
+
+// ─── ÄRENDEN ────────────────────────────────────────────────────────────────
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
   const [mottagarMail, setMottagarMail] = useState("");
