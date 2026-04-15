@@ -2867,7 +2867,18 @@ const TradView = () => {
 const LöneväxlingView = () => {
   const [bruttolön, setBruttolön] = useState(50000);
   const [växling, setVäxling] = useState(5000);
-  const [marginalskatt, setMarginalskatt] = useState(52);
+  const [marginalskatt, setMarginalskatt] = useState(34.29);
+  const [manuelltSkatt, setManuelltSkatt] = useState(false);
+
+  // Brytpunkt 2026: 55 033 kr/mån (660 400 kr/år). Statlig skatt +20% på överskjutande.
+  const BRYTPUNKT_MÅN = 55033;
+  const autoMarginalskatt = useMemo(() => {
+    const kommunalskatt = manuelltSkatt ? marginalskatt : marginalskatt;
+    if (bruttolön > BRYTPUNKT_MÅN) return Math.min(60, kommunalskatt + 20);
+    return kommunalskatt;
+  }, [bruttolön, marginalskatt]);
+  const effektivSkatt = manuelltSkatt ? marginalskatt : autoMarginalskatt;
+  const överBrytpunkt = bruttolön > BRYTPUNKT_MÅN;
   const [kompensationPct, setKompensationPct] = useState(100);
   const [kompensationVäxlingPct, setKompensationVäxlingPct] = useState(10);
   const [kompMode, setKompMode] = useState("agbesparing"); // "agbesparing" | "växling"
@@ -2883,12 +2894,12 @@ const LöneväxlingView = () => {
   const calc = useMemo(() => {
     // ── Utan löneväxling ──
     const lönMånUtan = bruttolön;
-    const nettoMånUtan = lönMånUtan * (1 - marginalskatt / 100);
+    const nettoMånUtan = lönMånUtan * (1 - effektivSkatt / 100);
     const arbKostnadUtan = lönMånUtan * (1 + AG_AVG);
 
     // ── Med löneväxling ──
     const lönMånMed = bruttolön - växling;
-    const nettoMånMed = lönMånMed * (1 - marginalskatt / 100);
+    const nettoMånMed = lönMånMed * (1 - effektivSkatt / 100);
     const arbKostnadMed_lön = lönMånMed * (1 + AG_AVG);
 
     // AG-avgift besparing på växlingsbelopp
@@ -2912,10 +2923,10 @@ const LöneväxlingView = () => {
 
     // ── Värde av pension vs lön (per år växlat) ──
     // Om man tar växlingen som lön: netto = växling * (1 - marginalskatt%)
-    const växlingSomLönNetto = växling * (1 - marginalskatt / 100);
+    const växlingSomLönNetto = växling * (1 - effektivSkatt / 100);
     // Om man tar det som pension: premie = pensionPremie, beskattas med avk.skatt under spartid
     // och uttag beskattas som inkomst (uttagSkatt)
-    const pensionNetto = pensionPremie * (1 - uttagSkatt / 100); // approximation av nettovärde
+    const pensionNetto = pensionPremie * (1 - marginalskatt / 100); // kommunalskatt vid uttag
 
     // ── Ackumulerat kapital över sparperioden ──
     const avkPension = pensionAvk / 100;
@@ -2994,7 +3005,64 @@ const LöneväxlingView = () => {
             </div>
             <InputRow label="Bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
             <InputRow label="Löneväxlingsbelopp" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
-            <InputRow label="Marginalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={1} min={0} max={60} hint="Din skattenivå" />
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Kommunalskatt (bas)</label>
+                <span style={{ color: C.textLight, fontSize: 10 }}>Din lokala skattesats</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+                <input type="number" value={marginalskatt === 0 ? "" : marginalskatt} placeholder="0" min={0} max={40} step={0.5}
+                  onChange={e => setMarginalskatt(e.target.value === "" ? 0 : Number(e.target.value))}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+                <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>%</span>
+              </div>
+            </div>
+            {/* Max växling info */}
+            {bruttolön > 56087 ? (
+              <div style={{ background: C.tanLight, border: `1px solid ${C.tan}`, borderRadius: 7, padding: "10px 14px", marginBottom: 14 }}>
+                <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Max löneväxling utan PGI-påverkan</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön - 56087)} kr/mån</div>
+                  <div style={{ color: C.textLight, fontSize: 10, textAlign: "right", lineHeight: 1.5 }}>
+                    {fmt(bruttolön)} − {fmt(56087)}<br />= {fmt(bruttolön - 56087)} kr
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 7, padding: "10px 14px", marginBottom: 14 }}>
+                <div style={{ color: C.red, fontSize: 11, fontWeight: 700, marginBottom: 2 }}>Lönen är redan under PGI-gränsen</div>
+                <div style={{ color: C.textMid, fontSize: 11 }}>Bruttolön ({fmt(bruttolön)} kr/mån) understiger 56 087 kr/mån — löneväxling rekommenderas inte.</div>
+              </div>
+            )}
+
+            {/* Effektiv marginalskatt — auto justerad vid brytpunkt */}
+            <div style={{ background: överBrytpunkt ? "#FFF5F0" : C.surface2, border: `1px solid ${överBrytpunkt ? C.gold : C.border}`, borderRadius: 8, padding: "12px 14px", marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: överBrytpunkt ? 8 : 0 }}>
+                <div>
+                  <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Effektiv marginalskatt</div>
+                  <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>
+                    {överBrytpunkt ? `Kommunalskatt ${marginalskatt} % + statlig 20 % (lön > 55 033 kr/mån)` : "Ingen statlig skatt (lön ≤ 55 033 kr/mån)"}
+                  </div>
+                </div>
+                <div style={{ color: överBrytpunkt ? C.gold : C.navy, fontSize: 20, fontWeight: 800 }}>{effektivSkatt} %</div>
+              </div>
+              {överBrytpunkt && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1, background: "#fff", border: `1px solid ${C.border}`, borderRadius: 5, padding: "6px 10px" }}>
+                    <div style={{ color: C.textLight, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Kommunal</div>
+                    <div style={{ color: C.navy, fontSize: 13, fontWeight: 700 }}>{marginalskatt} %</div>
+                  </div>
+                  <div style={{ flex: 1, background: "#fff", border: `1px solid ${C.border}`, borderRadius: 5, padding: "6px 10px" }}>
+                    <div style={{ color: C.textLight, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Statlig tillägg</div>
+                    <div style={{ color: C.gold, fontSize: 13, fontWeight: 700 }}>+20 %</div>
+                  </div>
+                  <div style={{ flex: 1, background: C.navy, borderRadius: 5, padding: "6px 10px" }}>
+                    <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 9, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Totalt</div>
+                    <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{effektivSkatt} %</div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: C.textMid, lineHeight: 1.6 }}>
               AG-avgift: <strong>31,42 %</strong> · SLP pension: <strong>24,26 %</strong>
             </div>
@@ -3002,49 +3070,34 @@ const LöneväxlingView = () => {
 
           {/* PGI-varning */}
           {(() => {
-            const PBB_2026 = 57300;
-            const IBB_2026 = 80600;
-            // Lönegräns för att alls tjäna in PGI: 42,3% av PBB
-            const pgiMinÅr = PBB_2026 * 0.423; // ~24 238 kr/år
-            // Intjänandepension tak: 7,5 × IBB
-            const pgiTakÅr = IBB_2026 * 7.5; // 604 500 kr/år
-            const lönEfterÅr = (bruttolön - växling) * 12;
-            const lönUtanÅr = bruttolön * 12;
-            const underMin = lönEfterÅr < pgiMinÅr;
-            const passatTak = lönUtanÅr > pgiTakÅr && (lönEfterÅr <= pgiTakÅr);
-            const näraMin = !underMin && lönEfterÅr < pgiMinÅr * 1.2;
-            if (!underMin && !passatTak && !näraMin) return null;
+            const PGI_MIN_MÅN = 56087;
+            const lönEfterMån = bruttolön - växling;
+            const underMin = växling > 0 && lönEfterMån < PGI_MIN_MÅN;
+            if (!underMin) return null;
+            const saknad = PGI_MIN_MÅN - lönEfterMån;
             return (
               <div style={{ background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 8, padding: "14px 16px", marginBottom: 14 }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-                      {underMin ? "Lönen understiger PGI-gränsen!" : passatTak ? "Löneväxling minskar pensionsintjänandet" : "Lönen närmar sig PGI-miniminivån"}
+                      Lönen understiger PGI-gränsen efter växling!
                     </div>
-                    {underMin && (
-                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
-                        Lönen efter växling (<strong>{fmt((bruttolön - växling) * 12)} kr/år</strong>) understiger PGI-minimum på <strong>{fmt(Math.round(pgiMinÅr))} kr/år</strong> (42,3 % av PBB {fmt(PBB_2026)}). Du kan gå miste om hela den allmänna pensionsintjäningen.
+                    <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 10 }}>
+                      Lönen efter växling (<strong>{fmt(lönEfterMån)} kr/mån</strong>) understiger gränsen på <strong>{fmt(PGI_MIN_MÅN)} kr/mån</strong> för full pensionsgrundande inkomst. Du riskerar att gå miste om allmän pensionsintjäning på den del som faller under gränsen.
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
+                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Lön efter växling</div>
+                        <div style={{ color: C.red, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(lönEfterMån)} kr/mån</div>
                       </div>
-                    )}
-                    {passatTak && (
-                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
-                        Din nuvarande lön ({fmt(lönUtanÅr)} kr/år) är över PGI-taket (<strong>{fmt(pgiTakÅr)} kr/år</strong> = 7,5 × IBB). Löneväxlingen minskar lönen under taket, vilket påverkar den pensionsgrundande inkomsten. Kompensera gärna med extra pensionspremie.
+                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
+                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>PGI-gräns</div>
+                        <div style={{ color: C.textMid, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(PGI_MIN_MÅN)} kr/mån</div>
                       </div>
-                    )}
-                    {näraMin && !underMin && (
-                      <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7 }}>
-                        Lönen efter växling (<strong>{fmt(lönEfterÅr)} kr/år</strong>) är nära PGI-minimum ({fmt(Math.round(pgiMinÅr))} kr/år). Kontrollera att du fortfarande tjänar in till allmän pension.
-                      </div>
-                    )}
-                    <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
-                      <div style={{ background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
-                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>Lön efter växling</div>
-                        <div style={{ color: underMin ? C.red : C.navy, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(lönEfterÅr)} kr/år</div>
-                      </div>
-                      <div style={{ background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
-                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>PGI-minimum</div>
-                        <div style={{ color: C.textMid, fontSize: 13, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(pgiMinÅr))} kr/år</div>
+                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
+                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Underskott</div>
+                        <div style={{ color: C.red, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>−{fmt(saknad)} kr/mån</div>
                       </div>
                     </div>
                   </div>
@@ -3150,7 +3203,7 @@ const LöneväxlingView = () => {
               <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 8, padding: "14px 16px" }}>
                 <div style={{ color: C.red, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>Som lön (utan växling)</div>
                 <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Brutto: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{fmt(växling)}/mån</span></div>
-                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Marginalskatt {marginalskatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.red }}>−{fmt(växling * marginalskatt / 100)}</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Marginalskatt {effektivSkatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.red }}>−{fmt(växling * effektivSkatt / 100)}</span></div>
                 <div style={{ borderTop: `1px solid #FECACA`, paddingTop: 8, marginTop: 4 }}>
                   <div style={{ color: C.textMid, fontSize: 10, marginBottom: 2 }}>Netto i handen</div>
                   <div style={{ color: C.red, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.växlingSomLönNetto)}/mån</div>
@@ -3160,7 +3213,7 @@ const LöneväxlingView = () => {
                 <div style={{ color: C.green, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>Som pension (med växling)</div>
                 <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Premie in: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{fmt(calc.pensionPremie)}/mån</span></div>
                 <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Avk.skatt ~2 %/år: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.textMid }}>låg</span></div>
-                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Skatt vid uttag {uttagSkatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#888" }}>vid pensionering</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Skatt vid uttag: <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#888" }}>{marginalskatt} % (kommunalskatt)</span></div>
                 <div style={{ borderTop: `1px solid #6EE7B7`, paddingTop: 8, marginTop: 4 }}>
                   <div style={{ color: C.textMid, fontSize: 10, marginBottom: 2 }}>Nettopremie (approx.)</div>
                   <div style={{ color: C.green, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionNetto)}/mån</div>
