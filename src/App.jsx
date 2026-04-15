@@ -3030,8 +3030,8 @@ const LöneväxlingView = () => {
               </div>
             ) : (
               <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 7, padding: "10px 14px", marginBottom: 14 }}>
-                <div style={{ color: C.red, fontSize: 11, fontWeight: 700, marginBottom: 2 }}>Lönen är redan under PGI-gränsen</div>
-                <div style={{ color: C.textMid, fontSize: 11 }}>Bruttolön ({fmt(bruttolön)} kr/mån) understiger 56 087 kr/mån — löneväxling rekommenderas inte.</div>
+                <div style={{ color: C.red, fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Lönen är redan under PGI-gränsen</div>
+                <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.5 }}>Bruttolön {fmt(bruttolön)} kr/mån understiger 56 087 kr/mån. Löneväxling rekommenderas inte.</div>
               </div>
             )}
 
@@ -3083,8 +3083,8 @@ const LöneväxlingView = () => {
                     <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
                       Lönen understiger PGI-gränsen efter växling!
                     </div>
-                    <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 10 }}>
-                      Lönen efter växling (<strong>{fmt(lönEfterMån)} kr/mån</strong>) understiger gränsen på <strong>{fmt(PGI_MIN_MÅN)} kr/mån</strong> för full pensionsgrundande inkomst. Du riskerar att gå miste om allmän pensionsintjäning på den del som faller under gränsen.
+                    <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.6, marginBottom: 10 }}>
+                      Lönen efter växling (<strong>{fmt(lönEfterMån)} kr/mån</strong>) understiger gränsen <strong>{fmt(56087)} kr/mån</strong>. Du riskerar att gå miste om allmän pensionsintjäning.
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
