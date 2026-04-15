@@ -3086,19 +3086,17 @@ const LöneväxlingView = () => {
                     <div style={{ color: C.textMid, fontSize: 10, lineHeight: 1.6, marginBottom: 10 }}>
                       Lönen efter växling (<strong>{fmt(lönEfterMån)} kr/mån</strong>) understiger gränsen <strong>{fmt(56087)} kr/mån</strong>. Du riskerar att gå miste om allmän pensionsintjäning.
                     </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
-                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Lön efter växling</div>
-                        <div style={{ color: C.red, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(lönEfterMån)} kr/mån</div>
-                      </div>
-                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
-                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>PGI-gräns</div>
-                        <div style={{ color: C.textMid, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(PGI_MIN_MÅN)} kr/mån</div>
-                      </div>
-                      <div style={{ flex: 1, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "7px 12px" }}>
-                        <div style={{ color: C.textLight, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>Underskott</div>
-                        <div style={{ color: C.red, fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>−{fmt(saknad)} kr/mån</div>
-                      </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {[
+                        { label: "Lön efter växling", value: fmt(lönEfterMån) + " kr/mån", red: true },
+                        { label: "PGI-gräns", value: fmt(56087) + " kr/mån", red: false },
+                        { label: "Underskott", value: "−" + fmt(saknad) + " kr/mån", red: true },
+                      ].map((k, i) => (
+                        <div key={i} style={{ flex: 1, minWidth: 0, background: "#fff", border: `1px solid #FECACA`, borderRadius: 6, padding: "6px 8px" }}>
+                          <div style={{ color: C.textLight, fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k.label}</div>
+                          <div style={{ color: k.red ? C.red : C.textMid, fontSize: 12, fontWeight: 800, fontFamily: "monospace", wordBreak: "break-all" }}>{k.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
