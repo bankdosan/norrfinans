@@ -2869,6 +2869,7 @@ const LöneväxlingView = () => {
   const [växling, setVäxling] = useState(5000);
   const [marginalskatt, setMarginalskatt] = useState(34.29);
   const [manuelltSkatt, setManuelltSkatt] = useState(false);
+  const [förenklad, setFörenklad] = useState(false);
 
   // Brytpunkt 2026: 55 033 kr/mån (660 400 kr/år). Statlig skatt +20% på överskjutande.
   const BRYTPUNKT_MÅN = 55033;
@@ -2993,7 +2994,132 @@ const LöneväxlingView = () => {
   };
 
   return (
-    <div style={{ padding: "28px 32px", background: C.bg, minHeight: "calc(100vh - 130px)", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+    <div style={{ background: C.bg, minHeight: "calc(100vh - 130px)", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+
+      {/* Toggle bar */}
+      <div style={{ display: "flex", gap: 8, padding: "12px 20px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
+        {[{ id: false, label: "📊 Avancerad vy" }, { id: true, label: "👤 Förenklad vy (kund)" }].map(v => (
+          <button key={String(v.id)} onClick={() => setFörenklad(v.id)}
+            style={{ padding: "8px 18px", borderRadius: 7, border: `1.5px solid ${förenklad === v.id ? C.navy : C.border}`, background: förenklad === v.id ? C.navy : "transparent", color: förenklad === v.id ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── FÖRENKLAD VY ── */}
+      {förenklad && (
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+
+          {/* Rubrik */}
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Vad är löneväxling?</div>
+            <h2 style={{ color: C.navy, fontSize: 22, fontWeight: 800, margin: "0 0 12px" }}>Byt lön mot pension — och tjäna på det</h2>
+            <p style={{ color: C.textMid, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+              Löneväxling innebär att du väljer att sänka din kontanta lön lite — och istället får den delen inbetald direkt som pension. Eftersom företaget slipper betala arbetsgivaravgift på den del du växlar kan du faktiskt <strong>få mer pension än vad du "ger upp" i lön.</strong>
+            </p>
+          </div>
+
+          {/* Enkla inputs */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "22px 24px", marginBottom: 24, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Ange din situation</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <InputRow label="Din bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+              <InputRow label="Vill växla" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
+            </div>
+            <InputRow label="Din kommunalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={0.5} min={0} max={60} hint="Hitta din på skatteverket.se" />
+          </div>
+
+          {/* Visuell förklaring: förut vs nu */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "center", marginBottom: 24 }}>
+            {/* Utan */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 18px" }}>
+              <div style={{ color: C.textLight, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>Utan löneväxling</div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: C.textMid, fontSize: 12, marginBottom: 3 }}>Din bruttolön</div>
+                <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön)} kr</div>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: C.textMid, fontSize: 12, marginBottom: 3 }}>Du betalar skatt</div>
+                <div style={{ color: C.red, fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>−{fmt(Math.round(bruttolön * effektivSkatt / 100))} kr</div>
+              </div>
+              <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 10 }}>
+                <div style={{ color: C.textMid, fontSize: 12, marginBottom: 3 }}>Netto i handen</div>
+                <div style={{ color: C.navy, fontSize: 20, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(bruttolön * (1 - effektivSkatt / 100)))} kr</div>
+              </div>
+              <div style={{ marginTop: 12, background: C.surface2, borderRadius: 6, padding: "8px 12px", color: C.textLight, fontSize: 11 }}>
+                Ingen pension härifrån 🚫
+              </div>
+            </div>
+
+            {/* Pil */}
+            <div style={{ textAlign: "center", color: C.gold, fontSize: 28 }}>→</div>
+
+            {/* Med */}
+            <div style={{ background: C.navy, borderRadius: 12, padding: "20px 18px" }}>
+              <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>Med löneväxling</div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginBottom: 3 }}>Din nya lön</div>
+                <div style={{ color: "#fff", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön - växling)} kr</div>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginBottom: 3 }}>Du betalar skatt</div>
+                <div style={{ color: "#FFB0B0", fontSize: 16, fontWeight: 700, fontFamily: "monospace" }}>−{fmt(Math.round((bruttolön - växling) * effektivSkatt / 100))} kr</div>
+              </div>
+              <div style={{ borderTop: "2px solid rgba(255,255,255,0.15)", paddingTop: 10, marginBottom: 12 }}>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginBottom: 3 }}>Netto i handen</div>
+                <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round((bruttolön - växling) * (1 - effektivSkatt / 100)))} kr</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, marginBottom: 3 }}>🎯 Direkt till din pension</div>
+                <div style={{ color: "#F9C5A5", fontSize: 17, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionPremie)} kr/mån</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>inkl. arbetsgivarens besparing</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Nyckeltal */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
+            {[
+              { emoji: "💰", label: "Din lön minskar med", value: fmt(Math.round(växling * effektivSkatt / 100)) + " kr/mån", sub: "Det du faktiskt märker (skatten uteblir)", color: C.surface },
+              { emoji: "📈", label: "Din pension ökar med", value: fmt(calc.pensionPremie) + " kr/mån", sub: "Mer än vad du ger upp i nettolön", color: C.surface },
+              { emoji: "🎁", label: "Du \"tjänar\" extra", value: fmt(calc.pensionPremie - Math.round(växling * effektivSkatt / 100)) + " kr/mån", sub: "Pension utöver kostnaden för dig", color: calc.pensionPremie > Math.round(växling * effektivSkatt / 100) ? C.navy : C.surface, white: calc.pensionPremie > Math.round(växling * effektivSkatt / 100) },
+            ].map((k, i) => (
+              <div key={i} style={{ background: k.color, border: `1px solid ${i === 2 && k.white ? C.navy : C.border}`, borderRadius: 10, padding: "16px 14px" }}>
+                <div style={{ fontSize: 22, marginBottom: 8 }}>{k.emoji}</div>
+                <div style={{ color: k.white ? "rgba(255,255,255,0.6)" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{k.label}</div>
+                <div style={{ color: k.white ? "#F9C5A5" : C.navy, fontSize: 16, fontWeight: 800, fontFamily: "monospace", marginBottom: 4 }}>{k.value}</div>
+                <div style={{ color: k.white ? "rgba(255,255,255,0.4)" : C.textLight, fontSize: 10, lineHeight: 1.5 }}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Förklaring i klartext */}
+          <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 12, padding: "20px 22px", marginBottom: 16 }}>
+            <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Varför fungerar det här?</div>
+            <div style={{ color: C.textMid, fontSize: 13, lineHeight: 1.8 }}>
+              När du tar ut {fmt(växling)} kr extra i lön betalar du <strong>{effektivSkatt} % i skatt</strong> — du får alltså bara <strong>{fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr</strong> kvar.<br/><br/>
+              Men om din arbetsgivare istället betalar in pengarna som pension slipper de betala arbetsgivaravgift (31,42 %) på beloppet. Den besparingen kan de ge tillbaka till dig — vilket gör att <strong>hela {fmt(calc.pensionPremie)} kr hamnar i din pension</strong>, mer än de {fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr du annars hade fått i handen.
+            </div>
+          </div>
+
+          {/* PGI info förenklad */}
+          {(bruttolön - växling) < 56087 && (
+            <div style={{ background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 10, padding: "16px 18px" }}>
+              <div style={{ color: C.red, fontSize: 13, fontWeight: 700, marginBottom: 6 }}>⚠️ Obs — du växlar för mycket!</div>
+              <div style={{ color: C.textMid, fontSize: 12, lineHeight: 1.7 }}>
+                Din lön efter växling ({fmt(bruttolön - växling)} kr/mån) är lägre än {fmt(56087)} kr/mån. Det kan påverka din allmänna pension negativt. Minska växlingsbeloppet till max <strong>{bruttolön > 56087 ? fmt(bruttolön - 56087) : "0"} kr/mån</strong>.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── AVANCERAD VY ── */}
+      {!förenklad && (
+      <div style={{ padding: "28px 32px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24 }}>
 
         {/* ── VÄNSTER: INSTÄLLNINGAR ── */}
@@ -3380,11 +3506,11 @@ const LöneväxlingView = () => {
           </div>
         </div>
       </div>
+      </div>
+      )}
     </div>
   );
 };
-
-// ─── ÄRENDEN ────────────────────────────────────────────────────────────────
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
   const [mottagarMail, setMottagarMail] = useState("");
