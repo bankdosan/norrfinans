@@ -1684,146 +1684,122 @@ const LönesummaView = () => {
 
       {/* ── FÖRENKLAD VY ── */}
       {förenklad && (
-        <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 24 }}>
-          {/* Vänster input */}
-          <div>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
-              <SektionRubrik title="Bolagets lönesumma" />
-              <InputRow label="Total kontant ersättning föregående år" value={totLönesumma} onChange={setTotLönesumma} suffix="kr / år" step={50000} hint="Alla anställda inkl. ägare" />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
-                <InfoChip label="Löneavdrag (8 IBB)" value={fmt(LONEAVDRAG_IBB * IBB_2026)} />
-                <InfoChip label="Grundbelopp (4 IBB)" value={fmt(grundbeloppTotal)} />
-              </div>
+        <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px", fontFamily: "'Inter',sans-serif" }}>
+
+          {/* Rubrik */}
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Vad är löneväxling?</div>
+            <h2 style={{ color: C.navy, fontSize: 20, fontWeight: 800, margin: "0 0 10px" }}>Byt lön mot pension — och tjäna på det</h2>
+            <p style={{ color: C.textMid, fontSize: 13, lineHeight: 1.7, margin: 0 }}>
+              Du sänker din kontanta lön lite och får istället pengarna inbetalda direkt som pension.
+              Eftersom företaget slipper betala arbetsgivaravgift på det du växlar kan du faktiskt
+              <strong> få mer pension än vad du ger upp i nettolön.</strong>
+            </p>
+          </div>
+
+          {/* Inmatning */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 22px", marginBottom: 20, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Din situation</span>
             </div>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
-              <SektionRubrik title="Delägare" />
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.surface2, borderRadius: 7, padding: "10px 14px", marginBottom: 16 }}>
-                <span style={{ color: C.textMid, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Antal delägare</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <button onClick={() => syncAntal(Math.max(1, antalDelägare - 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>−</button>
-                  <span style={{ color: C.navy, fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "center" }}>{antalDelägare}</span>
-                  <button onClick={() => syncAntal(Math.min(10, antalDelägare + 1))} style={{ width: 28, height: 28, borderRadius: 6, border: `1.5px solid ${C.border}`, background: C.surface, color: C.navy, fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>+</button>
-                </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
+              <InputRow label="Bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+              <InputRow label="Vill växla" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
+            </div>
+            <InputRow label="Kommunalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={0.5} min={0} max={60} />
+          </div>
+
+          {/* Utan vs Med */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center", marginBottom: 20 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "18px 16px" }}>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Utan löneväxling</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Bruttolön</div>
+                <div style={{ color: C.navy, fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön)} kr</div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, padding: "8px 12px", borderRadius: 6, background: ägarandelOk ? "#FFF0F0" : "#FEF2F2", border: `1px solid ${ägarandelOk ? "#F5C5C5" : "#FECACA"}` }}>
-                <span style={{ fontSize: 11, color: ägarandelOk ? C.green : C.red, fontWeight: 600 }}>Totala ägarandel</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: ägarandelOk ? C.green : C.red, fontFamily: "monospace" }}>{totÄgarandel.toFixed(1)} %</span>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Skatt ({effektivSkatt} %)</div>
+                <div style={{ color: C.red, fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round(bruttolön * effektivSkatt / 100))} kr</div>
               </div>
-              {delägare.map((d, i) => (
-                <div key={i} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 14px", marginBottom: 10 }}>
-                  <input value={d.namn} onChange={e => setDelField(i, "namn", e.target.value)}
-                    style={{ fontSize: 12, fontWeight: 700, color: C.navy, background: "transparent", border: "none", outline: "none", fontFamily: "inherit", display: "block", marginBottom: 10, width: "100%" }} />
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, minWidth: 0 }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.6 }}>Ägarandel %</div>
-                      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-                        <input type="number" value={d.ägarandel === 0 ? "" : d.ägarandel} placeholder="0" min={0} max={100} step={1} onChange={e => setDelField(i, "ägarandel", e.target.value === "" ? 0 : Number(e.target.value))}
-                          style={{ flex: 1, minWidth: 0, width: 0, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "8px 10px", fontFamily: "inherit" }} />
-                        <span style={{ color: C.textLight, padding: "8px 8px", fontSize: 11, borderLeft: `1px solid ${C.border}`, flexShrink: 0 }}>%</span>
-                      </div>
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.6 }}>Egen lön / år</div>
-                      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-                        <input type="number" value={d.egnLön === 0 ? "" : d.egnLön} placeholder="0" min={0} step={10000} onChange={e => setDelField(i, "egnLön", e.target.value === "" ? 0 : Number(e.target.value))}
-                          style={{ flex: 1, minWidth: 0, width: 0, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "8px 10px", fontFamily: "inherit" }} />
-                        <span style={{ color: C.textLight, padding: "8px 8px", fontSize: 11, borderLeft: `1px solid ${C.border}`, flexShrink: 0 }}>kr</span>
-                      </div>
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.6 }}>Sparat utrymme</div>
-                      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-                        <input type="number" value={d.sparat === 0 ? "" : d.sparat} placeholder="0" min={0} step={10000} onChange={e => setDelField(i, "sparat", e.target.value === "" ? 0 : Number(e.target.value))}
-                          style={{ flex: 1, minWidth: 0, width: 0, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "8px 10px", fontFamily: "inherit" }} />
-                        <span style={{ color: C.textLight, padding: "8px 8px", fontSize: 11, borderLeft: `1px solid ${C.border}`, flexShrink: 0 }}>kr</span>
-                      </div>
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: C.textMid, fontSize: 10, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.6 }}>Omkostnadsbelopp</div>
-                      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-                        <input type="number" value={d.omkostnad === 0 ? "" : d.omkostnad} placeholder="0" min={0} step={10000} onChange={e => setDelField(i, "omkostnad", e.target.value === "" ? 0 : Number(e.target.value))}
-                          style={{ flex: 1, minWidth: 0, width: 0, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, padding: "8px 10px", fontFamily: "inherit" }} />
-                        <span style={{ color: C.textLight, padding: "8px 8px", fontSize: 11, borderLeft: `1px solid ${C.border}`, flexShrink: 0 }}>kr</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 8, marginBottom: 10 }}>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Netto i handen</div>
+                <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(bruttolön * (1 - effektivSkatt / 100)))} kr</div>
+              </div>
+              <div style={{ background: C.surface2, borderRadius: 6, padding: "8px 10px", color: C.textLight, fontSize: 11 }}>Ingen pension härifrån</div>
+            </div>
+
+            <div style={{ textAlign: "center", color: C.gold, fontSize: 26, fontWeight: 700 }}>→</div>
+
+            <div style={{ background: C.navy, borderRadius: 12, padding: "18px 16px" }}>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Med löneväxling</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Ny lön</div>
+                <div style={{ color: "#fff", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön - växling)} kr</div>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Skatt ({effektivSkatt} %)</div>
+                <div style={{ color: "#FFB0B0", fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round((bruttolön - växling) * effektivSkatt / 100))} kr</div>
+              </div>
+              <div style={{ borderTop: "2px solid rgba(255,255,255,0.15)", paddingTop: 8, marginBottom: 10 }}>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Netto i handen</div>
+                <div style={{ color: "#fff", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round((bruttolön - växling) * (1 - effektivSkatt / 100)))} kr</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, marginBottom: 3 }}>Till din pension</div>
+                <div style={{ color: "#F9C5A5", fontSize: 17, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionPremie)} kr/mån</div>
+                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, marginTop: 2 }}>inkl. arbetsgivarens besparing</div>
+              </div>
             </div>
           </div>
 
-          {/* Höger — förenklat resultat per delägare */}
-          <div>
-            {beräkningar.map((b, i) => {
-              const d = delägare[i];
-              return (
-                <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 3, height: 20, background: C.gold, borderRadius: 2 }} />
-                      <div>
-                        <div style={{ color: C.navy, fontSize: 14, fontWeight: 700 }}>{d.namn}</div>
-                        <div style={{ color: C.textLight, fontSize: 11 }}>{d.ägarandel} % ägare{d.make ? " · Make/maka" : ""}</div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ color: C.textLight, fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>Gränsbelopp</div>
-                      <div style={{ color: C.navy, fontSize: 22, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.gränsbelopp)}</div>
-                    </div>
-                  </div>
-                  {/* Tre delar */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    <div style={{ background: "#FFF0F0", border: "1px solid #86EFAC", borderRadius: 7, padding: "12px 14px" }}>
-                      <div style={{ color: "#7A1020", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Grundbelopp</div>
-                      <div style={{ color: "#7A1020", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.grundbelopp)}</div>
-                      <div style={{ color: "#E5A0A0", fontSize: 10, marginTop: 2 }}>4 IBB × {d.ägarandel} %</div>
-                    </div>
-                    <div style={{ background: b.lönebaseratUtrymme > 0 ? "#FFF0F0" : C.surface2, border: `1px solid ${b.lönebaseratUtrymme > 0 ? "#E5A0A0" : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
-                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Lönebaserat</div>
-                      <div style={{ color: b.lönebaseratUtrymme > 0 ? "#7A1020" : C.textLight, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.lönebaseratUtrymme)}</div>
-                      <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>{b.begränsadAvLön ? "⚠ Begränsat av 50×-tak" : totLönesumma === 0 ? "Ange lönesumma" : b.lönebasRaw <= 0 ? "Under löneavdrag" : "(lön × andel − 8 IBB) × 50%"}</div>
-                    </div>
-                    <div style={{ background: b.sparatUtrymme > 0 ? "#FFF8EC" : C.surface2, border: `1px solid ${b.sparatUtrymme > 0 ? C.gold : C.border}`, borderRadius: 7, padding: "12px 14px" }}>
-                      <div style={{ color: b.sparatUtrymme > 0 ? C.gold : C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 }}>Sparat</div>
-                      <div style={{ color: b.sparatUtrymme > 0 ? C.gold : C.textLight, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.sparatUtrymme)}</div>
-                      <div style={{ color: C.textLight, fontSize: 10, marginTop: 2 }}>Nominellt värde</div>
-                    </div>
-                  </div>
-                  {/* Skatt */}
-                  <div style={{ background: C.navy, borderRadius: 7, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Skatt inom gränsbelopp</div>
-                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>2/3 × 30 % = 20 % effektivt</div>
-                    </div>
-                    <div style={{ color: "#F9C5A5", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(b.skattInomGräns)}</div>
-                  </div>
-                  {b.begränsadAvLön && (
-                    <div style={{ marginTop: 10, background: "#FFF5F0", border: "1px solid #FCD34D", borderRadius: 6, padding: "8px 12px", color: "#7A1020", fontSize: 11 }}>
-                      ⚠ Lönebaserat utrymme begränsat till 50× din lön ({fmt(b.maxLönebaserat)}). Höj din lön för att öka utrymmet.
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {beräkningar.length > 1 && (
-              <div style={{ background: C.navy, borderRadius: 8, padding: "18px 24px" }}>
-                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Summering — alla delägare</div>
-                {beräkningar.map((b, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < beräkningar.length - 1 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
-                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>{delägare[i].namn} ({delägare[i].ägarandel} %)</span>
-                    <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "monospace" }}>{fmt(b.gränsbelopp)}</span>
-                  </div>
-                ))}
-                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, marginTop: 6 }}>
-                  <span style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, fontWeight: 700 }}>Totalt gränsbelopp</span>
-                  <span style={{ color: "#F9C5A5", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(beräkningar.reduce((s, b) => s + b.gränsbelopp, 0))}</span>
-                </div>
-              </div>
-            )}
+          {/* Tre nyckeltal */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 14px" }}>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>💰</div>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Lön minskar med</div>
+              <div style={{ color: C.navy, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(växling * effektivSkatt / 100))} kr/mån</div>
+              <div style={{ color: C.textLight, fontSize: 10, lineHeight: 1.5, marginTop: 4 }}>Det du märker av i plånboken</div>
+            </div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 14px" }}>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>📈</div>
+              <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Pension ökar med</div>
+              <div style={{ color: C.green, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionPremie)} kr/mån</div>
+              <div style={{ color: C.textLight, fontSize: 10, lineHeight: 1.5, marginTop: 4 }}>Mer än vad du ger upp i nettolön</div>
+            </div>
+            <div style={{ background: C.navy, borderRadius: 10, padding: "14px 14px" }}>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>🎁</div>
+              <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Du tjänar extra</div>
+              <div style={{ color: "#F9C5A5", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.max(0, calc.pensionPremie - Math.round(växling * effektivSkatt / 100)))} kr/mån</div>
+              <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, lineHeight: 1.5, marginTop: 4 }}>Pension utöver kostnaden</div>
+            </div>
           </div>
+
+          {/* Förklaring */}
+          <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 12, padding: "18px 20px", marginBottom: 16 }}>
+            <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Varför fungerar det här?</div>
+            <div style={{ color: C.textMid, fontSize: 13, lineHeight: 1.8 }}>
+              Om du tar ut {fmt(växling)} kr som vanlig lön betalar du {effektivSkatt} % i skatt och får
+              bara {fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr kvar.
+              Men om pengarna går direkt som pension slipper din arbetsgivare betala 31,42 % i
+              arbetsgivaravgift — och den besparingen kan de ge dig tillbaka.
+              Resultatet: {fmt(calc.pensionPremie)} kr hamnar i din pension, istället för {fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr i handen.
+            </div>
+          </div>
+
+          {/* PGI-varning förenklad */}
+          {(bruttolön - växling) < 56087 && växling > 0 && (
+            <div style={{ background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ color: C.red, fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Obs — du växlar för mycket!</div>
+              <div style={{ color: C.textMid, fontSize: 12, lineHeight: 1.7 }}>
+                Din lön efter växling ({fmt(bruttolön - växling)} kr/mån) understiger {fmt(56087)} kr/mån.
+                Max rekommenderat växlingsbelopp: {fmt(Math.max(0, bruttolön - 56087))} kr/mån.
+              </div>
+            </div>
+          )}
+
         </div>
       )}
-
       {/* ── AVANCERAD VY ── */}
       {!förenklad && (
       <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 24 }}>
@@ -2062,6 +2038,7 @@ const TradFondView = () => {
 
   const [TRAD_COLOR, setTradColor] = useState("#9B182D");
   const [FOND_COLOR, setFondColor] = useState("#CEC09E");
+  const [hoveredTF, setHoveredTF] = useState(null);
 
   const SektionRubrik = ({ title, color = C.gold }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -2175,7 +2152,6 @@ const TradFondView = () => {
               </div>
             </div>
             {(() => {
-              const [hovered, setHovered] = useState(null);
               const VW = 800, VH = 240, PAD_L = 68, PAD_B = 22, PAD_T = 16;
               const plotW = VW - PAD_L - 8, plotH = VH - PAD_B - PAD_T;
               const n = rows.length;
@@ -2208,11 +2184,11 @@ const TradFondView = () => {
                       const tradShare = row.totalt > 0 ? row.tKap / row.totalt : tradPct / 100;
                       const tBarH = totH * tradShare;
                       const fBarH = totH * (1 - tradShare);
-                      const isHov = hovered === i;
+                      const isHov = hoveredTF === i;
                       return (
                         <g key={i}
-                          onMouseEnter={() => setHovered(i)}
-                          onMouseLeave={() => setHovered(null)}
+                          onMouseEnter={() => setHoveredTF(i)}
+                          onMouseLeave={() => setHoveredTF(null)}
                           style={{ cursor: "pointer" }}>
                           {/* Hover target — full bar area */}
                           <rect x={x - 4} y={baseY - totH - 4} width={barW + 8} height={totH + 4} fill="transparent" />
@@ -2231,14 +2207,14 @@ const TradFondView = () => {
                     <polyline fill="none" stroke={C.navy} strokeWidth={2} opacity={0.85}
                       points={rows.map((r, i) => `${PAD_L + i * gap + gap / 2},${toY(r.totalt)}`).join(" ")} />
                     {rows.map((row, i) => (
-                      <circle key={i} cx={PAD_L + i * gap + gap / 2} cy={toY(row.totalt)} r={hovered === i ? 4 : 2.5}
+                      <circle key={i} cx={PAD_L + i * gap + gap / 2} cy={toY(row.totalt)} r={hoveredTF === i ? 4 : 2.5}
                         fill={C.navy} stroke="#fff" strokeWidth={1} />
                     ))}
                   </svg>
                   {/* Tooltip */}
-                  {hovered !== null && rows[hovered] && (() => {
-                    const row = rows[hovered];
-                    const cx = PAD_L + hovered * gap + gap / 2;
+                  {hoveredTF !== null && rows[hoveredTF] && (() => {
+                    const row = rows[hoveredTF];
+                    const cx = PAD_L + hoveredTF * gap + gap / 2;
                     const pct = VW > 0 ? (cx / VW) * 100 : 50;
                     const alignRight = pct > 65;
                     return (
@@ -2870,6 +2846,7 @@ const LöneväxlingView = () => {
   const [marginalskatt, setMarginalskatt] = useState(34.29);
   const [manuelltSkatt, setManuelltSkatt] = useState(false);
   const [förenklad, setFörenklad] = useState(false);
+  const [hoveredLV, setHoveredLV] = useState(null);
 
   // Brytpunkt 2026: 55 033 kr/mån (660 400 kr/år). Statlig skatt +20% på överskjutande.
   const BRYTPUNKT_MÅN = 55033;
@@ -3410,7 +3387,6 @@ const LöneväxlingView = () => {
               </div>
             </div>
             {(() => {
-              const [hovered, setHovered] = useState(null);
               const ps = calc.pensionSeries;
               if (!ps.length) return null;
               const VW = 800, VH = 240, PAD_L = 72, PAD_B = 22, PAD_T = 16;
@@ -3441,7 +3417,7 @@ const LöneväxlingView = () => {
                         </g>
                       );
                     })}
-                    {hovered && <rect x={toX(hovered) - gap / 2} y={PAD_T} width={gap} height={plotH} fill={C.navy} opacity={0.05} />}
+                    {hoveredLV && <rect x={toX(hoveredLV) - gap / 2} y={PAD_T} width={gap} height={plotH} fill={C.navy} opacity={0.05} />}
                     {/* Area fill */}
                     <path d={areaPath} fill="url(#pensionGrad)" />
                     {/* Netto streckad */}
@@ -3450,22 +3426,22 @@ const LöneväxlingView = () => {
                     <path d={linePath} fill="none" stroke={C.navy} strokeWidth={2.5} opacity={0.95} />
                     {/* Dots vid hvert 5:e år och sista */}
                     {ps.filter(r => r.y % Math.max(1, Math.floor(sparÅr / 8)) === 0 || r.y === sparÅr).map(r => (
-                      <circle key={r.y} cx={toX(r.y)} cy={toY(r.brutto)} r={hovered === r.y ? 5 : 3} fill={C.navy} stroke="#fff" strokeWidth={1.2} />
+                      <circle key={r.y} cx={toX(r.y)} cy={toY(r.brutto)} r={hoveredLV === r.y ? 5 : 3} fill={C.navy} stroke="#fff" strokeWidth={1.2} />
                     ))}
                     {/* Year labels */}
                     {ps.filter(r => r.y % Math.max(1, Math.floor(sparÅr / 8)) === 0 || r.y === sparÅr).map(r => (
-                      <text key={r.y} x={toX(r.y)} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={hovered === r.y ? C.navy : C.textLight} fontWeight={hovered === r.y ? "bold" : "normal"} fontFamily="inherit">{r.y}</text>
+                      <text key={r.y} x={toX(r.y)} y={VH - 6} textAnchor="middle" fontSize={7.5} fill={hoveredLV === r.y ? C.navy : C.textLight} fontWeight={hoveredLV === r.y ? "bold" : "normal"} fontFamily="inherit">{r.y}</text>
                     ))}
                     {/* Hover targets */}
                     {ps.map(r => (
                       <rect key={r.y} x={toX(r.y) - gap / 2} y={PAD_T} width={gap} height={plotH}
-                        fill="transparent" onMouseEnter={() => setHovered(r.y)} onMouseLeave={() => setHovered(null)} />
+                        fill="transparent" onMouseEnter={() => setHoveredLV(r.y)} onMouseLeave={() => setHoveredLV(null)} />
                     ))}
                   </svg>
-                  {hovered && (() => {
-                    const pr = ps.find(r => r.y === hovered);
+                  {hoveredLV && (() => {
+                    const pr = ps.find(r => r.y === hoveredLV);
                     if (!pr) return null;
-                    const xPct = (toX(hovered) / VW) * 100;
+                    const xPct = (toX(hoveredLV) / VW) * 100;
                     const alignRight = xPct > 60;
                     return (
                       <div style={{
