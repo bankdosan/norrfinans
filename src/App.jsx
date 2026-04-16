@@ -2839,6 +2839,15 @@ const TradView = () => {
   );
 };
 
+// ─── LÖNEVÄXLING HELPERS ─────────────────────────────────────────────────────
+const LV_BRYTPUNKT = 55033;
+const LV_STATLIG = 0.20;
+const calcNettoLön = (brutto, kommunalPct) => {
+  const k = kommunalPct / 100;
+  if (brutto <= LV_BRYTPUNKT) return brutto * (1 - k);
+  return LV_BRYTPUNKT * (1 - k) + (brutto - LV_BRYTPUNKT) * (1 - k - LV_STATLIG);
+};
+
 // ─── LÖNEVÄXLING ─────────────────────────────────────────────────────────────
 const LöneväxlingView = () => {
   const [bruttolön, setBruttolön] = useState(50000);
@@ -2848,25 +2857,11 @@ const LöneväxlingView = () => {
   const [förenklad, setFörenklad] = useState(false);
   const [hoveredLV, setHoveredLV] = useState(null);
 
-  // Rätt skatteberäkning: kommunalskatt på hela lönen, statlig 20% ENDAST på del över brytpunkten
+  // Skatteberäkning
   const BRYTPUNKT_MÅN = 55033;
-  const STATLIG_SKATT = 0.20;
   const överBrytpunkt = bruttolön > BRYTPUNKT_MÅN;
-
-  // Beräknar korrekt nettolön med splittat skatteuttag
-  const calcNettoLön = (brutto, kommunalPct) => {
-    const k = kommunalPct / 100;
-    if (brutto <= BRYTPUNKT_MÅN) {
-      return brutto * (1 - k);
-    }
-    const nettoUnder = BRYTPUNKT_MÅN * (1 - k);
-    const nettoÖver = (brutto - BRYTPUNKT_MÅN) * (1 - k - STATLIG_SKATT);
-    return nettoUnder + nettoÖver;
-  };
-
-  // Effektiv skattesats på MARGINELL krona (visas i UI för info)
   const effektivSkatt = överBrytpunkt ? marginalskatt + 20 : marginalskatt;
-  const autoMarginalskatt = effektivSkatt; // behålls för bakåtkompatibilitet
+  const autoMarginalskatt = effektivSkatt;
   const [kompensationPct, setKompensationPct] = useState(100);
   const [kompensationVäxlingPct, setKompensationVäxlingPct] = useState(10);
   const [kompMode, setKompMode] = useState("agbesparing"); // "agbesparing" | "växling"
@@ -2955,7 +2950,7 @@ const LöneväxlingView = () => {
       fondKapital: fondSeries[fondSeries.length - 1]?.brutto || 0,
       pensionSeries, fondSeries,
     };
-  }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk, calcNettoLön]);
+  }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk]);
 
   const Chip = ({ label, value, color, sub }) => (
     <div style={{ background: color ? color : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
