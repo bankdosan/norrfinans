@@ -1719,12 +1719,12 @@ const LönesummaView = () => {
                 <div style={{ color: C.navy, fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön)} kr</div>
               </div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Skatt ({effektivSkatt} %)</div>
-                <div style={{ color: C.red, fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round(bruttolön * effektivSkatt / 100))} kr</div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Skatt</div>
+                <div style={{ color: C.red, fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round(bruttolön - calcNettoLön(bruttolön, marginalskatt)))} kr</div>
               </div>
               <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 8, marginBottom: 10 }}>
                 <div style={{ color: C.textMid, fontSize: 11, marginBottom: 2 }}>Netto i handen</div>
-                <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(bruttolön * (1 - effektivSkatt / 100)))} kr</div>
+                <div style={{ color: C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(calcNettoLön(bruttolön, marginalskatt)))} kr</div>
               </div>
               <div style={{ background: C.surface2, borderRadius: 6, padding: "8px 10px", color: C.textLight, fontSize: 11 }}>Ingen pension härifrån</div>
             </div>
@@ -1738,12 +1738,12 @@ const LönesummaView = () => {
                 <div style={{ color: "#fff", fontSize: 16, fontWeight: 800, fontFamily: "monospace" }}>{fmt(bruttolön - växling)} kr</div>
               </div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Skatt ({effektivSkatt} %)</div>
-                <div style={{ color: "#FFB0B0", fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round((bruttolön - växling) * effektivSkatt / 100))} kr</div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Skatt</div>
+                <div style={{ color: "#FFB0B0", fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>-{fmt(Math.round((bruttolön - växling) - calcNettoLön(bruttolön - växling, marginalskatt)))} kr</div>
               </div>
               <div style={{ borderTop: "2px solid rgba(255,255,255,0.15)", paddingTop: 8, marginBottom: 10 }}>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginBottom: 2 }}>Netto i handen</div>
-                <div style={{ color: "#fff", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round((bruttolön - växling) * (1 - effektivSkatt / 100)))} kr</div>
+                <div style={{ color: "#fff", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(calcNettoLön(bruttolön - växling, marginalskatt)))} kr</div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 6, padding: "10px 12px" }}>
                 <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, marginBottom: 3 }}>Till din pension</div>
@@ -1758,7 +1758,7 @@ const LönesummaView = () => {
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 14px" }}>
               <div style={{ fontSize: 20, marginBottom: 6 }}>💰</div>
               <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Lön minskar med</div>
-              <div style={{ color: C.navy, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(växling * effektivSkatt / 100))} kr/mån</div>
+              <div style={{ color: C.navy, fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(calcNettoLön(bruttolön, marginalskatt) - calcNettoLön(bruttolön - växling, marginalskatt)))} kr/mån</div>
               <div style={{ color: C.textLight, fontSize: 10, lineHeight: 1.5, marginTop: 4 }}>Det du märker av i plånboken</div>
             </div>
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 14px" }}>
@@ -1770,7 +1770,7 @@ const LönesummaView = () => {
             <div style={{ background: C.navy, borderRadius: 10, padding: "14px 14px" }}>
               <div style={{ fontSize: 20, marginBottom: 6 }}>🎁</div>
               <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Du tjänar extra</div>
-              <div style={{ color: "#F9C5A5", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.max(0, calc.pensionPremie - Math.round(växling * effektivSkatt / 100)))} kr/mån</div>
+              <div style={{ color: "#F9C5A5", fontSize: 15, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.max(0, calc.pensionPremie - Math.round(calcNettoLön(bruttolön, marginalskatt) - calcNettoLön(bruttolön - växling, marginalskatt))))} kr/mån</div>
               <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, lineHeight: 1.5, marginTop: 4 }}>Pension utöver kostnaden</div>
             </div>
           </div>
@@ -1779,11 +1779,11 @@ const LönesummaView = () => {
           <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 12, padding: "18px 20px", marginBottom: 16 }}>
             <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Varför fungerar det här?</div>
             <div style={{ color: C.textMid, fontSize: 13, lineHeight: 1.8 }}>
-              Om du tar ut {fmt(växling)} kr som vanlig lön betalar du {effektivSkatt} % i skatt och får
-              bara {fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr kvar.
+              Om du tar ut {fmt(växling)} kr som vanlig lön betalar du skatt och får
+              bara {fmt(Math.round(calcNettoLön(bruttolön, marginalskatt) - calcNettoLön(bruttolön - växling, marginalskatt)))} kr kvar (kommunalskatt {marginalskatt} %{överBrytpunkt ? ` + 20 % statlig på del över ${fmt(BRYTPUNKT_MÅN)} kr/mån` : ""}).
               Men om pengarna går direkt som pension slipper din arbetsgivare betala 31,42 % i
               arbetsgivaravgift — och den besparingen kan de ge dig tillbaka.
-              Resultatet: {fmt(calc.pensionPremie)} kr hamnar i din pension, istället för {fmt(Math.round(växling * (1 - effektivSkatt / 100)))} kr i handen.
+              Resultatet: {fmt(calc.pensionPremie)} kr hamnar i din pension, istället för {fmt(Math.round(calcNettoLön(bruttolön, marginalskatt) - calcNettoLön(bruttolön - växling, marginalskatt)))} kr i handen.
             </div>
           </div>
 
@@ -2848,15 +2848,25 @@ const LöneväxlingView = () => {
   const [förenklad, setFörenklad] = useState(false);
   const [hoveredLV, setHoveredLV] = useState(null);
 
-  // Brytpunkt 2026: 55 033 kr/mån (660 400 kr/år). Statlig skatt +20% på överskjutande.
+  // Rätt skatteberäkning: kommunalskatt på hela lönen, statlig 20% ENDAST på del över brytpunkten
   const BRYTPUNKT_MÅN = 55033;
-  const autoMarginalskatt = useMemo(() => {
-    const kommunalskatt = manuelltSkatt ? marginalskatt : marginalskatt;
-    if (bruttolön > BRYTPUNKT_MÅN) return Math.min(60, kommunalskatt + 20);
-    return kommunalskatt;
-  }, [bruttolön, marginalskatt]);
-  const effektivSkatt = manuelltSkatt ? marginalskatt : autoMarginalskatt;
+  const STATLIG_SKATT = 0.20;
   const överBrytpunkt = bruttolön > BRYTPUNKT_MÅN;
+
+  // Beräknar korrekt nettolön med splittat skatteuttag
+  const calcNettoLön = (brutto, kommunalPct) => {
+    const k = kommunalPct / 100;
+    if (brutto <= BRYTPUNKT_MÅN) {
+      return brutto * (1 - k);
+    }
+    const nettoUnder = BRYTPUNKT_MÅN * (1 - k);
+    const nettoÖver = (brutto - BRYTPUNKT_MÅN) * (1 - k - STATLIG_SKATT);
+    return nettoUnder + nettoÖver;
+  };
+
+  // Effektiv skattesats på MARGINELL krona (visas i UI för info)
+  const effektivSkatt = överBrytpunkt ? marginalskatt + 20 : marginalskatt;
+  const autoMarginalskatt = effektivSkatt; // behålls för bakåtkompatibilitet
   const [kompensationPct, setKompensationPct] = useState(100);
   const [kompensationVäxlingPct, setKompensationVäxlingPct] = useState(10);
   const [kompMode, setKompMode] = useState("agbesparing"); // "agbesparing" | "växling"
@@ -2872,12 +2882,12 @@ const LöneväxlingView = () => {
   const calc = useMemo(() => {
     // ── Utan löneväxling ──
     const lönMånUtan = bruttolön;
-    const nettoMånUtan = lönMånUtan * (1 - effektivSkatt / 100);
+    const nettoMånUtan = calcNettoLön(lönMånUtan, marginalskatt);
     const arbKostnadUtan = lönMånUtan * (1 + AG_AVG);
 
     // ── Med löneväxling ──
     const lönMånMed = bruttolön - växling;
-    const nettoMånMed = lönMånMed * (1 - effektivSkatt / 100);
+    const nettoMånMed = calcNettoLön(lönMånMed, marginalskatt);
     const arbKostnadMed_lön = lönMånMed * (1 + AG_AVG);
 
     // AG-avgift besparing på växlingsbelopp
@@ -2899,12 +2909,11 @@ const LöneväxlingView = () => {
     const nettoMånDiff = nettoMånMed - nettoMånUtan; // negativ (lägre lön)
     const nettoÅrDiff = nettoMånDiff * 12;
 
-    // ── Värde av pension vs lön (per år växlat) ──
-    // Om man tar växlingen som lön: netto = växling * (1 - marginalskatt%)
-    const växlingSomLönNetto = växling * (1 - effektivSkatt / 100);
-    // Om man tar det som pension: premie = pensionPremie, beskattas med avk.skatt under spartid
-    // och uttag beskattas som inkomst (uttagSkatt)
-    const pensionNetto = pensionPremie * (1 - marginalskatt / 100); // kommunalskatt vid uttag
+    // ── Värde av växlingen: hur mycket netto ger den som lön vs pension ──
+    // Netto av växlingsbeloppet som lön = netto(brutto) - netto(brutto-växling)
+    const växlingSomLönNetto = nettoMånUtan - nettoMånMed;
+    // Som pension: kommunalskatt vid uttag
+    const pensionNetto = pensionPremie * (1 - marginalskatt / 100);
 
     // ── Ackumulerat kapital över sparperioden ──
     const avkPension = pensionAvk / 100;
@@ -2946,7 +2955,7 @@ const LöneväxlingView = () => {
       fondKapital: fondSeries[fondSeries.length - 1]?.brutto || 0,
       pensionSeries, fondSeries,
     };
-  }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk]);
+  }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk, calcNettoLön]);
 
   const Chip = ({ label, value, color, sub }) => (
     <div style={{ background: color ? color : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
@@ -3304,10 +3313,10 @@ const LöneväxlingView = () => {
               <div style={{ background: "#FEF2F2", border: `1px solid #FECACA`, borderRadius: 8, padding: "14px 16px" }}>
                 <div style={{ color: C.red, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>Som lön (utan växling)</div>
                 <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Brutto: <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{fmt(växling)}/mån</span></div>
-                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Marginalskatt {effektivSkatt} %: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.red }}>−{fmt(växling * effektivSkatt / 100)}</span></div>
+                <div style={{ color: C.textMid, fontSize: 11, marginBottom: 4 }}>Skatt{överBrytpunkt ? ` (komp ${marginalskatt}% + statlig 20%)` : ` (${marginalskatt}%)`}: <span style={{ fontFamily: "monospace", fontWeight: 700, color: C.red }}>−{fmt(Math.round(calcNettoLön(bruttolön, marginalskatt) - calcNettoLön(bruttolön - växling, marginalskatt)))}</span></div>
                 <div style={{ borderTop: `1px solid #FECACA`, paddingTop: 8, marginTop: 4 }}>
                   <div style={{ color: C.textMid, fontSize: 10, marginBottom: 2 }}>Netto i handen</div>
-                  <div style={{ color: C.red, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.växlingSomLönNetto)}/mån</div>
+                  <div style={{ color: C.red, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(calc.växlingSomLönNetto))}/mån</div>
                 </div>
               </div>
               <div style={{ background: "#F0FBF5", border: `1px solid #6EE7B7`, borderRadius: 8, padding: "14px 16px" }}>
