@@ -2839,6 +2839,28 @@ const TradView = () => {
   );
 };
 
+const LVChip = ({ label, value, color, sub }) => (
+  <div style={{ background: color ? color : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+    <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+    <div style={{ color: color ? "#fff" : C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{value}</div>
+    {sub && <div style={{ color: color ? "rgba(255,255,255,0.55)" : C.textLight, fontSize: 10, marginTop: 3 }}>{sub}</div>}
+  </div>
+);
+
+const LVCompRow = ({ label, utan, med, diffPositive }) => {
+  const diff = med - utan;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderBottom: `1px solid ${C.border}`, padding: "9px 0" }}>
+      <span style={{ color: C.textMid, fontSize: 12 }}>{label}</span>
+      <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(utan)}</span>
+      <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(med)}</span>
+      <span style={{ color: diff === 0 ? C.textLight : (diffPositive ? diff > 0 : diff < 0) ? C.green : C.red, fontSize: 12, fontFamily: "monospace", textAlign: "right", fontWeight: 600 }}>
+        {diff >= 0 ? "+" : "−"}{fmt(Math.abs(diff))}
+      </span>
+    </div>
+  );
+};
+
 // ─── LÖNEVÄXLING HELPERS ─────────────────────────────────────────────────────
 const LV_BRYTPUNKT = 55033;
 const LV_STATLIG = 0.20;
@@ -2937,14 +2959,15 @@ const LöneväxlingView = () => {
 
     const kapitalFördel = pensionEfterSkatt - fondEfterSkatt;
     const månFördel = pensionPremie - växlingSomLönNetto;
+    const pctFördel = växlingSomLönNetto > 0 ? (månFördel / växlingSomLönNetto) * 100 : 0;
 
     return {
-      lönMånUtan, nettoMånUtan, arbKostnadUtan,
-      lönMånMed, nettoMånMed, arbKostnadMed,
+      lönMånUtan, nettoMånUtan: nettoMånUtan || 0, arbKostnadUtan,
+      lönMånMed, nettoMånMed: nettoMånMed || 0, arbKostnadMed,
       agBesparing, kompensation, pensionPremie, slpKostnad,
       arbKostnadDiff, nettoMånDiff, nettoÅrDiff,
-      växlingSomLönNetto, pensionNetto,
-      månFördel, pctFördel: (månFördel / växlingSomLönNetto) * 100,
+      växlingSomLönNetto: växlingSomLönNetto || 0, pensionNetto: pensionNetto || 0,
+      månFördel, pctFördel,
       pensionEfterSkatt, fondEfterSkatt, kapitalFördel,
       pensionKapital: pensionSeries[pensionSeries.length - 1]?.brutto || 0,
       fondKapital: fondSeries[fondSeries.length - 1]?.brutto || 0,
@@ -2952,27 +2975,7 @@ const LöneväxlingView = () => {
     };
   }, [bruttolön, växling, marginalskatt, kompensationPct, kompensationVäxlingPct, kompMode, sparÅr, uttagSkatt, pensionAvk, fondAvk]);
 
-  const Chip = ({ label, value, color, sub }) => (
-    <div style={{ background: color ? color : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-      <div style={{ color: C.textLight, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-      <div style={{ color: color ? "#fff" : C.navy, fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{value}</div>
-      {sub && <div style={{ color: color ? "rgba(255,255,255,0.55)" : C.textLight, fontSize: 10, marginTop: 3 }}>{sub}</div>}
-    </div>
-  );
 
-  const CompRow = ({ label, utan, med, diffPositive }) => {
-    const diff = med - utan;
-    return (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderBottom: `1px solid ${C.border}`, padding: "9px 0" }}>
-        <span style={{ color: C.textMid, fontSize: 12 }}>{label}</span>
-        <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(utan)}</span>
-        <span style={{ color: C.text, fontSize: 12, fontFamily: "monospace", textAlign: "right" }}>{fmt(med)}</span>
-        <span style={{ color: diff === 0 ? C.textLight : (diffPositive ? diff > 0 : diff < 0) ? C.green : C.red, fontSize: 12, fontFamily: "monospace", textAlign: "right", fontWeight: 600 }}>
-          {diff >= 0 ? "+" : "−"}{fmt(Math.abs(diff))}
-        </span>
-      </div>
-    );
-  };
 
   return (
     <div style={{ background: C.bg, minHeight: "calc(100vh - 130px)", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
@@ -3291,9 +3294,9 @@ const LöneväxlingView = () => {
 
           {/* Fördel per månad */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
-            <Chip label="Nettolön minskar med" value={fmt(Math.abs(calc.nettoMånDiff))} sub="per månad" />
-            <Chip label="Pensionspremie ökar med" value={fmt(calc.pensionPremie)} sub="per månad (inkl. komp.)" />
-            <Chip label={`Fördel pension vs lön`} value={`${calc.pctFördel >= 0 ? "+" : ""}${calc.pctFördel.toFixed(1).replace(".", ",")} %`}
+            <LVChip label="Nettolön minskar med" value={fmt(Math.abs(calc.nettoMånDiff))} sub="per månad" />
+            <LVChip label="Pensionspremie ökar med" value={fmt(calc.pensionPremie)} sub="per månad (inkl. komp.)" />
+            <LVChip label={`Fördel pension vs lön`} value={`${calc.pctFördel >= 0 ? "+" : ""}${calc.pctFördel.toFixed(1).replace(".", ",")} %`}
               color={calc.månFördel >= 0 ? C.navy : undefined}
               sub={`${calc.månFördel >= 0 ? "+" : ""}${fmt(calc.månFördel)} / mån`} />
           </div>
@@ -3352,10 +3355,10 @@ const LöneväxlingView = () => {
                 <div key={h} style={{ color: C.textLight, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, padding: "6px 0", borderBottom: `2px solid ${C.border}`, textAlign: align }}>{h}</div>
               ))}
             </div>
-            <CompRow label="Bruttolön" utan={calc.lönMånUtan} med={calc.lönMånMed} diffPositive={false} />
-            <CompRow label="AG-avgift (31,42 %)" utan={calc.lönMånUtan * AG_AVG} med={calc.lönMånMed * AG_AVG} diffPositive={false} />
-            <CompRow label="Pensionspremie" utan={0} med={calc.pensionPremie} diffPositive={true} />
-            <CompRow label="SLP på pension (24,26 %)" utan={0} med={calc.slpKostnad} diffPositive={false} />
+            <LVCompRow label="Bruttolön" utan={calc.lönMånUtan} med={calc.lönMånMed} diffPositive={false} />
+            <LVCompRow label="AG-avgift (31,42 %)" utan={calc.lönMånUtan * AG_AVG} med={calc.lönMånMed * AG_AVG} diffPositive={false} />
+            <LVCompRow label="Pensionspremie" utan={0} med={calc.pensionPremie} diffPositive={true} />
+            <LVCompRow label="SLP på pension (24,26 %)" utan={0} med={calc.slpKostnad} diffPositive={false} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderTop: `2px solid ${C.border}`, paddingTop: 8, marginTop: 4 }}>
               <span style={{ color: C.navy, fontSize: 12, fontWeight: 700 }}>Total kostnad</span>
               <span style={{ color: C.text, fontSize: 12, fontWeight: 700, fontFamily: "monospace", textAlign: "right" }}>{fmt(calc.arbKostnadUtan)}</span>
