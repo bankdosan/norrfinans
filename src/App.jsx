@@ -3495,6 +3495,394 @@ const LöneväxlingView = () => {
   );
 };
 
+// ─── COMPLIANCE HELPERS ──────────────────────────────────────────────────────
+const CompCB = ({ checked, onChange, label }) => (
+  <div onClick={() => onChange({ target: { checked: !checked } })}
+    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: `1.5px solid ${checked ? C.navy : C.border}`, borderRadius: 7, cursor: "pointer", background: checked ? C.goldLight : C.surface, marginBottom: 6, userSelect: "none" }}>
+    <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked ? C.navy : C.border}`, background: checked ? C.navy : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {checked && <span style={{ color: "#fff", fontSize: 12, lineHeight: 1 }}>✓</span>}
+    </div>
+    <span style={{ color: checked ? C.navy : C.textMid, fontSize: 13, fontWeight: checked ? 700 : 400 }}>{label}</span>
+  </div>
+);
+
+const CompRadio = ({ options, value, onChange }) => (
+  <div style={{ display: "flex", gap: 8 }}>
+    {options.map(o => (
+      <div key={o.val} onClick={() => onChange(o.val)}
+        style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", border: `1.5px solid ${value === o.val ? C.navy : C.border}`, borderRadius: 7, cursor: "pointer", background: value === o.val ? C.navy : C.surface, flex: 1, justifyContent: "center" }}>
+        <span style={{ color: value === o.val ? "#fff" : C.textMid, fontSize: 13, fontWeight: 700 }}>{o.label}</span>
+      </div>
+    ))}
+  </div>
+);
+
+const CompSekt = ({ nr, title, sub, children, missing, showErrors }) => (
+  <div style={{ background: C.surface, border: `1px solid ${missing && showErrors ? C.red : C.border}`, borderRadius: 10, padding: "20px 24px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+      <div style={{ width: 28, height: 28, borderRadius: 7, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>{nr}</div>
+      <div>
+        <div style={{ color: C.navy, fontSize: 14, fontWeight: 700 }}>{title}</div>
+        {sub && <div style={{ color: C.textLight, fontSize: 11, marginTop: 2 }}>{sub}</div>}
+      </div>
+    </div>
+    {children}
+  </div>
+);
+
+const CompLabel = ({ text, required }) => (
+  <div style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6, display: "flex", gap: 4, alignItems: "center" }}>
+    {text}{required && <span style={{ color: C.red, fontSize: 10 }}>*</span>}
+  </div>
+);
+
+// ─── COMPLIANCE ──────────────────────────────────────────────────────────────
+const ComplianceView = () => {
+  const PBB_2026 = 57300;
+
+  // ── State ──
+  const [kundnamn, setKundnamn] = useState("");
+  const [datum, setDatum] = useState(new Date().toISOString().slice(0, 10));
+  const [radgivare, setRadgivare] = useState("");
+
+  // Sektion 1
+  const [behov, setBehov] = useState({ nyttSparande: false, förändra: false, flytt: false, riskjustering: false, försäkringar: false, annat: false });
+  const [behovAnnat, setBehovAnnat] = useState("");
+  const [kundMål, setKundMål] = useState("");
+
+  // Sektion 2
+  const [kundRisk, setKundRisk] = useState("");
+  const [rekRisk, setRekRisk] = useState("");
+  const [kunskap, setKunskap] = useState("");
+  const [riskKommentar, setRiskKommentar] = useState("");
+
+  // Sektion 3
+  const [analyserats, setAnalyserats] = useState("");
+  const [valtBäst, setValtBäst] = useState("");
+
+  // Sektion 4
+  const [rekommendation, setRekommendation] = useState("");
+
+  // Sektion 5
+  const [lämplighet, setLämplighet] = useState("");
+
+  // Sektion 6
+  const [info, setInfo] = useState({ avgifter: false, risker: false, funktion: false, konsekvenser: false });
+  const [kundBekräftat, setKundBekräftat] = useState(false);
+
+  // Sektion 7
+  const [avvikelse, setAvvikelse] = useState("");
+  const [avvikelseMotivering, setAvvikelseMotivering] = useState("");
+
+  // ── Validering ──
+  const validate = () => {
+    const errors = [];
+    if (!kundnamn.trim()) errors.push("Kundnamn");
+    if (!radgivare.trim()) errors.push("Rådgivare");
+    if (!Object.values(behov).some(Boolean)) errors.push("1. Kundens behov (minst ett alternativ)");
+    if (behov.annat && !behovAnnat.trim()) errors.push("1. Beskriv annat behov");
+    if (!kundMål.trim()) errors.push("1. Kundens mål");
+    if (!kundRisk) errors.push("2. Kundens risknivå");
+    if (!rekRisk) errors.push("2. Rekommenderad risknivå");
+    if (!kunskap) errors.push("2. Kundens kunskap");
+    if (!analyserats.trim()) errors.push("3. Analyserade alternativ");
+    if (!valtBäst.trim()) errors.push("3. Motivering av valt alternativ");
+    if (!rekommendation.trim()) errors.push("4. Rekommendation");
+    if (!lämplighet.trim()) errors.push("5. Lämplighetsförklaring");
+    if (!Object.values(info).some(Boolean)) errors.push("6. Information till kund (minst ett alternativ)");
+    if (!kundBekräftat) errors.push("6. Kunden har bekräftat förståelsen");
+    if (!avvikelse) errors.push("7. Avvikelse (välj alternativ)");
+    if (avvikelse === "ja" && !avvikelseMotivering.trim()) errors.push("7. Motivering vid avvikelse");
+    return errors;
+  };
+
+  const errors = validate();
+  const isValid = errors.length === 0;
+  const [showErrors, setShowErrors] = useState(false);
+
+  // ── PDF Generator ──
+  const generatePDF = () => {
+    if (!isValid) { setShowErrors(true); return; }
+    const d = new Date().toLocaleDateString("sv-SE");
+    const t = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
+    const behovList = [
+      behov.nyttSparande && "Nytt sparande",
+      behov.förändra && "Förändra befintlig lösning",
+      behov.flytt && "Flytt av försäkring",
+      behov.riskjustering && "Riskjustering",
+      behov.försäkringar && "Försäkringar",
+      behov.annat && `Annat: ${behovAnnat}`,
+    ].filter(Boolean);
+
+    const infoList = [
+      info.avgifter && "Avgifter och kostnader",
+      info.risker && "Risker",
+      info.funktion && "Produktens funktion",
+      info.konsekvenser && "Eventuella konsekvenser av förändring",
+    ].filter(Boolean);
+
+    const row = (label, value, alt) =>
+      `<div class="row${alt ? " alt" : ""}"><div class="label">${label}</div><div class="value">${value || "–"}</div></div>`;
+    const chips = arr => arr.map(x => `<span class="chip">${x}</span>`).join("") || "–";
+    const sec = (title, body, sub = "") =>
+      `<div class="section"><div class="sec-head"><div class="sec-nr">${title.split(".")[0]}</div><div><div class="sec-title">${title}</div>${sub ? `<div class="sec-sub">${sub}</div>` : ""}</div></div><div class="sec-body">${body}</div></div>`;
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Compliance – ${kundnamn}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;font-size:11px;color:#2A1015;background:#F5F3EE;padding:28px 36px}
+.header{display:flex;align-items:center;gap:14px;margin-bottom:6px;padding-bottom:14px;border-bottom:3px solid #9B182D}
+.logo{width:38px;height:38px;background:#E73331;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:900;flex-shrink:0}
+.brand{color:#9B182D;font-size:15px;font-weight:800;letter-spacing:1px}
+.sub{color:#A87880;font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.doc-meta{margin-left:auto;text-align:right}
+.meta-title{font-size:13px;font-weight:700;color:#9B182D}
+.meta-info{font-size:10px;color:#A87880;margin-top:2px}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;margin-top:10px}
+.party{background:#fff;border:1px solid #E0D8CC;border-radius:6px;padding:10px 14px}
+.party-label{color:#A87880;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.party-value{color:#2A1015;font-size:13px;font-weight:700}
+.section{margin-bottom:12px;background:#fff;border:1px solid #E0D8CC;border-radius:8px;overflow:hidden}
+.sec-head{display:flex;align-items:flex-start;gap:10px;background:#9B182D;padding:10px 16px}
+.sec-nr{width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;flex-shrink:0}
+.sec-title{color:#fff;font-size:12px;font-weight:700}
+.sec-sub{color:rgba(255,255,255,0.6);font-size:9px;margin-top:2px}
+.sec-body{padding:0}
+.row{display:flex;border-bottom:1px solid #F0EDE6}
+.row:last-child{border-bottom:none}
+.row.alt{background:#F5F3EE}
+.label{width:220px;flex-shrink:0;padding:8px 14px;color:#6B3040;font-weight:600;font-size:10px}
+.value{padding:8px 14px;color:#2A1015;font-size:11px;flex:1;line-height:1.6}
+.chip{display:inline-block;background:#9B182D;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;margin:2px 3px 2px 0}
+.risk-badge{display:inline-block;padding:3px 12px;border-radius:4px;font-size:10px;font-weight:700}
+.risk-låg{background:#F0EDE6;color:#6B3040}
+.risk-medel{background:#FFF5F0;color:#C04020}
+.risk-hög{background:#FEF2F2;color:#9B182D}
+.footer{margin-top:20px;padding-top:10px;border-top:1px solid #E0D8CC;display:flex;justify-content:space-between;color:#A87880;font-size:9px}
+.sig-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
+.sig-box{border-top:2px solid #2A1015;padding-top:6px}
+.sig-label{color:#A87880;font-size:9px;letter-spacing:1px;text-transform:uppercase}
+@media print{body{padding:16px;background:#fff}}
+</style></head><body>
+<div class="header">
+  <div class="logo">N</div>
+  <div><div class="brand">Norrfinans</div><div class="sub">Rådgivningsdokumentation</div></div>
+  <div class="doc-meta"><div class="meta-title">Compliance – Rådgivningsdokument</div><div class="meta-info">Genererat ${d} kl. ${t}</div></div>
+</div>
+<div class="parties">
+  <div class="party"><div class="party-label">Kund</div><div class="party-value">${kundnamn}</div></div>
+  <div class="party"><div class="party-label">Rådgivare</div><div class="party-value">${radgivare}</div></div>
+  <div class="party"><div class="party-label">Datum för rådgivning</div><div class="party-value">${datum}</div></div>
+</div>
+${sec("1. Kundens behov och mål", "Bonnaya: Sammanfattning – kundens behov och önskemål",
+  row("Kundens behov/syfte", chips(behovList), false) +
+  row("Kundens mål med rådgivningen", kundMål, true)
+)}
+${sec("2. Risk och kunskap", "Bonnaya: Syn på risk och avkastning",
+  row("Kundens accepterade risknivå", `<span class="risk-badge risk-${kundRisk}">${kundRisk.charAt(0).toUpperCase() + kundRisk.slice(1) || "–"}</span>`, false) +
+  row("Rekommenderad risknivå", `<span class="risk-badge risk-${rekRisk}">${rekRisk.charAt(0).toUpperCase() + rekRisk.slice(1) || "–"}</span>`, true) +
+  row("Kundens kunskap och erfarenhet", kunskap === "tillräcklig" ? "Tillräcklig för rekommenderad lösning" : "Krävt extra genomgång (genomförd)", false) +
+  (riskKommentar ? row("Kommentar (avvikelse)", riskKommentar, true) : "")
+)}
+${sec("3. Analys och jämförelse", "Bonnaya: Sammanfattning / Analys",
+  row("Analyserade alternativ", analyserats, false) +
+  row("Valt alternativ bedöms bäst eftersom", valtBäst, true)
+)}
+${sec("4. Rekommendation", "Bonnaya: Rådgivarens rekommendation",
+  row("Rådgivaren rekommenderar", rekommendation, false) +
+  row("Baseras på", "Kundens behov, mål och riskprofil enligt ovan", true)
+)}
+${sec("5. Motivering och lämplighet", "Bonnaya: Motivering + Lämplighetsförklaring",
+  row("Den rekommenderade lösningen är lämplig för kunden eftersom", lämplighet, false)
+)}
+${sec("6. Information till kund", "Bonnaya: Information till kund",
+  row("Kunden har informerats om", chips(infoList), false) +
+  row("Kunden har bekräftat förståelse", kundBekräftat ? "Ja ✓" : "Nej", true)
+)}
+${sec("7. Avvikelse", "Bonnaya: Avvikelse från rådgivning",
+  row("Avvikelse", avvikelse === "ingen" ? "Ingen avvikelse" : "Kunden har valt annan lösning än rekommenderad", false) +
+  (avvikelse === "ja" ? row("Motivering", avvikelseMotivering, true) : "")
+)}
+<div class="sig-row">
+  <div class="sig-box"><div class="sig-label">Rådgivarens underskrift</div></div>
+  <div class="sig-box"><div class="sig-label">Kundens underskrift</div></div>
+</div>
+<div class="footer"><span>Norrfinans — Konfidentiellt</span><span>${d}</span></div>
+</body></html>`;
+
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 500); }
+  };
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 3, height: 24, background: C.gold, borderRadius: 2 }} />
+          <div>
+            <div style={{ color: C.gold, fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Rådgivningsdokumentation</div>
+            <div style={{ color: C.navy, fontSize: 20, fontWeight: 800 }}>Compliance</div>
+          </div>
+        </div>
+        <button onClick={generatePDF}
+          style={{ padding: "12px 24px", background: isValid ? C.navy : C.border, border: "none", borderRadius: 8, color: isValid ? "#fff" : C.textLight, fontSize: 13, fontWeight: 700, cursor: isValid ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>
+          📄 Generera PDF
+        </button>
+      </div>
+
+      {/* Errors */}
+      {showErrors && !isValid && (
+        <div style={{ background: "#FEF2F2", border: `1.5px solid ${C.red}`, borderRadius: 8, padding: "14px 18px", marginBottom: 20 }}>
+          <div style={{ color: C.red, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>⚠️ Följande obligatoriska fält saknas:</div>
+          {errors.map((e, i) => <div key={i} style={{ color: C.textMid, fontSize: 11, marginBottom: 3 }}>• {e}</div>)}
+        </div>
+      )}
+
+      {/* Kund & Rådgivare */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "18px 22px", marginBottom: 16, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+          {[
+            { label: "Kundnamn", value: kundnamn, onChange: setKundnamn, placeholder: "Förnamn Efternamn / AB Företaget" },
+            { label: "Rådgivare", value: radgivare, onChange: setRadgivare, placeholder: "Ditt namn" },
+            { label: "Datum", value: datum, onChange: setDatum, type: "date" },
+          ].map(f => (
+            <div key={f.label}>
+              <CompLabel text={f.label} required />
+              <input type={f.type || "text"} value={f.value} onChange={e => f.onChange(e.target.value)} placeholder={f.placeholder || ""}
+                style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: `1.5px solid ${showErrors && !f.value.trim() ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", background: C.surface }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 1. Kundens behov */}
+      <CompSekt showErrors={showErrors} nr="1" title="Kundens behov och mål" sub="Bonnaya: Sammanfattning – kundens behov och önskemål" missing={!Object.values(behov).some(Boolean) || !kundMål.trim()}>
+        <CompLabel text="Kunden önskar (kryssa i ett eller flera)" required />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, marginBottom: 14 }}>
+          {[
+            { key: "nyttSparande", label: "Nytt sparande" },
+            { key: "förändra", label: "Förändra befintlig lösning" },
+            { key: "flytt", label: "Flytt av försäkring" },
+            { key: "riskjustering", label: "Riskjustering" },
+            { key: "försäkringar", label: "Försäkringar" },
+            { key: "annat", label: "Annat" },
+          ].map(o => (
+            <CompCB key={o.key} checked={behov[o.key]} onChange={e => setBehov(p => ({ ...p, [o.key]: e.target.checked }))} label={o.label} />
+          ))}
+        </div>
+        {behov.annat && (
+          <div style={{ marginBottom: 14 }}>
+            <CompLabel text="Beskriv annat" required />
+            <textarea value={behovAnnat} onChange={e => setBehovAnnat(e.target.value)} rows={1} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!behovAnnat.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+          </div>
+        )}
+        <CompLabel text="Kundens huvudsakliga mål med rådgivningen" required />
+        <textarea value={kundMål} onChange={e => setKundMål(e.target.value)} rows={2} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!kundMål.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+      </CompSekt>
+
+      {/* 2. Risk och kunskap */}
+      <CompSekt showErrors={showErrors} nr="2" title="Risk och kunskap" sub="Bonnaya: Syn på risk och avkastning" missing={!kundRisk || !rekRisk || !kunskap}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 14 }}>
+          <div>
+            <CompLabel text="Kundens accepterade risknivå" required />
+            <CompRadio options={[{ val: "låg", label: "Låg" }, { val: "medel", label: "Medel" }, { val: "hög", label: "Hög" }]} value={kundRisk} onChange={setKundRisk} />
+          </div>
+          <div>
+            <CompLabel text="Rekommenderad risknivå" required />
+            <CompRadio options={[{ val: "låg", label: "Låg" }, { val: "medel", label: "Medel" }, { val: "hög", label: "Hög" }]} value={rekRisk} onChange={setRekRisk} />
+          </div>
+        </div>
+        <CompLabel text="Kundens kunskap och erfarenhet" required />
+        <div style={{ marginBottom: 14 }}>
+          <CompCB checked={kunskap === "tillräcklig"} onChange={() => setKunskap("tillräcklig")} label="Tillräcklig för rekommenderad lösning" />
+          <CompCB checked={kunskap === "genomgång"} onChange={() => setKunskap("genomgång")} label="Krävt extra genomgång (genomförd)" />
+        </div>
+        {(kundRisk && rekRisk && kundRisk !== rekRisk) && (
+          <div>
+            <CompLabel text="Kommentar vid avvikelse mellan önskad och rekommenderad risk" />
+            <textarea value={riskKommentar} onChange={e => setRiskKommentar(e.target.value)} rows={2} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+          </div>
+        )}
+      </CompSekt>
+
+      {/* 3. Analys */}
+      <CompSekt showErrors={showErrors} nr="3" title="Analys och jämförelse" sub="Bonnaya: Sammanfattning / Analys" missing={!analyserats.trim() || !valtBäst.trim()}>
+        <div style={{ marginBottom: 14 }}>
+          <CompLabel text="Följande alternativ har analyserats" required />
+          <textarea value={analyserats} onChange={e => setAnalyserats(e.target.value)} rows={2} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!analyserats.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+        </div>
+        <CompLabel text="Valt alternativ bedöms bäst eftersom" required />
+        <textarea value={valtBäst} onChange={e => setValtBäst(e.target.value)} rows={2} placeholder="T.ex. lägre avgifter, bättre risk/avkastning, flexibilitet..."
+          style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${valtBäst.trim() === "" && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+      </CompSekt>
+
+      {/* 4. Rekommendation */}
+      <CompSekt showErrors={showErrors} nr="4" title="Rekommendation" sub="Bonnaya: Rådgivarens rekommendation" missing={!rekommendation.trim()}>
+        <CompLabel text="Rådgivaren rekommenderar" required />
+        <textarea value={rekommendation} onChange={e => setRekommendation(e.target.value)} rows={3} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!rekommendation.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+        <div style={{ marginTop: 10, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", color: C.textMid, fontSize: 11 }}>
+          Rekommendationen baseras på kundens behov, mål och riskprofil enligt ovan.
+        </div>
+      </CompSekt>
+
+      {/* 5. Lämplighet */}
+      <CompSekt showErrors={showErrors} nr="5" title="Motivering och lämplighet" sub="Bonnaya: Motivering + Lämplighetsförklaring" missing={!lämplighet.trim()}>
+        <CompLabel text="Den rekommenderade lösningen är lämplig för kunden eftersom" required />
+        <textarea value={lämplighet} onChange={e => setLämplighet(e.target.value)} rows={4} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!lämplighet.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+      </CompSekt>
+
+      {/* 6. Information */}
+      <CompSekt showErrors={showErrors} nr="6" title="Information till kund" sub="Bonnaya: Information till kund" missing={!Object.values(info).some(Boolean) || !kundBekräftat}>
+        <CompLabel text="Kunden har informerats om" required />
+        <div style={{ marginBottom: 14 }}>
+          {[
+            { key: "avgifter", label: "Avgifter och kostnader" },
+            { key: "risker", label: "Risker" },
+            { key: "funktion", label: "Produktens funktion" },
+            { key: "konsekvenser", label: "Eventuella konsekvenser av förändring" },
+          ].map(o => (
+            <CompCB key={o.key} checked={info[o.key]} onChange={e => setInfo(p => ({ ...p, [o.key]: e.target.checked }))} label={o.label} />
+          ))}
+        </div>
+        <CompCB checked={kundBekräftat} onChange={e => setKundBekräftat(e.target.checked)} label="Kunden har bekräftat att informationen är förstådd ✓" />
+      </CompSekt>
+
+      {/* 7. Avvikelse */}
+      <CompSekt showErrors={showErrors} nr="7" title="Avvikelse" sub="Bonnaya: Avvikelse från rådgivning" missing={!avvikelse}>
+        <CompLabel text="Välj alternativ" required />
+        <div style={{ marginBottom: 14 }}>
+          <CompCB checked={avvikelse === "ingen"} onChange={() => setAvvikelse("ingen")} label="Ingen avvikelse" />
+          <CompCB checked={avvikelse === "ja"} onChange={() => setAvvikelse("ja")} label="Kunden har valt annan lösning än rekommenderad" />
+        </div>
+        {avvikelse === "ja" && (
+          <div>
+            <CompLabel text="Kort motivering" required />
+            <textarea value={avvikelseMotivering} onChange={e => setAvvikelseMotivering(e.target.value)} rows={2} placeholder={""} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: `1.5px solid ${!avvikelseMotivering.trim() && showErrors ? C.red : C.border}`, borderRadius: 7, fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit", resize: "vertical", background: C.surface }} />
+          </div>
+        )}
+      </CompSekt>
+
+      {/* Footer CTA */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+        {!isValid && (
+          <div style={{ color: C.textLight, fontSize: 12, alignSelf: "center" }}>
+            {errors.length} obligatoriska fält kvar
+          </div>
+        )}
+        <button onClick={() => { setShowErrors(true); generatePDF(); }}
+          style={{ padding: "13px 28px", background: isValid ? C.navy : C.gold, border: "none", borderRadius: 8, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>
+          📄 {isValid ? "Generera PDF" : "Visa saknade fält"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── ÄRENDEN ────────────────────────────────────────────────────────────────
 const ArendenView = () => {
   const [mode, setMode] = useState(null); // null | "nyteckning" | "andring"
@@ -4493,6 +4881,7 @@ ${extraRows}
     { id: "trad-fond", label: "TRAD & Fond" },
     { id: "lönesumma", label: "Lönesumma" },
     { id: "löneväxling", label: "Löneväxling" },
+    { id: "compliance", label: "Compliance" },
     { id: "arenden", label: "Ärenden" },
   ];
 
@@ -5092,6 +5481,7 @@ ${extraRows}
       {tab === "avgifter" && <AvgiftsView defaultMånSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "offert" && <OffertView />}
       {tab === "arenden" && <ArendenView />}
+      {tab === "compliance" && <ComplianceView />}
       {tab === "löneväxling" && <LöneväxlingView />}
       {tab === "trad" && <TradView />}
       {tab === "trad-fond" && <TradFondView />}
