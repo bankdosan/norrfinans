@@ -181,6 +181,12 @@ const COLS = [
 ];
 
 // ── OFFERT VIEW ───────────────────────────────────────────────────────────────
+const TinyInput = ({ value, onChange }) => (
+  <input type="number" value={value === 0 || value === "" ? "" : value} placeholder="0" min={0} step={10}
+    onChange={e => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+    style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, padding: "4px 6px", fontSize: 11, fontFamily: "monospace", outline: "none", textAlign: "right" }} />
+);
+
 const OffertView = () => {
   const [employees, setEmployees] = useState(EMP_DEFAULT);
   const [companies, setCompanies] = useState(COMPANIES_DEFAULT);
@@ -232,10 +238,7 @@ const OffertView = () => {
   const best = ranked[0];
   const worst = ranked[ranked.length - 1];
 
-  const TinyInput = ({ value, onChange }) => (
-    <input type="number" value={value === 0 || value === "" ? "" : value} placeholder="0" min={0} step={10} onChange={e => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-      style={{ width: "100%", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, padding: "4px 6px", fontSize: 11, fontFamily: "monospace", outline: "none", textAlign: "right" }} />
-  );
+
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", minHeight: "calc(100vh - 90px)" }}>
@@ -529,22 +532,24 @@ function calcProviderFees(provider, inputs) {
   return { engångsFee, year1Fee, totalFee, avgFee: totalFee / år };
 }
 
+const ProviderMI = ({ label, value, onChange, suffix, hint }) => (
+  <div style={{ marginBottom: 16 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+      <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
+      {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
+    </div>
+    <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+      <input type="number" value={value === 0 ? "" : value} placeholder="0" min={0} step={0.01} onChange={e => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+        style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
+      <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
+    </div>
+  </div>
+);
+
 const ProviderModal = ({ provider, onSave, onClose, onReset }) => {
   const [vals, setVals] = useState({ löpandePct: provider.löpandePct, kapitalPct: provider.kapitalPct, fast: provider.fast });
   const set = (k, v) => setVals(prev => ({ ...prev, [k]: v }));
-  const MI = ({ label, value, onChange, suffix, hint }) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-        <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
-        {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
-        <input type="number" value={value === 0 ? "" : value} placeholder="0" min={0} step={0.01} onChange={e => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }} />
-        <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{suffix}</span>
-      </div>
-    </div>
-  );
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(155,24,45,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
       <div style={{ background: C.surface, borderRadius: 10, padding: "28px 28px 24px", width: 400, boxShadow: "0 8px 40px rgba(155,24,45,0.18)", border: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
@@ -556,9 +561,9 @@ const ProviderModal = ({ provider, onSave, onClose, onReset }) => {
           <button onClick={onClose} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.textLight, cursor: "pointer", padding: "6px 10px", fontSize: 14 }}>✕</button>
         </div>
         <div style={{ height: 1, background: C.border, marginBottom: 20 }} />
-        <MI label="Premieavgift (löpande)" value={vals.löpandePct} onChange={v => set("löpandePct", v)} suffix="% av inbetald premie" hint="Dras månadsvis" />
-        <MI label="Kapitalavgift" value={vals.kapitalPct} onChange={v => set("kapitalPct", v)} suffix="% / år av totalt kapital" hint="Dras årsvis" />
-        <MI label="Fast avgift" value={vals.fast} onChange={v => set("fast", v)} suffix="kr / år" />
+        <ProviderMI label="Premieavgift (löpande)" value={vals.löpandePct} onChange={v => set("löpandePct", v)} suffix="% av inbetald premie" hint="Dras månadsvis" />
+        <ProviderMI label="Kapitalavgift" value={vals.kapitalPct} onChange={v => set("kapitalPct", v)} suffix="% / år av totalt kapital" hint="Dras årsvis" />
+        <ProviderMI label="Fast avgift" value={vals.fast} onChange={v => set("fast", v)} suffix="kr / år" />
         <div style={{ background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 6, padding: "10px 14px", marginBottom: 20 }}>
           <div style={{ color: C.gold, fontSize: 11, lineHeight: 1.7 }}>
             <strong>Premieavgift</strong> dras på varje månatlig inbetalning.<br />
@@ -573,6 +578,13 @@ const ProviderModal = ({ provider, onSave, onClose, onReset }) => {
     </div>
   );
 };
+
+const AvgiftsSH = ({ label, k, sortKey, setSortKey }) => (
+  <div onClick={() => setSortKey(k)}
+    style={{ cursor: "pointer", color: sortKey === k ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: sortKey === k ? 700 : 400, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
+    {label}{sortKey === k && <span style={{ color: C.gold }}>▲</span>}
+  </div>
+);
 
 const AvgiftsView = ({ defaultMånSparande }) => {
   const [löpandeMån, setLöpandeMån] = useState(defaultMånSparande || 10000);
@@ -593,11 +605,7 @@ const AvgiftsView = ({ defaultMånSparande }) => {
   const worst = results[results.length - 1];
 
   const colW = "52px 1fr 100px 100px 100px 110px 100px";
-  const SH = ({ label, k }) => (
-    <div onClick={() => setSortKey(k)} style={{ cursor: "pointer", color: sortKey === k ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: sortKey === k ? 700 : 400, fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase", userSelect: "none", display: "flex", alignItems: "center", gap: 4 }}>
-      {label}{sortKey === k && <span style={{ color: C.gold }}>▲</span>}
-    </div>
-  );
+
 
   return (
     <>
@@ -668,8 +676,8 @@ const AvgiftsView = ({ defaultMånSparande }) => {
           </div>
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
             <div style={{ display: "grid", gridTemplateColumns: colW, background: C.navy, padding: "12px 16px", gap: 8 }}>
-              <SH label="Rank" k="totalFee" /><div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Bolag</div>
-              <SH label="Engångsfee" k="engångsFee" /><SH label="Avgift år 1" k="year1Fee" /><SH label="Snitt/år" k="avgFee" /><SH label="Total avgift" k="totalFee" />
+              <AvgiftsSH label="Rank" k="totalFee" /><div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Bolag</div>
+              <AvgiftsSH label="Engångsfee" k="engångsFee" /><AvgiftsSH label="Avgift år 1" k="year1Fee" /><AvgiftsSH label="Snitt/år" k="avgFee" /><AvgiftsSH label="Total avgift" k="totalFee" />
               <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, letterSpacing: 0.8, textTransform: "uppercase" }}>Kapitalavg %</div>
             </div>
             {results.map((p, i) => {
@@ -1587,6 +1595,13 @@ const GRUNDBELOPP_IBB = 4;    // 4 IBB per bolag
 const LONEAVDRAG_IBB = 8;     // 8 IBB avdrag per delägare
 const MAX_LONEUTRYMME_FAKTOR = 50; // max 50x ägarens lön
 
+const SektionRubrik = ({ title, color = C.gold }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+    <div style={{ width: 3, height: 16, background: color, borderRadius: 2 }} />
+    <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>{title}</h3>
+  </div>
+);
+
 const LönesummaView = () => {
   const [antalDelägare, setAntalDelägare] = useState(1);
   const [totLönesumma, setTotLönesumma] = useState(0);
@@ -1651,12 +1666,7 @@ const LönesummaView = () => {
   const totÄgarandel = delägare.reduce((s, d) => s + (d.ägarandel || 0), 0);
   const ägarandelOk = Math.abs(totÄgarandel - 100) < 0.01;
 
-  const SektionRubrik = ({ title }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-      <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
-      <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>{title}</h3>
-    </div>
-  );
+
 
   return (
     <div style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", background: C.bg, minHeight: "calc(100vh - 130px)" }}>
@@ -2040,12 +2050,7 @@ const TradFondView = () => {
   const [FOND_COLOR, setFondColor] = useState("#CEC09E");
   const [hoveredTF, setHoveredTF] = useState(null);
 
-  const SektionRubrik = ({ title, color = C.gold }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-      <div style={{ width: 3, height: 16, background: color, borderRadius: 2 }} />
-      <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>{title}</h3>
-    </div>
-  );
+
 
   return (
     <div style={{ padding: "28px 32px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", background: C.bg, minHeight: "calc(100vh - 130px)" }}>
@@ -2861,6 +2866,34 @@ const LVCompRow = ({ label, utan, med, diffPositive }) => {
   );
 };
 
+const LVInput = ({ label, value, onChange, suffix, step = 1000, hint, min = 0, max }) => {
+  const [local, setLocal] = React.useState(String(value ?? ""));
+  React.useEffect(() => {
+    if (Number(local) !== value) setLocal(value === 0 ? "" : String(value));
+  }, [value]);
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
+        {hint && <span style={{ color: C.textLight, fontSize: 10 }}>{hint}</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+        <input type="text" inputMode="decimal" value={local} placeholder="0"
+          onChange={e => {
+            const v = e.target.value.replace(",", ".");
+            setLocal(e.target.value);
+            const n = parseFloat(v);
+            if (!isNaN(n)) onChange(n);
+            else if (v === "" || v === "-") onChange(0);
+          }}
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "10px 12px", fontFamily: "inherit", minWidth: 0 }}
+        />
+        <span style={{ color: C.textLight, padding: "10px 12px", fontSize: 12, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>{suffix}</span>
+      </div>
+    </div>
+  );
+};
+
 // ─── LÖNEVÄXLING HELPERS ─────────────────────────────────────────────────────
 const LV_BRYTPUNKT = 55033;
 const LV_STATLIG = 0.20;
@@ -3010,10 +3043,10 @@ const LöneväxlingView = () => {
               <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Ange din situation</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <InputRow label="Din bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
-              <InputRow label="Vill växla" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
+              <LVInput label="Din bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+              <LVInput label="Vill växla" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
             </div>
-            <InputRow label="Din kommunalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={0.5} min={0} max={60} hint="Hitta din på skatteverket.se" />
+            <LVInput label="Din kommunalskatt" value={marginalskatt} onChange={setMarginalskatt} suffix="%" step={0.5} min={0} max={60} hint="Hitta din på skatteverket.se" />
           </div>
 
           {/* Visuell förklaring: förut vs nu */}
@@ -3113,8 +3146,8 @@ const LöneväxlingView = () => {
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Löneparametrar</h3>
             </div>
-            <InputRow label="Bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
-            <InputRow label="Löneväxlingsbelopp" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
+            <LVInput label="Bruttolön / mån" value={bruttolön} onChange={setBruttolön} suffix="kr / mån" step={1000} />
+            <LVInput label="Löneväxlingsbelopp" value={växling} onChange={setVäxling} suffix="kr / mån" step={500} hint="Minskning av lön" />
             <div style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
                 <label style={{ color: C.textMid, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Kommunalskatt (bas)</label>
@@ -3257,7 +3290,7 @@ const LöneväxlingView = () => {
                 <div style={{ color: C.textMid, fontSize: 11, lineHeight: 1.7, marginBottom: 12 }}>
                   Arbetsgivaren lägger till en procentsats direkt på växlingsbeloppet som extra pensionspremie, oberoende av AG-avgiftsbesparingen.
                 </div>
-                <InputRow label="Kompensation på växlingsbelopp" value={kompensationVäxlingPct} onChange={setKompensationVäxlingPct} suffix="% av växlingen" step={1} min={0} max={100} />
+                <LVInput label="Kompensation på växlingsbelopp" value={kompensationVäxlingPct} onChange={setKompensationVäxlingPct} suffix="% av växlingen" step={1} min={0} max={100} />
                 <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", fontSize: 11, color: C.textMid }}>
                   = <strong>{fmt(växling * kompensationVäxlingPct / 100)}/mån</strong> extra på pensionen
                 </div>
@@ -3283,9 +3316,9 @@ const LöneväxlingView = () => {
               <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
               <h3 style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: 0 }}>Långsiktig jämförelse</h3>
             </div>
-            <InputRow label="Sparperiod" value={sparÅr} onChange={setSparÅr} suffix="år" step={1} min={1} max={45} />
-            <InputRow label="Skatt vid uttag (pension)" value={uttagSkatt} onChange={setUttagSkatt} suffix="%" step={1} min={0} max={55} hint="Kommunalskatt + statlig" />
-            <InputRow label="Avkastning" value={pensionAvk} onChange={v => { setPensionAvk(v); setFondAvk(v); }} suffix="% / år" step={0.5} min={0} max={20} hint="Gäller pension & fond" />
+            <LVInput label="Sparperiod" value={sparÅr} onChange={setSparÅr} suffix="år" step={1} min={1} max={45} />
+            <LVInput label="Skatt vid uttag (pension)" value={uttagSkatt} onChange={setUttagSkatt} suffix="%" step={1} min={0} max={55} hint="Kommunalskatt + statlig" />
+            <LVInput label="Avkastning" value={pensionAvk} onChange={v => { setPensionAvk(v); setFondAvk(v); }} suffix="% / år" step={0.5} min={0} max={20} hint="Gäller pension & fond" />
           </div>
         </div>
 
@@ -3296,9 +3329,9 @@ const LöneväxlingView = () => {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
             <LVChip label="Nettolön minskar med" value={fmt(Math.abs(calc.nettoMånDiff))} sub="per månad" />
             <LVChip label="Pensionspremie ökar med" value={fmt(calc.pensionPremie)} sub="per månad (inkl. komp.)" />
-            <LVChip label={`Fördel pension vs lön`} value={`${calc.pctFördel >= 0 ? "+" : ""}${calc.pctFördel.toFixed(1).replace(".", ",")} %`}
+            <LVChip label={`Fördel pension vs lön`} value={`${calc.pctFördel >= 0 ? "+" : ""}${(isNaN(calc.pctFördel) ? "0,0" : (isNaN(calc.pctFördel) ? "0,0" : calc.pctFördel.toFixed(1).replace(".", ",")))} %`}
               color={calc.månFördel >= 0 ? C.navy : undefined}
-              sub={`${calc.månFördel >= 0 ? "+" : ""}${fmt(calc.månFördel)} / mån`} />
+              sub={`${(calc.månFördel||0) >= 0 ? "+" : ""}${fmt(calc.månFördel||0)} / mån`} />
           </div>
 
           {/* Lön vs pension förklaring */}
@@ -3338,7 +3371,7 @@ const LöneväxlingView = () => {
                   {calc.månFördel >= 0 ? "+" : "−"}{fmt(Math.abs(calc.månFördel))}
                 </div>
                 <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10 }}>
-                  {calc.pctFördel >= 0 ? "+" : ""}{calc.pctFördel.toFixed(1).replace(".", ",")} % mer värde i pension
+                  {calc.pctFördel >= 0 ? "+" : ""}{(isNaN(calc.pctFördel) ? "0,0" : (isNaN(calc.pctFördel) ? "0,0" : calc.pctFördel.toFixed(1).replace(".", ",")))} % mer värde i pension
                 </div>
               </div>
             </div>
@@ -4656,6 +4689,40 @@ Skickat via Norrfinans Rådgivningsverktyg`;
 };
 
 
+const PdfModal = ({ onClose, generatePdf }) => (
+  <div style={{ position: "fixed", inset: 0, background: "rgba(42,16,21,0.65)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" }}
+    onClick={onClose}>
+    <div style={{ background: "#fff", borderRadius: 14, padding: "32px 32px 28px", width: 480, boxShadow: "0 24px 60px rgba(155,24,45,0.28)", border: `1px solid ${C.border}` }}
+      onClick={e => e.stopPropagation()}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Likviditetskalkylator</div>
+          <div style={{ color: C.navy, fontSize: 18, fontWeight: 800 }}>Generera PDF</div>
+        </div>
+        <button onClick={onClose} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.textLight, cursor: "pointer", padding: "6px 10px", fontSize: 14 }}>✕</button>
+      </div>
+      <div style={{ color: C.textMid, fontSize: 12, marginBottom: 22, lineHeight: 1.6 }}>
+        Välj vilken typ av PDF som ska genereras. Dokumentet öppnas i en ny flik — välj <strong>Spara som PDF</strong> eller <strong>Skriv ut</strong>.
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {[
+          { typ: "förenklad", emoji: "📄", rubrik: "Förenklad", desc: "Resultatöversikt + KF-sammanfattning. Passar som kundpresentation." },
+          { typ: "avancerad", emoji: "📊", rubrik: "Avancerad", desc: "Alla detaljer: intäkter, personalkostnader, övriga poster och KF-beräkning." },
+        ].map(v => (
+          <button key={v.typ} onClick={() => generatePdf(v.typ)}
+            style={{ padding: "20px 18px", borderRadius: 10, border: `2px solid ${C.border}`, background: C.surface, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.background = C.goldLight; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.surface; }}>
+            <div style={{ fontSize: 26, marginBottom: 8 }}>{v.emoji}</div>
+            <div style={{ color: C.navy, fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{v.rubrik}</div>
+            <div style={{ color: C.textLight, fontSize: 11, lineHeight: 1.5 }}>{v.desc}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 function MainApp({ onLogout }) {
     const [tab, setTab] = useState("kalkylator");
   const [förenkladVy, setFörenkladVy] = useState(false);
@@ -4837,39 +4904,6 @@ ${extraRows}
     if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 500); }
   };
 
-  const PdfModal = () => (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(42,16,21,0.65)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" }}
-      onClick={() => setShowPdfModal(false)}>
-      <div style={{ background: "#fff", borderRadius: 14, padding: "32px 32px 28px", width: 480, boxShadow: "0 24px 60px rgba(155,24,45,0.28)", border: `1px solid ${C.border}` }}
-        onClick={e => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-          <div>
-            <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Likviditetskalkylator</div>
-            <div style={{ color: C.navy, fontSize: 18, fontWeight: 800 }}>Generera PDF</div>
-          </div>
-          <button onClick={() => setShowPdfModal(false)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.textLight, cursor: "pointer", padding: "6px 10px", fontSize: 14 }}>✕</button>
-        </div>
-        <div style={{ color: C.textMid, fontSize: 12, marginBottom: 22, lineHeight: 1.6 }}>
-          Välj vilken typ av PDF som ska genereras. Dokumentet öppnas i en ny flik — välj <strong>Spara som PDF</strong> eller <strong>Skriv ut</strong>.
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {[
-            { typ: "förenklad", emoji: "📄", rubrik: "Förenklad", desc: "Resultatöversikt + KF-sammanfattning. Passar som kundpresentation." },
-            { typ: "avancerad", emoji: "📊", rubrik: "Avancerad", desc: "Alla detaljer: intäkter, personalkostnader, övriga poster och KF-beräkning." },
-          ].map(v => (
-            <button key={v.typ} onClick={() => generatePdf(v.typ)}
-              style={{ padding: "20px 18px", borderRadius: 10, border: `2px solid ${C.border}`, background: C.surface, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.background = C.goldLight; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.surface; }}>
-              <div style={{ fontSize: 26, marginBottom: 8 }}>{v.emoji}</div>
-              <div style={{ color: C.navy, fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{v.rubrik}</div>
-              <div style={{ color: C.textLight, fontSize: 11, lineHeight: 1.5 }}>{v.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
@@ -4905,7 +4939,7 @@ ${extraRows}
       <div style={{ height: 3, background: `linear-gradient(90deg,${C.gold},#E8B84B,${C.gold})` }} />
 
       {/* PDF Modal */}
-      {showPdfModal && tab === "kalkylator" && <PdfModal />}
+      {showPdfModal && tab === "kalkylator" && <PdfModal onClose={() => setShowPdfModal(false)} generatePdf={generatePdf} />}
 
       {tab === "kalkylator" && (
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -5519,6 +5553,15 @@ const MInput = ({ label, value, onChange, suffix }) => {
 };
 
 // ─── MOBILE APP ──────────────────────────────────────────────────────────────
+const MMRow = ({ label, value, bold, red }) => (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
+    <span style={{ color: bold ? C.text : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 400 }}>{label}</span>
+    <span style={{ color: red ? C.red : bold ? C.navy : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 500, fontFamily: "monospace" }}>
+      {value < 0 ? "−" : ""}{fmt(Math.abs(value))}
+    </span>
+  </div>
+);
+
 const MobileApp = ({ onLogout }) => {
   const [tab, setTab] = useState("kalkylator");
   const [intäkterMode, setIntäkterMode] = useState("timbaserat");
@@ -5547,14 +5590,7 @@ const MobileApp = ({ onLogout }) => {
     return { omsättning, lönTotal, pensionTotal, ebit, bolagsskatt, resultatEfterSkatt, kvarEfterUtdelning, faktTim };
   }, [intäkterMode, timpris, timmar, debiteringsgrad, direktOmsättning, bruttolön, bruttolönÅr, lönPeriod, antalÄgare, pensionMån, utdelning, buffertKr]);
 
-  const MRow = ({ label, value, bold, red }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
-      <span style={{ color: bold ? C.text : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 400 }}>{label}</span>
-      <span style={{ color: red ? C.red : bold ? C.navy : C.textMid, fontSize: 14, fontWeight: bold ? 700 : 500, fontFamily: "monospace" }}>
-        {value < 0 ? "−" : ""}{fmt(Math.abs(value))}
-      </span>
-    </div>
-  );
+
 
 
 
@@ -5664,14 +5700,14 @@ const MobileApp = ({ onLogout }) => {
                 <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
                 <span style={{ color: C.navy, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Resultatöversikt</span>
               </div>
-              <MRow label="Omsättning" value={r.omsättning} bold />
-              <MRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} red />
-              <MRow label="Pension inkl. SLP" value={-r.pensionTotal} red />
-              <MRow label="Resultat före skatt" value={r.ebit} bold />
-              <MRow label="Bolagsskatt (20,6 %)" value={-r.bolagsskatt} red />
-              <MRow label="Resultat efter skatt" value={r.resultatEfterSkatt} bold />
-              <MRow label="Utdelning (brutto)" value={-utdelning} red />
-              <MRow label="Likviditetsbuffert" value={-buffertKr} red />
+              <MMRow label="Omsättning" value={r.omsättning} bold />
+              <MMRow label="Lön & arbetsgivaravgift" value={-r.lönTotal} red />
+              <MMRow label="Pension inkl. SLP" value={-r.pensionTotal} red />
+              <MMRow label="Resultat före skatt" value={r.ebit} bold />
+              <MMRow label="Bolagsskatt (20,6 %)" value={-r.bolagsskatt} red />
+              <MMRow label="Resultat efter skatt" value={r.resultatEfterSkatt} bold />
+              <MMRow label="Utdelning (brutto)" value={-utdelning} red />
+              <MMRow label="Likviditetsbuffert" value={-buffertKr} red />
             </div>
 
             {/* Highlight card */}
