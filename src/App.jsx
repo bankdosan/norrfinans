@@ -1595,6 +1595,238 @@ const GRUNDBELOPP_IBB = 4;    // 4 IBB per bolag
 const LONEAVDRAG_IBB = 8;     // 8 IBB avdrag per delägare
 const MAX_LONEUTRYMME_FAKTOR = 50; // max 50x ägarens lön
 
+// ─── TJÄNSTEPENSION ──────────────────────────────────────────────────────────
+// Tariffer 2026 (källa: Collectum/Avtalat)
+const TP_IBB         = 80600;
+const TP_PBB         = 59200;           // PBB 2026 = 59 200 kr
+const TP_TAK_45      = TP_IBB * 7.5 / 12;  // 50 375 kr/mån (4,5%-gräns)
+const TP_TAK_30      = TP_IBB * 30 / 12;   // 201 500 kr/mån (30 IBB-tak)
+const TP_SJK_TAK     = TP_PBB * 10 / 12;   // 49 333 kr/mån (10 PBB)
+const TP_TGL_MÅN     = 32;                  // kr/mån per anställd (2026)
+const TP_SLP         = 0.2426;
+const TP_COLL_AVG_PCT = 0.0055;
+const TP_COLL_MAX_ÅR  = 450;
+const TP_PREMBEF_PCT  = 0.001022;           // premiebefrielseförsäkring (~0,102%)
+
+// Beräknar ITP 1-premie exkl. SLP och TGL (matchar Collectums räknesnurra)
+const calcITP1 = (lönMån) => {
+  const lön = Math.max(0, lönMån);
+  // Ålderspension (INGEN ITPK — ITPK hör till ITP 2)
+  const åp = 0.045 * Math.min(lön, TP_TAK_45)
+           + 0.30  * Math.max(0, Math.min(lön, TP_TAK_30) - TP_TAK_45);
+  // Sjukpension
+  const sjk = 0.00030 * Math.min(lön, TP_SJK_TAK)
+            + 0.00108 * Math.max(0, Math.min(lön, TP_TAK_30) - TP_SJK_TAK);
+  // Premiebefrielseförsäkring
+  const prem_bef = TP_PREMBEF_PCT * Math.min(lön, TP_TAK_30);
+  // Collectums administrationskostnad (0,55% av åp, max 450 kr/år)
+  const coll_avg = Math.min(TP_COLL_MAX_ÅR / 12, TP_COLL_AVG_PCT * åp);
+  // ITP-premie (Collectums siffra, exkl. TGL och SLP)
+  const itpPremie = åp + sjk + prem_bef + coll_avg;
+  // TGL — separat från ITP, visas separat
+  const tgl = TP_TGL_MÅN;
+  // SLP — arbetsgivaravgift på pensionskostnader, visas separat
+  const slp = (itpPremie + tgl) * TP_SLP;
+  return { åp, sjk, prem_bef, coll_avg, itpPremie, tgl, slp, total: itpPremie + tgl + slp };
+};
+
+const TjanstepensionView = () => {
+  const [anställda, setAnställda] = useState([
+    { id: 1, namn: "Anställd 1", lön: 45000 },
+    { id: 2, namn: "Anställd 2", lön: 65000 },
+  ]);
+  const [nextId, setNextId] = useState(3);
+  const [hovTP, setHovTP] = useState(null);
+
+  const addRow = () => {
+    setAnställda(p => [...p, { id: nextId, namn: `Anställd ${nextId}`, lön: 35000 }]);
+    setNextId(p => p + 1);
+  };
+  const removeRow = id => setAnställda(p => p.filter(a => a.id !== id));
+  const updateRow = (id, field, val) => setAnställda(p => p.map(a => a.id === id ? { ...a, [field]: val } : a));
+
+  const rows = anställda.map(a => ({ ...a, itp: calcITP1(a.lön) }));
+  const totLön = rows.reduce((s, r) => s + r.lön, 0);
+  const totPremie = rows.reduce((s, r) => s + r.itp.itpPremie, 0);
+  const totTGL = rows.reduce((s, r) => s + r.itp.tgl, 0);
+  const totTotal = rows.reduce((s, r) => s + r.itp.itpPremie + r.itp.tgl, 0);
+
+  const segments = [
+    { key: "åp",       label: "Ålderspension",       color: C.navy },
+    { key: "sjk",      label: "Sjukpension",          color: "#4A6FA5" },
+    { key: "prem_bef", label: "Premiebefrielseförs.", color: C.gold },
+    { key: "coll_avg", label: "Collectums avgift",    color: C.tan },
+    { key: "tgl",      label: "TGL",                  color: "#CEC09E" },
+  ];
+
+  const chartW = 680, chartH = 200, padL = 58, padB = 28, padT = 12;
+  const plotW = chartW - padL - 8;
+  const plotH = chartH - padB - padT;
+  const maxVal = Math.max(...rows.map(r => r.itp.itpPremie + r.itp.tgl), 1);
+  const barW = Math.min(52, plotW / rows.length - 10);
+  const toY = v => padT + plotH - (v / maxVal) * plotH;
+  const toX = i => padL + (i + 0.5) * (plotW / rows.length);
+
+  return (
+    <div style={{ padding: "28px 32px", background: C.bg, minHeight: "calc(100vh - 130px)", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif" }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
+        <div style={{ width: 3, height: 24, background: C.gold, borderRadius: 2 }} />
+        <div>
+          <div style={{ color: C.navy, fontSize: 20, fontWeight: 800 }}>Tjänstepensionskalkylator</div>
+        </div>
+        <div style={{ marginLeft: "auto", background: C.goldLight, border: `1px solid ${C.gold}`, borderRadius: 7, padding: "7px 14px", fontSize: 10, color: C.textMid }}>
+          IBB {fmt(TP_IBB)} · PBB {fmt(TP_PBB)} · TGL {TP_TGL_MÅN} kr/mån
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20 }}>
+
+        {/* Vänster: anställda + summering */}
+        <div>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "18px 18px", marginBottom: 14, boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Anställda</span>
+              <button onClick={addRow} style={{ padding: "6px 14px", background: C.navy, border: "none", borderRadius: 6, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+ Lägg till</button>
+            </div>
+
+            {rows.map((a) => (
+              <div key={a.id} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "11px 13px", marginBottom: 8, background: C.surface2 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+                  <input value={a.namn} onChange={e => updateRow(a.id, "namn", e.target.value)}
+                    style={{ background: "transparent", border: "none", outline: "none", color: C.navy, fontSize: 13, fontWeight: 700, fontFamily: "inherit", width: "65%" }} />
+                  {rows.length > 1 && (
+                    <button onClick={() => removeRow(a.id)} style={{ background: "none", border: "none", color: C.textLight, cursor: "pointer", fontSize: 15, padding: 0 }}>✕</button>
+                  )}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, overflow: "hidden", marginBottom: 8 }}>
+                  <input type="number" value={a.lön || ""} placeholder="0" min={0} step={1000}
+                    onChange={e => updateRow(a.id, "lön", e.target.value === "" ? 0 : Number(e.target.value))}
+                    style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 14, fontWeight: 600, padding: "8px 11px", fontFamily: "inherit", minWidth: 0 }} />
+                  <span style={{ color: C.textLight, padding: "8px 10px", fontSize: 10, borderLeft: `1px solid ${C.border}`, whiteSpace: "nowrap", flexShrink: 0 }}>kr / mån</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                  <span style={{ color: C.textLight }}>Kostnad</span>
+                  <span style={{ color: C.navy, fontWeight: 700, fontFamily: "monospace" }}>{fmt(Math.round(a.itp.itpPremie + a.itp.tgl))} kr/mån</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summering */}
+          <div style={{ background: C.navy, borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Totalt — {rows.length} anställda</div>
+            {[
+              { label: "Total lönesumma", value: totLön },
+              { label: "Tjänstepensionspremier", value: totPremie },
+              { label: "TGL", value: totTGL },
+              { label: "Total kostnad", value: totTotal, big: true },
+            ].map((k, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{k.label}</span>
+                <span style={{ color: k.big ? "#F9C5A5" : "#fff", fontSize: k.big ? 15 : 11, fontWeight: k.big ? 800 : 600, fontFamily: "monospace" }}>{fmt(Math.round(k.value))} kr</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 10, background: "rgba(255,255,255,0.07)", borderRadius: 5, padding: "6px 10px", color: "rgba(255,255,255,0.4)", fontSize: 10 }}>
+              Kostnad = {((totTotal / (totLön || 1)) * 100).toFixed(1)} % av lönesumman
+            </div>
+          </div>
+        </div>
+
+        {/* Höger: chart + info */}
+        <div>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "18px 20px", boxShadow: "0 1px 4px rgba(155,24,45,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <div style={{ width: 3, height: 16, background: C.gold, borderRadius: 2 }} />
+              <span style={{ color: C.navy, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>Premieuppdelning per anställd</span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginBottom: 12 }}>
+              {segments.map(s => (
+                <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: 2, background: s.color }} />
+                  <span style={{ fontSize: 10, color: C.textLight }}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+            <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`} style={{ display: "block" }}
+              onMouseLeave={() => setHovTP(null)}>
+              {[0, 0.25, 0.5, 0.75, 1].map(f => {
+                const val = f * maxVal;
+                const y = toY(val);
+                return (
+                  <g key={f}>
+                    <line x1={padL} y1={y} x2={chartW - 8} y2={y} stroke={C.border} strokeWidth={0.5} strokeDasharray="3,5" />
+                    <text x={padL - 4} y={y + 3.5} textAnchor="end" fontSize={8} fill={C.textLight} fontFamily="inherit">{fmtShort(val)}</text>
+                  </g>
+                );
+              })}
+              {rows.map((a, i) => {
+                const cx = toX(i);
+                let stackY = padT + plotH;
+                return (
+                  <g key={a.id} onMouseEnter={() => setHovTP(i)} style={{ cursor: "default" }}>
+                    {segments.map(s => {
+                      const h = (a.itp[s.key] / maxVal) * plotH;
+                      stackY -= h;
+                      return <rect key={s.key} x={cx - barW / 2} y={stackY} width={barW} height={h} fill={s.color} opacity={hovTP === i ? 1 : 0.82} />;
+                    })}
+                    {hovTP === i && <rect x={cx - barW / 2 - 2} y={padT} width={barW + 4} height={plotH} fill="transparent" stroke={C.navy} strokeWidth={1.2} strokeDasharray="3,2" />}
+                    <text x={cx} y={chartH - 8} textAnchor="middle" fontSize={8} fill={hovTP === i ? C.navy : C.textLight} fontWeight={hovTP === i ? "bold" : "normal"} fontFamily="inherit">
+                      {a.namn.length > 11 ? a.namn.slice(0, 10) + "…" : a.namn}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            {hovTP !== null && rows[hovTP] && (() => {
+              const a = rows[hovTP];
+              return (
+                <div style={{ background: C.navy, borderRadius: 8, padding: "12px 16px", marginTop: 8 }}>
+                  <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                    {a.namn} — {fmt(a.lön)} kr/mån
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6 }}>
+                    {segments.map(s => (
+                      <div key={s.key} style={{ background: "rgba(255,255,255,0.07)", borderRadius: 4, padding: "6px 8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: 1, background: s.color }} />
+                          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 8 }}>{s.label}</span>
+                        </div>
+                        <div style={{ color: "#fff", fontSize: 11, fontWeight: 700, fontFamily: "monospace" }}>{fmt(Math.round(a.itp[s.key]))} kr</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>Total kostnad (exkl. SLP)</span>
+                    <span style={{ color: "#F9C5A5", fontSize: 14, fontWeight: 800, fontFamily: "monospace" }}>{fmt(Math.round(a.itp.itpPremie + a.itp.tgl))} kr/mån</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Info-rad */}
+            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              {[
+                { label: "Ålderspension", detail: `4,5 % upp till ${fmt(TP_TAK_45)} kr, sedan 30 %` },
+                { label: "Sjukpension", detail: `0,030 % / 0,108 % med brytpunkt ${fmt(Math.round(TP_SJK_TAK))} kr/mån` },
+                { label: "TGL", detail: `${TP_TGL_MÅN} kr/mån per anställd (fast)` },
+              ].map((k, i) => (
+                <div key={i} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, padding: "10px 12px" }}>
+                  <div style={{ color: C.navy, fontSize: 11, fontWeight: 700, marginBottom: 3 }}>{k.label}</div>
+                  <div style={{ color: C.textLight, fontSize: 10, lineHeight: 1.5 }}>{k.detail}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const SektionRubrik = ({ title, color = C.gold }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
     <div style={{ width: 3, height: 16, background: color, borderRadius: 2 }} />
@@ -4908,6 +5140,7 @@ ${extraRows}
   const tabs = [
     { id: "kalkylator", label: "Likviditetskalkylator" },
     { id: "analys", label: "Likviditetsanalys" },
+    { id: "tjanstepension", label: "Tjänstepension" },
     { id: "sparande", label: "Sparande & Avkastning" },
     { id: "avgifter", label: "Avgiftskalkylator" },
     { id: "offert", label: "Offertjämförelse" },
@@ -5511,6 +5744,7 @@ ${extraRows}
       )}
 
       {tab === "analys" && <LikviditetsanalysView r={r} utdelning={utdelning} buffertPct={buffertPct} buffertMode={buffertMode} buffertKr={buffertKr} />}
+      {tab === "tjanstepension" && <TjanstepensionView />}
       {tab === "sparande" && <SparandeView månSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "avgifter" && <AvgiftsView defaultMånSparande={Math.max(0, Math.round(r.tillgängligtKF_mån))} />}
       {tab === "offert" && <OffertView />}
