@@ -3766,13 +3766,14 @@ const LöneväxlingView = () => {
           </div>
         </div>
       </div>
-     </div>
+    </div>
+        </div>
       </div>
       </div>}
     </div>
   );
 };
-
+      
 // ─── COMPLIANCE HELPERS
 const CompCB = ({ checked, onChange, label }) => (
   <div onClick={() => onChange({ target: { checked: !checked } })}
