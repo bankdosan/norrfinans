@@ -3766,6 +3766,8 @@ const LöneväxlingView = () => {
           </div>
         </div>
       </div>
+     </div>
+      </div>
       </div>}
     </div>
   );
