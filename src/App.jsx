@@ -1,3 +1,4 @@
+import Livranta from "./Livranta";
 import React, { useState, useMemo } from "react";
 
 const fmt = (n) => new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: 0 }).format(n);
@@ -2618,6 +2619,7 @@ const TradAvgiftCard = ({ totalAvgift }) => {
 };
 
 const TradView = () => {
+  const [tradUnderflik, setTradUnderflik] = useState("beräkning");
   const [bolag, setBolag] = useState("skandia");
   const [kapital, setKapital] = useState(10000000);
   const [extra, setExtra] = useState(0);
@@ -2705,7 +2707,17 @@ const TradView = () => {
   const chartH = 180;
 
   return (
-    <div style={{ padding: "28px 32px", fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", background: C.bg, minHeight: "calc(100vh - 130px)" }}>
+    <div style={{ fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif", background: C.bg, minHeight: "calc(100vh - 130px)" }}>
+      <div style={{ display: "flex", gap: 6, padding: "12px 20px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
+        {[{ id: "beräkning", label: "Beräkning" }, { id: "livranta", label: "Livränta" }].map(f => (
+          <button key={f.id} onClick={() => setTradUnderflik(f.id)}
+            style={{ padding: "8px 18px", borderRadius: 7, border: `1.5px solid ${tradUnderflik === f.id ? C.navy : C.border}`, background: tradUnderflik === f.id ? C.navy : "transparent", color: tradUnderflik === f.id ? "#fff" : C.textMid, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+      {tradUnderflik === "livranta" && <Livranta />}
+      {tradUnderflik === "beräkning" && <div style={{ padding: "28px 32px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 24 }}>
 
         {/* ── VÄNSTERKOLUMN ── */}
@@ -3753,6 +3765,7 @@ const LöneväxlingView = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
       </div>
       )}
