@@ -3762,17 +3762,16 @@ const LöneväxlingView = () => {
                 <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Netto efter uttag</div>
                 <div style={{ color: "#F9C5A5", fontSize: 18, fontWeight: 800, fontFamily: "monospace" }}>{fmt(calc.pensionEfterSkatt)}</div>
                 <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>efter {uttagSkatt} % uttagsskatt</div>
+    </div>
           </div>
-         </div>
         </div>
       </div>
-      </div>
-      }
+      </div>}
     </div>
   );
 };
 
-// ─── COMPLIANCE HELPERS ──────────────────────────────────────────────────────
+// ─── COMPLIANCE HELPERS
 const CompCB = ({ checked, onChange, label }) => (
   <div onClick={() => onChange({ target: { checked: !checked } })}
     style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: `1.5px solid ${checked ? C.navy : C.border}`, borderRadius: 7, cursor: "pointer", background: checked ? C.goldLight : C.surface, marginBottom: 6, userSelect: "none" }}>
