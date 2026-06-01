@@ -3084,6 +3084,7 @@ const TradView = () => {
           </div>
         </div>
       </div>
+      </div>}
     </div>
   );
 };
