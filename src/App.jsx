@@ -5164,6 +5164,7 @@ ${extraRows}
     { id: "löneväxling", label: "Löneväxling" },
     { id: "compliance", label: "Compliance" },
     { id: "arenden", label: "Ärenden" },
+    { id: "livranta", label: "Livränta" },
   ];
 
   return (
@@ -5764,6 +5765,7 @@ ${extraRows}
       {tab === "offert" && <OffertView />}
       {tab === "arenden" && <ArendenView />}
       {tab === "compliance" && <ComplianceView />}
+      {tab === "livranta" && <Livranta />}
       {tab === "löneväxling" && <LöneväxlingView />}
       {tab === "trad" && <TradView />}
       {tab === "trad-fond" && <TradFondView />}
